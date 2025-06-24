@@ -27,7 +27,7 @@ from pydicom.pixel_data_handlers.util import apply_voi_lut
 import cv2
 import scipy.ndimage
 from scipy.fft import fft2, ifft2, fftshift, ifftshift
-import tkinter as tk
+#import tkinter as tk
 from tkinter import filedialog
 from skimage.draw import line, polygon
 import streamlit_image_coordinates as sc
