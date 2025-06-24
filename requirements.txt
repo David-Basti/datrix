@@ -1,0 +1,15 @@
+streamlit
+numpy
+matplotlib
+sympy
+scikit-image
+pillow
+pydicom
+numba
+opencv-python-headless
+scipy
+tk
+streamlit-drawable-canvas
+streamlit-image-coordinates
+pandas
+imageio
