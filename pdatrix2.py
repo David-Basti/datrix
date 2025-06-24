@@ -28,7 +28,7 @@ import cv2
 import scipy.ndimage
 from scipy.fft import fft2, ifft2, fftshift, ifftshift
 #import tkinter as tk
-from tkinter import filedialog
+#from tkinter import filedialog
 from skimage.draw import line, polygon
 import streamlit_image_coordinates as sc
 from streamlit_drawable_canvas import st_canvas
