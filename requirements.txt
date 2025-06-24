@@ -1,4 +1,5 @@
 streamlit>=1.25.0
+git+https://github.com/andfanilo/streamlit-drawable-canvas.git@master
 numpy
 matplotlib
 sympy
