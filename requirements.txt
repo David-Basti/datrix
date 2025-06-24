@@ -13,3 +13,4 @@ streamlit-drawable-canvas
 streamlit-image-coordinates
 pandas
 imageio
+XlsxWriter
