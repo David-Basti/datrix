@@ -2628,6 +2628,12 @@ match modulo:
                         st.session_state["img_analisis"] = imagen_recombinada
                 else:
                     if img_a.ndim == 2:  # Imagen en escala de grises
+                        if img_a.dtype != np.uint8:
+                            img_a = cv2.normalize(img_a, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+
+                        # Si tiene 3 canales (color), convertir a gris
+                        if len(img_a.shape) == 3 and img_a.shape[2] == 3:
+                            img_a = cv2.cvtColor(img_a, cv2.COLOR_BGR2GRAY)
                         if "img_original_gray" not in st.session_state or not np.array_equal(img_a, st.session_state["img_original_gray"]):
                             st.session_state["img_original_gray"] = img_a
                             st.session_state["canalGray"] = img_a
