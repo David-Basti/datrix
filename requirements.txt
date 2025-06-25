@@ -14,3 +14,4 @@ streamlit-image-coordinates
 pandas
 imageio
 XlsxWriter
+openpyxl
