@@ -598,26 +598,27 @@ match modulo:
                                     b = resultados['b']
                                     sign_b = '+' if b >= 0 else '-'
                                     b_abs = abs(b)
-
-                                    st.latex(rf"""
-                                        \begin{{aligned}}
-                                        y &= {a:.5f}x {sign_b} {b_abs:.5f} \\
-                                        a &= {a:.5f} \quad & b &= {b:.5f} \\
-                                        R^2 &= {resultados['R']:.5f} \quad & D &= {resultados['D']:.5f} \\
-                                        \Delta a &= {resultados['𝛥a']:.5f} \quad & \Delta b &= {resultados['𝛥b']:.5f}
-                                        \end{{aligned}}
-                                    """)
+                                    with st.expander("Ver resultados"):
+                                        st.latex(rf"""
+                                            \begin{{aligned}}
+                                            y &= {a:.5f}x {sign_b} {b_abs:.5f} \\
+                                            a &= {a:.5f} \quad & b &= {b:.5f} \\
+                                            R^2 &= {resultados['R']:.5f} \quad & D &= {resultados['D']:.5f} \\
+                                            \Delta a &= {resultados['𝛥a']:.5f} \quad & \Delta b &= {resultados['𝛥b']:.5f}
+                                            \end{{aligned}}
+                                        """)
                                 else:
                                     ecuacion = fn.formatear_ecuacion(resultados['coef'])
-                                    st.latex(ecuacion)
-
-                                    coef_str = r" \\ ".join([
-                                        fn.formato_coeficiente(resultados['coef'][i], resultados['delta_coef'][i], i, grado)
-                                        for i in range(len(resultados['coef']))
-                                    ])
-                                    st.latex(r"\begin{aligned}" + coef_str + r"\end{aligned}")
-                                    st.latex(rf"R^2 = {resultados['R2']:.5f}")
-                                    st.latex(rf"D = {resultados['D']:.5f}")
+                                    with st.expander("Ver resultados"):
+                                        st.latex(ecuacion)
+    
+                                        coef_str = r" \\ ".join([
+                                            fn.formato_coeficiente(resultados['coef'][i], resultados['delta_coef'][i], i, grado)
+                                            for i in range(len(resultados['coef']))
+                                        ])
+                                        st.latex(r"\begin{aligned}" + coef_str + r"\end{aligned}")
+                                        st.latex(rf"R^2 = {resultados['R2']:.5f}")
+                                        st.latex(rf"D = {resultados['D']:.5f}")
                             else:
                                 st.warning("Los vectores U y V deben tener la misma longitud.")
                         else: st.warning("El extremo superior debe ser mayor al inferior")
@@ -772,16 +773,16 @@ match modulo:
                                 sign_b = '+' if b >= 0 else '-'
                                 b_abs = abs(b)
 
-                                                                
-                                st.latex(rf"""
-                                    \begin{{aligned}}
-                                    y &= {a:.5f} \cdot e^{{{b:.5f}x}} + {c:.5f} \\
-                                    a &= {a:.5f} \quad & \Delta a &= {delta_a:.5f} \\
-                                    b &= {b:.5f} \quad & \Delta b &= {delta_b:.5f} \\
-                                    c &= {c:.5f} \quad & \Delta c &= {delta_c:.5f} \\
-                                    R^2 &= {R2:.5f} \quad & D &= {D:.5f}
-                                    \end{{aligned}}
-                                """)
+                                with st.expander("Ver resultados"):                                
+                                    st.latex(rf"""
+                                        \begin{{aligned}}
+                                        y &= {a:.5f} \cdot e^{{{b:.5f}x}} + {c:.5f} \\
+                                        a &= {a:.5f} \quad & \Delta a &= {delta_a:.5f} \\
+                                        b &= {b:.5f} \quad & \Delta b &= {delta_b:.5f} \\
+                                        c &= {c:.5f} \quad & \Delta c &= {delta_c:.5f} \\
+                                        R^2 &= {R2:.5f} \quad & D &= {D:.5f}
+                                        \end{{aligned}}
+                                    """)
                             else:
                                 st.warning("Los vectores U y V deben tener la misma longitud.")
                         else:
