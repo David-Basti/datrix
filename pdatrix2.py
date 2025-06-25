@@ -1057,6 +1057,74 @@ match modulo:
                                     #ax.legend()
                                     st.pyplot(figspline)
 
+                if opcion == "Ajuste exponencial":
+                    if U is not None and len(U) == len(V):
+                        if xinicial <= xfinal:
+                            volu1, volu2 = st.columns([0.3, 0.7])
+
+                            resultados_exp = fn.RLE_exponential_fit(
+                                U=U, V=V, W=W if usar_W else None,
+                                plot=True, titulo=titulo,
+                                xlabel=xlabel, ylabel=ylabel,
+                                use_weights=True, show_errorbars=True
+                            )
+
+                            f = resultados_exp["f"]
+                            x_full = resultados_exp["x_plot"]
+                            y_full = resultados_exp["y_plot"]
+
+                            # Establecer rangos posibles para los sliders
+                            x_min_full, x_max_full = float(min(x_full)), float(max(x_full))
+                            y_min_full, y_max_full = float(min(y_full)), float(max(y_full))
+
+                            with volu1:
+                                x_lines = st.slider("Intervalo en X (líneas verticales)",
+                                                    min_value=x_min_full, max_value=x_max_full,
+                                                    value=(x_min_full, x_max_full),
+                                                    step=(x_max_full - x_min_full) / 100,
+                                                    format="%.4f")
+
+                                y_lines = st.slider("Intervalo en Y (líneas horizontales)",
+                                                    min_value=y_min_full, max_value=y_max_full,
+                                                    value=(y_min_full, y_max_full),
+                                                    step=(y_max_full - y_min_full) / 100,
+                                                    format="%.4f")
+
+                            # Buscar mínimos y máximos dentro del rectángulo
+                            y_max = -np.inf
+                            x_max = None
+                            y_min = np.inf
+                            x_min = None
+
+                            for i in range(len(x_full)):
+                                x = x_full[i]
+                                y = y_full[i]
+                                if x_lines[0] <= x <= x_lines[1] and y_lines[0] <= y <= y_lines[1]:
+                                    if y > y_max:
+                                        y_max = y
+                                        x_max = x
+                                    if y < y_min:
+                                        y_min = y
+                                        x_min = x
+
+                            st.success(f"📈 Dentro del rectángulo:\n\n🔽 Mínimo f(x) = {y_min:.4f} en x = {x_min:.4f}\n🔼 Máximo f(x) = {y_max:.4f} en x = {x_max:.4f}")
+
+                            with volu2:
+                                figexp = resultados_exp["fig2"]
+                                ax = figexp.gca()
+                                ax.plot(x_min, y_min, 'gv', label='Mín.')
+                                ax.plot(x_max, y_max, 'r^', label='Máx.')
+
+                                # Líneas verticales
+                                ax.axvline(x=x_lines[0], color='cyan', linestyle='--', label=f'x₁ = {x_lines[0]:.2f}')
+                                ax.axvline(x=x_lines[1], color='cyan', linestyle='--', label=f'x₂ = {x_lines[1]:.2f}')
+
+                                # Líneas horizontales
+                                ax.axhline(y=y_lines[0], color='y', linestyle='--', label=f'y₁ = {y_lines[0]:.2f}')
+                                ax.axhline(y=y_lines[1], color='y', linestyle='--', label=f'y₂ = {y_lines[1]:.2f}')
+
+                                st.pyplot(figexp)
+
                 if f is not None:
                     # Calcular área
                     # Límites de integración
@@ -1119,6 +1187,10 @@ match modulo:
                         elif opcion == "Ajuste polinómico":
                             x_plot = resultadospoli["U_plot"]
                             y_plot = resultadospoli["V_plot"]
+                        elif "Ajuste exponencial":
+                            def g(x):
+                                return f(x) - p_val
+                            dg = resultados_exp["df"]
 
                         fig, ax = plt.subplots()
                         ax.plot(x_plot, y_plot, label="Función", color='blue')
