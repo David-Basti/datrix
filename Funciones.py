@@ -1634,7 +1634,27 @@ def RLE_exponential_fit(U, V, W=None, plot=True, titulo="", xlabel="", ylabel=""
         #ax.legend()
         #ax.grid(True)
         plt.close(fig)
+    fig2 = None
+    if plot:
+        fig2, ax = plt.subplots()
+        #ax.scatter(U, V, color="r", label="Datos")
+        U_plot = np.linspace(min(U), max(U), 300)
+        V_plot = modelo_exp(U_plot, a, b, c)
+        ax.plot(U_plot, V_plot, color="blue", label="Ajuste exponencial")
 
+        #if show_errorbars and sigma is not None:
+        #    ax.errorbar(U, V, yerr=sigma, fmt='none', ecolor='black', capsize=3)
+
+        ax.set_title(titulo)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        #ax.legend()
+        #ax.grid(True)
+        plt.close(fig2)
+    f_evaluable = lambda x: a * np.exp(b * x) + c
+    U_plot = np.linspace(min(U), max(U), 300)
+    V_plot = modelo_exp(U_plot, a, b, c)
+    df = lambda x: a * b * np.exp(b * x)
     # Resultado
     return {
         'a': a,
@@ -1648,6 +1668,11 @@ def RLE_exponential_fit(U, V, W=None, plot=True, titulo="", xlabel="", ylabel=""
         'R': np.sqrt(R2),
         'D': D,
         'fig': fig,
+        'fig2': fig2,
+        'f': f_evaluable,
+        'x_plot': U_plot,
+        'y_plot': V_plot,
+        'df': df,
         'modelo': 'exponencial'
     }
 
