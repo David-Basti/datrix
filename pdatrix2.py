@@ -977,20 +977,6 @@ match modulo:
 
                                 volu1, volu2 = st.columns([0.3,0.7])
                                 with volu1:
-                                    ylimit22 = st.number_input(
-                                                        "Extremo inferior en (y) visible",
-                                                        value=float(min(V_interp)),      # valor por defecto
-                                                        min_value=float(min(V_interp)-10.0),  # valor mínimo que se puede elegir
-                                                        max_value=float(max(V_interp)+10.0),  # valor máximo que se puede elegir
-                                                        step=0.01,
-                                                        format="%.4f",key="yspline12")
-                                    ylimit11 = st.number_input(
-                                                        "Extremo superior en (y) visible",
-                                                        value=float(max(V_interp)),      # valor por defecto
-                                                        min_value=float(min(V_interp)-10.0),  # valor mínimo que se puede elegir
-                                                        max_value=float(max(V_interp)+10.0),  # valor máximo que se puede elegir
-                                                        step=0.01,
-                                                        format="%.4f",key="yspline22")
                                     # 4. Sliders (ahora ya tenemos min y max válidos)
                                     x_lines = st.slider("Intervalo en X (líneas verticales)", 
                                                         min_value=float(x_min_full), max_value=float(x_max_full), 
@@ -1054,7 +1040,6 @@ match modulo:
                                     ax.axhline(y=y_lines[0], color='y', linestyle='--', label=f'y₁ = {y_lines[0]:.2f}')
                                     ax.axhline(y=y_lines[1], color='y', linestyle='--', label=f'y₂ = {y_lines[1]:.2f}')
 
-                                    plt.ylim([ylimit22,ylimit11])
                                     #ax.legend()
                                     st.pyplot(figspline)
 
