@@ -692,8 +692,8 @@ match modulo:
 
                                 with col2:
                                     fig, ax = plt.subplots()
-                                    ax.plot(U_interp, V_interp, label='Spline', color='blue')
                                     ax.plot(U, V, 'ro', label='Datos')
+                                    ax.plot(U_interp, V_interp, label='Spline', color='blue')
                                     if W is not None:
                                         ax.errorbar(U, V, yerr=W, fmt='none', ecolor='black', capsize=3, label="Errores")
 
