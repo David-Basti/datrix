@@ -1191,10 +1191,9 @@ match modulo:
                         elif opcion == "Ajuste polinómico":
                             x_plot = resultadospoli["U_plot"]
                             y_plot = resultadospoli["V_plot"]
-                        elif "Ajuste exponencial":
-                            def g(x):
-                                return f(x) - p_val
-                            dg = resultados_exp["df"]
+                        elif opcion == "Ajuste exponencial":
+                            x_plot = np.linspace(min(U), max(U), 300)
+                            y_plot = resultados_exp["f"](x_plot)
 
                         fig, ax = plt.subplots()
                         ax.plot(x_plot, y_plot, label="Función", color='blue')
