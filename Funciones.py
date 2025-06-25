@@ -1600,6 +1600,21 @@ def RLE_exponential_fit(U, V, W=None, plot=True, titulo="", xlabel="", ylabel=""
     R2 = 1 - ss_res / ss_tot if ss_tot != 0 else 0
     D = np.sqrt(ss_res / (n - 3))  # 3 parámetros ajustados
 
+    ylimit2 = st.number_input(
+                        "Extremo inferior en (y) visible",
+                        value=float(min(V)),      # valor por defecto
+                        min_value=float(min(V)-(np.max(W)+10.0 if W is not None else 10.0)),  # valor mínimo que se puede elegir
+                        max_value=float(max(V)+(np.max(W)+10.0 if W is not None else 10.0)),  # valor máximo que se puede elegir
+                        step=0.01,
+                        format="%.4f",key="yl21")
+    ylimit1 = st.number_input(
+                        "Extremo superior en (y) visible",
+                        value=float(max(V)),      # valor por defecto
+                        min_value=float(min(V)-(np.max(W)+10.0 if W is not None else 10.0)),  # valor mínimo que se puede elegir
+                        max_value=float(max(V)+(np.max(W)+10.0 if W is not None else 10.0)),  # valor máximo que se puede elegir
+                        step=0.01,
+                        format="%.4f",key="yl11")
+    
     # Gráfico
     fig = None
     if plot:
@@ -1617,6 +1632,7 @@ def RLE_exponential_fit(U, V, W=None, plot=True, titulo="", xlabel="", ylabel=""
         ax.set_ylabel(ylabel)
         #ax.legend()
         #ax.grid(True)
+        plt.ylim([ylimit2,ylimit1])
         plt.close(fig)
     fig2 = None
     if plot:
