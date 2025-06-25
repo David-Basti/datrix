@@ -1108,27 +1108,27 @@ match modulo:
                         b_custom = st.number_input("Límite superior", value=float(max(U)))
                         tol = st.number_input("Tolerancia", value=1e-6, format="%.1e")
 
-                    if st.button("🔧 Buscar raíz"):
-                        try:
-                            x_sol,_,_ = fn.biner2(g, dg,a_custom, b_custom, max_iter,tol)
-                            st.success(f"✅ Solución: x ≈ {x_sol:.6f} tal que f(x) ≈ {p_val:.4f}")
+                    #if st.button("🔧 Buscar raíz"):
+                    try:
+                        x_sol,_,_ = fn.biner2(g, dg,a_custom, b_custom, max_iter,tol)
+                        st.success(f"✅ Solución: x ≈ {x_sol:.6f} tal que f(x) ≈ {p_val:.4f}")
 
-                            if opcion == "Interpolación Spline":
-                                x_plot = U_interp
-                                y_plot = V_interp
-                            elif opcion == "Ajuste polinómico":
-                                x_plot = resultadospoli["U_plot"]
-                                y_plot = resultadospoli["V_plot"]
+                        if opcion == "Interpolación Spline":
+                            x_plot = U_interp
+                            y_plot = V_interp
+                        elif opcion == "Ajuste polinómico":
+                            x_plot = resultadospoli["U_plot"]
+                            y_plot = resultadospoli["V_plot"]
 
-                            fig, ax = plt.subplots()
-                            ax.plot(x_plot, y_plot, label="Función", color='blue')
-                            ax.axhline(p_val, color='gray', linestyle='--', label=f"p = {p_val}")
-                            ax.plot(x_sol, f(x_sol), 'go', label=f"x ≈ {x_sol:.4f}")
-                            ax.legend()
-                            st.pyplot(fig)
-                        except Exception as e:
-                            st.error(f"❌ Error: {e}")
-        
+                        fig, ax = plt.subplots()
+                        ax.plot(x_plot, y_plot, label="Función", color='blue')
+                        ax.axhline(p_val, color='gray', linestyle='--', label=f"p = {p_val}")
+                        ax.plot(x_sol, f(x_sol), 'go', label=f"x ≈ {x_sol:.4f}")
+                        ax.legend()
+                        st.pyplot(fig)
+                    except Exception as e:
+                        st.error(f"❌ Error: {e}")
+    
         
 # ------------------------------
 # Mostrar resultado
