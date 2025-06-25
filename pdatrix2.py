@@ -1166,6 +1166,10 @@ match modulo:
                         dg_u = sp.lambdify(u, dgsym, "math") # derivada evaluable
                         g = lambda x: float(g_u(escalar(x)))
                         dg = lambda x: float(dg_u(escalar(x)))
+                    elif "Ajuste exponencial":
+                        def g(x):
+                            return f(x) - p_val
+                        dg = resultados_exp["df"]
                         
 
                     col1, col2 = st.columns(2)
