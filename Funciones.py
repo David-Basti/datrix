@@ -1378,6 +1378,23 @@ def RLE_polyfit2(volu1,volu2,U, V, grado, W=None, plot=True, titulo="", xlabel="
         ax.set_ylabel(ylabel)
         #ax.legend()
         ax.grid(False)
+
+        with volu1:
+            ylimit2 = st.number_input(
+                                "Extremo inferior en (y) visible",
+                                value=float(min(V_plot)),      # valor por defecto
+                                min_value=float(min(V_plot)-(np.max(W)+10.0 if W is not None else 10.0)),  # valor mínimo que se puede elegir
+                                max_value=float(max(V_plot)+(np.max(W)+10.0 if W is not None else 10.0)),  # valor máximo que se puede elegir
+                                step=0.01,
+                                format="%.4f",key="yl221")
+            ylimit1 = st.number_input(
+                                "Extremo superior en (y) visible",
+                                value=float(max(V_plot)),      # valor por defecto
+                                min_value=float(min(V_plot)-(np.max(W)+10.0 if W is not None else 10.0)),  # valor mínimo que se puede elegir
+                                max_value=float(max(V_plot)+(np.max(W)+10.0 if W is not None else 10.0)),  # valor máximo que se puede elegir
+                                step=0.01,
+                                format="%.4f",key="yl211")
+        plt.ylim([ylimit2,ylimit1])
         
         plt.close(fig)
 
