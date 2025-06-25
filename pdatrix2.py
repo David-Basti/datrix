@@ -1048,16 +1048,9 @@ match modulo:
                         if xinicial <= xfinal:
                             volu1, volu2 = st.columns([0.3, 0.7])
 
-                            resultados_exp = fn.RLE_exponential_fit(
-                                U=U, V=V, W=W if usar_W else None,
-                                plot=True, titulo=titulo,
-                                xlabel=xlabel, ylabel=ylabel,
-                                use_weights=True, show_errorbars=True
-                            )
-
-                            f = resultados_exp["f"]
-                            x_full = resultados_exp["x_plot"]
-                            y_full = resultados_exp["y_plot"]
+                            f = resultados["f"]
+                            x_full = resultados["x_plot"]
+                            y_full = resultados["y_plot"]
 
                             # Establecer rangos posibles para los sliders
                             x_min_full, x_max_full = float(min(x_full)), float(max(x_full))
@@ -1096,7 +1089,7 @@ match modulo:
                             st.success(f"📈 Dentro del rectángulo:\n\n🔽 Mínimo f(x) = {y_min:.4f} en x = {x_min:.4f}\n🔼 Máximo f(x) = {y_max:.4f} en x = {x_max:.4f}")
 
                             with volu2:
-                                figexp = resultados_exp["fig2"]
+                                figexp = resultados["fig2"]
                                 ax = figexp.gca()
                                 ax.plot(x_min, y_min, 'gv', label='Mín.')
                                 ax.plot(x_max, y_max, 'r^', label='Máx.')
@@ -1155,7 +1148,7 @@ match modulo:
                     elif "Ajuste exponencial":
                         def g(x):
                             return f(x) - p_val
-                        dg = resultados_exp["df"]
+                        dg = resultados["df"]
                         
 
                     col1, col2 = st.columns(2)
@@ -1179,7 +1172,7 @@ match modulo:
                             y_plot = resultadospoli["V_plot"]
                         elif opcion == "Ajuste exponencial":
                             x_plot = np.linspace(min(U), max(U), 300)
-                            y_plot = resultados_exp["f"](x_plot)
+                            y_plot = resultados["f"](x_plot)
 
                         fig, ax = plt.subplots()
                         ax.plot(x_plot, y_plot, label="Función", color='blue')
