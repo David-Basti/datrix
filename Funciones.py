@@ -1650,3 +1650,32 @@ def RLE_exponential_fit(U, V, W=None, plot=True, titulo="", xlabel="", ylabel=""
         'fig': fig,
         'modelo': 'exponencial'
     }
+
+def biner2(g,dg,a,b,n,e):
+  """biner(x,f,a,b,n):
+  [x: símbolo]; [f: función simbólica];
+  [a: extremo inferior]; [b: extremo superior];
+  [n: número de iteraciones]; [e: máximo error esperado]"""
+  #df = sp.diff(f, x)
+  #g = sp.lambdify(x, f, "math")   # función evaluable
+  #dg = sp.lambdify(x, df, "math") # derivada evaluable
+  # Comprobación de signo contrario
+  if g(a)*g(b) >= 0:
+      raise ValueError("Rango incompatible: no hay cambio de signo en el intervalo.")
+  # Primera parte: Bisección
+  for k in range(n+1):
+      c = (a + b)/2
+      if g(a)*g(c) < 0:
+          b = c
+      else:
+          a = c
+  # Segunda parte: Newton-Raphson
+  m = 999999
+  l = 0
+  while m >= e:
+      z = c
+      c = c - g(c)/dg(c)
+      m = abs(c - z)
+      l += 1
+  return c, np.array([a, b]), l
+
