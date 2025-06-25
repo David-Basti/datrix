@@ -1075,6 +1075,61 @@ match modulo:
                     else:
                         with polum2:
                             st.warning("El paso h es absurdo.")
+                    
+                    p_val = st.number_input("Elegí el valor de f(x) = p", value=0.0, step=0.01, format="%.4f")
+                    if opcion == "Interpolación Spline":
+                        # Función g(x)
+                        def g(x):
+                            return f(x) - p_val
+                        # Derivada de g(x)
+                        dg = f.derivative()  # esta es f'(x)
+                    elif opcion == "Ajuste polinómico": 
+                        c = np.arange(0,grado+1,1)
+                        c = c[::-1]
+                        u = sp.symbols("u")
+                        h=0
+                        for k in range(len(c)):
+                            h+=resultadospoli['coef'][k]*u**c[k]
+                        gsym = sp.sympify(h-p_val)
+                        dgsym = sp.diff(gsym, u)*2 / (umax - umin)
+                        #st.latex(gsym)
+                        #st.latex(dgsym)
+                        g_u = sp.lambdify(u, gsym, "math")   # función evaluable
+                        dg_u = sp.lambdify(u, dgsym, "math") # derivada evaluable
+                        g = lambda x: float(g_u(escalar(x)))
+                        dg = lambda x: float(dg_u(escalar(x)))
+                        
+
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        a_custom = st.number_input("Límite inferior", value=float(min(U)))
+                    with col2:
+                        b_custom = st.number_input("Límite superior", value=float(max(U)))
+
+                    tol = st.number_input("Tolerancia", value=1e-6, format="%.1e")
+                    max_iter = st.number_input("Máximo de iteraciones", value=10)
+
+                    if st.button("🔧 Buscar raíz"):
+                        try:
+                            x_sol,_,_ = fn.biner2(g, dg,a_custom, b_custom, max_iter,tol)
+                            st.success(f"✅ Solución: x ≈ {x_sol:.6f} tal que f(x) ≈ {p_val:.4f}")
+
+                            if opcion == "Interpolación Spline":
+                                x_plot = U_interp
+                                y_plot = V_interp
+                            elif opcion == "Ajuste polinómico":
+                                x_plot = resultadospoli["U_plot"]
+                                y_plot = resultadospoli["V_plot"]
+
+                            fig, ax = plt.subplots()
+                            ax.plot(x_plot, y_plot, label="Función", color='blue')
+                            ax.axhline(p_val, color='gray', linestyle='--', label=f"p = {p_val}")
+                            ax.plot(x_sol, f(x_sol), 'go', label=f"x ≈ {x_sol:.4f}")
+                            ax.legend()
+                            st.pyplot(fig)
+                        except Exception as e:
+                            st.error(f"❌ Error: {e}")
+        
         
 # ------------------------------
 # Mostrar resultado
