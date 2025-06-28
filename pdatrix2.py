@@ -551,6 +551,9 @@ match modulo:
                         U = np.array(U)
                         V = np.array(V)
                         #st.write(U,V)
+                        if len(U) == 0 or len(V) == 0:
+                            st.error("Error: las listas de datos U y V no pueden estar vacías.")
+                            st.stop()
 
                         st.subheader("Cortar la función")
                         xinicial = st.number_input(
@@ -716,6 +719,9 @@ match modulo:
                     if U is not None and V is not None:
                         U = np.array(U)
                         V = np.array(V)
+                        if len(U) == 0 or len(V) == 0:
+                            st.error("Error: las listas de datos U y V no pueden estar vacías.")
+                            st.stop()
 
                         st.subheader("Cortar la función")
                         xinicial = st.number_input(
