@@ -762,6 +762,7 @@ match modulo:
                                         st.pyplot(resultados['fig'])
                                     else:
                                         st.warning("No se pudo generar el gráfico. Verifica que los datos no estén vacíos.")
+                                        st.stop()
 
 
                                 st.markdown("### 📊 Resultados del ajuste exponencial")
