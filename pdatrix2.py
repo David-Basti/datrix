@@ -758,7 +758,11 @@ match modulo:
                                 )
 
                                 with col2:
-                                    st.pyplot(resultados['fig'])
+                                     if resultados and 'fig' in resultados and resultados['fig'] is not None:
+                                        st.pyplot(resultados['fig'])
+                                    else:
+                                        st.warning("No se pudo generar el gráfico. Verifica que los datos no estén vacíos.")
+
 
                                 st.markdown("### 📊 Resultados del ajuste exponencial")
                                 a = resultados['a']
