@@ -1567,7 +1567,9 @@ def RLE_exponential_fit(U, V, W=None, plot=True, titulo="", xlabel="", ylabel=""
     U = np.array(U, dtype=float)
     V = np.array(V, dtype=float)
     n = len(U)
-
+    if len(U) == 0 or len(V) == 0:
+        st.error("Error: las listas de datos U y V no pueden estar vacías.")
+        return {}
     # Modelo: y = a * exp(b * x) + c
     def modelo_exp(x, a, b, c):
         return a * np.exp(b * x) + c
