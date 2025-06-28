@@ -766,7 +766,7 @@ match modulo:
                                 with col2:
                                      if resultados and 'fig' in resultados and resultados['fig'] is not None:
                                         st.pyplot(resultados['fig'])
-                                    else:
+                                     else:
                                         st.warning("No se pudo generar el gráfico. Verifica que los datos no estén vacíos.")
                                         st.stop()
 
