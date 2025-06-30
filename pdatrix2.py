@@ -1170,10 +1170,10 @@ match modulo:
 
                     col1, col2 = st.columns(2)
                     with col1:
-                        a_custom = st.number_input("Límite inferior", value=float(min(U)))
+                        a_custom = st.number_input("Límite inferior", value=float(min(U)),format="%.4f")
                         max_iter = st.number_input("Máximo de iteraciones de bisección", value=10)
                     with col2:
-                        b_custom = st.number_input("Límite superior", value=float(max(U)))
+                        b_custom = st.number_input("Límite superior", value=float(max(U)),format="%.4f")
                         tol = st.number_input("Tolerancia de Newton-Raphson", value=1e-6, format="%.1e")
 
                     #if st.button("🔧 Buscar raíz"):
