@@ -1126,8 +1126,8 @@ match modulo:
                     # Límites de integración
                     polum1,polum2 = st.columns([0.3,0.7])
                     with polum1:
-                        a = st.number_input("Límite inferior de integración (a)", value=float(min(U)), min_value=float(min(U)), max_value=float(max(U)))
-                        b = st.number_input("Límite superior de integración (b)", value=float(max(U)), min_value=float(min(U)), max_value=float(max(U)))
+                        a = st.number_input("Límite inferior de integración (a)", value=float(min(U)), min_value=float(min(U)), max_value=float(max(U)),format="%.4f")
+                        b = st.number_input("Límite superior de integración (b)", value=float(max(U)), min_value=float(min(U)), max_value=float(max(U)),format="%.4f")
                         h = st.number_input("Paso de integración (h)", value=0.01, min_value=1e-4, format="%.4f")
                     if h <= abs(b-a):
                         with polum1:
