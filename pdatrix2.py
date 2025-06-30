@@ -267,7 +267,7 @@ match modulo:
 
             with columna1:
                 st.header("⚙️ Operación")
-                operacion = st.radio("Elegí una operación", ["Ninguna", "Rango", "Traspuesta", "Determinante", "Inversa",
+                operacion = st.radio("Elegí una operación", ["Ninguna", "Rango", "Transpuesta", "Determinante", "Inversa",
                                             "Autovalores y autovectores"])
                 resultado = None
                 resulvect = None
@@ -281,7 +281,7 @@ match modulo:
                                 st.session_state["resulvect"] = None
                                 resultado = A
                                 st.session_state["resultado"] = resultado
-                            case "Traspuesta":
+                            case "Transpuesta":
                                 st.session_state["resulvect"] = None
                                 resultado = A.T
                                 st.session_state["resultado"] = resultado  # lo guardamos
