@@ -38,6 +38,12 @@ from matplotlib.patches import Rectangle, Ellipse, Polygon
 import base64
 from io import BytesIO
 
+icono = Image.open("logodatrix.jpg")
+##---------
+st.set_page_config(
+    page_title="Datrix",
+    page_icon=icono
+)
 ##---------
 #st.title("🧮 DaTrix")
 #titulo_personalizado("🧮 DaTrix", nivel=2, tamaño=56, color="black")
@@ -48,12 +54,6 @@ def get_image_base64(path):
 
 #Ruta a tu imagen (ajustá el nombre del archivo)
 img_base64 = get_image_base64("logodatrix.jpg")
-icono = Image.open("logodatrix.jpg")
-##---------
-st.set_page_config(
-    page_title="Datrix",
-    page_icon=icono
-)
 
 # Título con logo centrado
 st.markdown(
