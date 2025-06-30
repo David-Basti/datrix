@@ -675,11 +675,13 @@ match modulo:
                                 orden = np.argsort(U)
                                 U_ord = U[orden]
                                 V_ord = V[orden]
+                                if len(W)==len(U):
+                                    W_ord = W[orden]
                             if len(np.unique(U_ord)) != len(U_ord):
                                 st.warning("Hay valores repetidos en U.")
                             else:
                                 from scipy.interpolate import UnivariateSpline
-                                spline = UnivariateSpline(U_ord, V_ord, w=(1/W[orden] if W is not None and len(W)==len(U) else None), s=suavizado)
+                                spline = UnivariateSpline(U_ord, V_ord, w=(1/W_ord if W_ord is not None and len(W)==len(U) else None), s=suavizado)
 
                                 U_interp = np.linspace(U_ord.min(), U_ord.max(), 100000)
                                 V_interp = spline(U_interp)
