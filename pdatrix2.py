@@ -677,6 +677,8 @@ match modulo:
                                 V_ord = V[orden]
                                 if len(W)==len(U):
                                     W_ord = W[orden]
+                                else:
+                                    W_ord = None
                             if len(np.unique(U_ord)) != len(U_ord):
                                 st.warning("Hay valores repetidos en U.")
                             else:
