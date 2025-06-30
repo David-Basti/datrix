@@ -1128,6 +1128,7 @@ match modulo:
                 if f is not None:
                     # Calcular área
                     # Límites de integración
+                    st.subheader("Integración")
                     polum1,polum2 = st.columns([0.3,0.7])
                     with polum1:
                         a = st.number_input("Límite inferior de integración (a)", value=float(min(U)), min_value=float(min(U)), max_value=float(max(U)),format="%.4f")
@@ -1143,7 +1144,7 @@ match modulo:
                     else:
                         with polum2:
                             st.warning("El paso h es absurdo.")
-                    
+                    st.subheader("Resoluación de ecuación")
                     p_val = st.number_input("Elegí el valor de f(x) = p", value=0.0, step=0.01, format="%.4f")
                     if opcion == "Interpolación Spline":
                         # Función g(x)
