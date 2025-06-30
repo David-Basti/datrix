@@ -39,7 +39,6 @@ import base64
 from io import BytesIO
 
 icono = Image.open("logodatrix.jpg")
-##---------
 st.set_page_config(
     page_title="Datrix",
     page_icon=icono
