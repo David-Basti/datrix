@@ -48,6 +48,12 @@ def get_image_base64(path):
 
 #Ruta a tu imagen (ajustá el nombre del archivo)
 img_base64 = get_image_base64("logodatrix.jpg")
+icono = Image.open("logodatrix.jpg")
+##---------
+st.set_page_config(
+    page_title="Mi App Personalizada",
+    page_icon=icono
+)
 
 # Título con logo centrado
 st.markdown(
