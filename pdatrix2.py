@@ -679,7 +679,7 @@ match modulo:
                                 st.warning("Hay valores repetidos en U.")
                             else:
                                 from scipy.interpolate import UnivariateSpline
-                                spline = UnivariateSpline(U_ord, V_ord, w=(1/W[orden] if W is not None else None), s=suavizado)
+                                spline = UnivariateSpline(U_ord, V_ord, w=(1/W[orden] if W is not None and len(W)==len(U) else None), s=suavizado)
 
                                 U_interp = np.linspace(U_ord.min(), U_ord.max(), 100000)
                                 V_interp = spline(U_interp)
@@ -703,7 +703,7 @@ match modulo:
                                     fig, ax = plt.subplots()
                                     ax.plot(U, V, 'ro', label='Datos')
                                     ax.plot(U_interp, V_interp, label='Spline', color='blue')
-                                    if W is not None:
+                                    if W is not None and len(W)==len(U):
                                         ax.errorbar(U, V, yerr=W, fmt='none', ecolor='black', capsize=3, label="Errores")
 
 
