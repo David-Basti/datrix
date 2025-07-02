@@ -44,7 +44,7 @@ st.set_page_config(
     page_title="Datrix",
     page_icon=icono
 )
-##---------
+###---------
 #st.title("🧮 DaTrix")
 #titulo_personalizado("🧮 DaTrix", nivel=2, tamaño=56, color="black")
 # Función para convertir imagen local a base64
