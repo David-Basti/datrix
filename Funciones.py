@@ -817,20 +817,23 @@ def extraer_roi(obj, scale, img_np):
     return img_np[y1:y2, x1:x2], left, top, width, height
 
 def obtener_roi_desde_canvas(canvas_result, scale, img_np, color="lime", nombre="ROI"):
-    """
-    Procesa el último objeto dibujado en el canvas y devuelve la ROI escalada,
-    su imagen, y las coordenadas del parche para visualización.
-    Soporta rectángulos, círculos y dibujo libre ("freedraw"/"path").
-    """
     height_orig, width_orig = img_np.shape[:2]
 
     if canvas_result.json_data and "objects" in canvas_result.json_data:
         objs = canvas_result.json_data["objects"]
         if len(objs) == 0:
-            return None, None, None
+            return None, None, None, None, None
 
         obj = objs[-1]
         tipo = obj["type"]
+
+        info_figura = {
+            "tipo": tipo,
+            "objeto": obj,
+            "color": color,
+            "label": nombre,
+            "scale": scale
+        }
 
         if tipo == "rect":
             left = int(obj["left"] / scale)
@@ -848,12 +851,15 @@ def obtener_roi_desde_canvas(canvas_result, scale, img_np, color="lime", nombre=
             patch = plt.Rectangle((x1, y1), x2 - x1, y2 - y1,
                                   edgecolor=color, facecolor='none', linewidth=1.5, label=nombre)
 
+            mask_bin = np.zeros((height_orig, width_orig), dtype=bool)
+            mask_bin[y1:y2, x1:x2] = True
+
             stats = {
                 "media": np.mean(roi),
                 "suma": np.sum(roi),
                 "area": roi.shape[0] * roi.shape[1]
             }
-            return roi, patch, stats
+            return roi, patch, stats, mask_bin, info_figura
 
         elif tipo == "circle":
             left = int(obj["left"] / scale)
@@ -874,30 +880,33 @@ def obtener_roi_desde_canvas(canvas_result, scale, img_np, color="lime", nombre=
             ry = (y2 - y1) // 2
 
             yy, xx = np.ogrid[:y2 - y1, :x2 - x1]
-            mask = ((xx - cx)**2) / (rx**2) + ((yy - cy)**2) / (ry**2) <= 1
+            mask_local = ((xx - cx)**2) / (rx**2) + ((yy - cy)**2) / (ry**2) <= 1
 
             roi_masked = roi.copy()
             if roi.ndim == 2:
-                roi_masked[~mask] = 0
+                roi_masked[~mask_local] = 0
             else:
-                roi_masked[~mask] = 0  # Broadcasting compatible con (h, w, c)
+                roi_masked[~mask_local] = 0
 
             patch = Ellipse((x1 + cx, y1 + cy), 2*rx, 2*ry,
                             edgecolor=color, facecolor='none', linewidth=1.5, label=nombre)
 
-            pixels_roi = roi[mask] if roi.ndim == 2 else roi[mask].reshape(-1, roi.shape[2])
+            mask_bin = np.zeros((height_orig, width_orig), dtype=bool)
+            mask_bin[y1:y2, x1:x2] = mask_local
+
+            pixels_roi = roi[mask_local] if roi.ndim == 2 else roi[mask_local].reshape(-1, roi.shape[2])
             stats = {
                 "media": float(np.mean(pixels_roi)) if pixels_roi.size > 0 else 0,
                 "suma": float(np.sum(pixels_roi)) if pixels_roi.size > 0 else 0,
-                "area": int(np.sum(mask))
+                "area": int(np.sum(mask_local))
             }
 
-            return roi_masked, patch, stats
+            return roi_masked, patch, stats, mask_bin, info_figura
 
-        elif tipo == "path":  # Freedraw
+        elif tipo == "path":
             points = [(int(p[1] / scale), int(p[2] / scale)) for p in obj["path"]]
             if len(points) < 3:
-                return None, None, None
+                return None, None, None, None, None
 
             roi_mask = np.zeros(img_np.shape[:2], dtype=np.uint8)
 
@@ -915,7 +924,7 @@ def obtener_roi_desde_canvas(canvas_result, scale, img_np, color="lime", nombre=
 
             coords = np.argwhere(roi_mask)
             if coords.size == 0:
-                return None, None, None
+                return None, None, None, None, None
 
             y1, x1 = coords.min(axis=0)
             y2, x2 = coords.max(axis=0)
@@ -923,32 +932,60 @@ def obtener_roi_desde_canvas(canvas_result, scale, img_np, color="lime", nombre=
             roi = img_np[y1:y2+1, x1:x2+1]
             mask_crop = roi_mask[y1:y2+1, x1:x2+1]
 
-            # Expansión condicional para broadcasting correcto
             if roi.ndim == 2:
-                roi = roi[:, :, np.newaxis]  # Escala de grises → (h, w, 1)
-
-            roi_masked = roi * mask_crop[:, :, np.newaxis]  # (h, w, c)
+                roi = roi[:, :, np.newaxis]
+            roi_masked = roi * mask_crop[:, :, np.newaxis]
 
             patch = Polygon(points, closed=True, edgecolor=color, facecolor='none', linewidth=1.5, label=nombre)
 
-            pixels_roi = roi[mask_crop == 1]  # shape (n, c) si es RGB, (n,) si es gris
+            pixels_roi = roi[mask_crop == 1]
             stats = {
                 "media": float(np.mean(pixels_roi)) if pixels_roi.size > 0 else 0,
                 "suma": float(np.sum(pixels_roi)) if pixels_roi.size > 0 else 0,
                 "area": int(np.sum(mask_crop))
             }
 
-            # Si era escala de grises, devolvemos roi_masked sin eje extra
             if roi_masked.shape[2] == 1:
                 roi_masked = roi_masked[:, :, 0]
 
-            return roi_masked, patch, stats
+            mask_bin = roi_mask.astype(bool)
+            return roi_masked, patch, stats, mask_bin, info_figura
 
         else:
-            return None, None, None
+            return None, None, None, None, None
     else:
-        return None, None, None
-    
+        return None, None, None, None, None
+
+def reconstruir_patch_desde_info(info):
+    from matplotlib.patches import Rectangle, Ellipse, Polygon
+
+    tipo = info["tipo"]
+    obj = info["objeto"]
+    color = info["color"]
+    label = info["label"]
+    scale = info.get("scale", 1.0)
+
+    if tipo == "rect":
+        x = obj["left"] / scale
+        y = obj["top"] / scale
+        w = obj["width"] / scale
+        h = obj["height"] / scale
+        return Rectangle((x, y), w, h, edgecolor=color, facecolor='none', linewidth=1.5, label=label)
+
+    elif tipo == "circle":
+        x = obj["left"] / scale
+        y = obj["top"] / scale
+        w = obj["width"] / scale
+        h = obj["height"] / scale
+        cx = x + w / 2
+        cy = y + h / 2
+        return Ellipse((cx, cy), w, h, edgecolor=color, facecolor='none', linewidth=1.5, label=label)
+
+    elif tipo == "path":
+        points = [(p[1] / scale, p[2] / scale) for p in obj["path"]]
+        return Polygon(points, closed=True, edgecolor=color, facecolor='none', linewidth=1.5, label=label)
+
+    return None    
 
 #EDICIONIMAGENES
 def inicializar_sesion_rgb():
