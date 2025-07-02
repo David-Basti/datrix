@@ -3921,7 +3921,7 @@ match modulo:
 
                             resultado = img_np.copy()
 
-                            
+                            #
                             if operacion == "Fusionar ROI 1 y ROI 2":
                                 mascara = np.logical_or(mask1, mask2)
                                 if mascara is not None:
