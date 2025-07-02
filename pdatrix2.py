@@ -3790,104 +3790,169 @@ match modulo:
                         canvas_height = int(height_orig * scale)
                         img_resized = img_pil.resize((canvas_width, canvas_height))
                         # Selección del tipo de ROI
-                        roi_type1 = st.selectbox("Selecciona el tipo de ROI 1", options=["rect", "circle", "freedraw"], index=0, format_func=lambda x: {
-                            "rect": "Rectángulo",
-                            "circle": "Círculo",
-                            "freedraw": "Mano alzada"
-                        }[x])
-                        roi_type2 = st.selectbox("Selecciona el tipo de ROI 2", options=["rect", "circle", "freedraw"], index=0, format_func=lambda x: {
-                            "rect": "Rectángulo",
-                            "circle": "Círculo",
-                            "freedraw": "Mano alzada"
-                        }[x])
+                        tabsrois = st.tabs(["ROI1", "ROI2", "ROI vs. timepo"])
+                        with tabsrois[0]:
+                            roi_type1 = st.selectbox("Selecciona el tipo de ROI 1", options=["rect", "circle", "freedraw"], index=0, format_func=lambda x: {
+                                "rect": "Rectángulo",
+                                "circle": "Círculo",
+                                "freedraw": "Mano alzada"
+                            }[x])
+                            # ROI 1
+                            st.write("🔲 ROI 1 - selecciona una región en el canvas")
+                            canvas_result_1 = st_canvas(
+                                fill_color="rgba(255, 255, 255, 0.0)",
+                                stroke_width=2,
+                                stroke_color="lime",
+                                background_image=img_resized,
+                                height=canvas_height,
+                                width=canvas_width,
+                                drawing_mode=roi_type1,  # Puedes cambiar a "ellipse" o "freedraw" si querés admitir más formas
+                                key="canvas_roi1",
+                            )
 
-                        # ROI 1
-                        st.write("🔲 ROI 1 - selecciona una región en el canvas")
-                        canvas_result_1 = st_canvas(
-                            fill_color="rgba(255, 255, 255, 0.0)",
-                            stroke_width=2,
-                            stroke_color="lime",
-                            background_image=img_resized,
-                            height=canvas_height,
-                            width=canvas_width,
-                            drawing_mode=roi_type1,  # Puedes cambiar a "ellipse" o "freedraw" si querés admitir más formas
-                            key="canvas_roi1",
-                        )
-
-                        # ROI 2
-                        st.write("🔲 ROI 2 - selecciona una región en el canvas")
-                        canvas_result_2 = st_canvas(
-                            fill_color="rgba(255, 255, 255, 0.0)",
-                            stroke_width=2,
-                            stroke_color="yellow",
-                            background_image=img_resized,
-                            height=canvas_height,
-                            width=canvas_width,
-                            drawing_mode=roi_type2,  # Puedes cambiar a "ellipse" o "freedraw"
-                            key="canvas_roi2",
-                        )
-                        mm_per_pixel = st.session_state.get("escala_mm_por_pixel", 1.0)
-                        c1, c2 = st.columns(2)
-                        with c1:
-                            roi1, patch1, stats1 = fn.obtener_roi_desde_canvas(canvas_result_1, scale, img_np, color="lime", nombre="ROI 1")
+                        with tabsrois[1]:
                             
-                            if roi1 is not None:
-                                mostrar_mm1 = st.checkbox("Mostrar área 1 en milímetros cuadrados", value=False)
+                            roi_type2 = st.selectbox("Selecciona el tipo de ROI 2", options=["rect", "circle", "freedraw"], index=0, format_func=lambda x: {
+                                "rect": "Rectángulo",
+                                "circle": "Círculo",
+                                "freedraw": "Mano alzada"
+                            }[x])
+                            # ROI 2
+                            st.write("🔲 ROI 2 - selecciona una región en el canvas")
+                            canvas_result_2 = st_canvas(
+                                fill_color="rgba(255, 255, 255, 0.0)",
+                                stroke_width=2,
+                                stroke_color="yellow",
+                                background_image=img_resized,
+                                height=canvas_height,
+                                width=canvas_width,
+                                drawing_mode=roi_type2,  # Puedes cambiar a "ellipse" o "freedraw"
+                                key="canvas_roi2",
+                            )
+                        
+                        for k in [0, 1]:
+                            with tabsrois[k]:
+                                mm_per_pixel = st.session_state.get("escala_mm_por_pixel", 1.0)
+                                c1, c2 = st.columns(2)
+                                with c1:
+                                    roi1, patch1, stats1,mask1, info1 = fn.obtener_roi_desde_canvas(canvas_result_1, scale, img_np, color="lime", nombre="ROI 1")
+                                    
+                                    if roi1 is not None:
+                                        mostrar_mm1 = st.checkbox("Mostrar área 1 en milímetros cuadrados", value=False,key=f"mm1_{k}")
+                                        
+                                        if mostrar_mm1:
+                                            area1=stats1['area']*mm_per_pixel**2
+                                            unidad1 = "mm^2"
+                                        else:
+                                            area1=stats1['area']
+                                            unidad1 = "píxeles"
+                                        st.image(fn.normalizar_0_255(roi1), caption="ROI 1", clamp=True, use_container_width=True)
+                                        st.write(f"🔢 Intensidad media ROI 1: {stats1['media']:.2f}")
+                                        st.write(f"➕ Suma de intensidades ROI 1: {stats1['suma']}")
+                                        st.write(f"📏 Área ROI 1: {area1:.2f} {unidad1}")
+                                    else:
+                                        st.write("Dibuja una región para seleccionar la ROI 1.")
+                                with c2:
+                                    roi2, patch2, stats2, mask2, info2 = fn.obtener_roi_desde_canvas(canvas_result_2, scale, img_np, color="yellow", nombre="ROI 2")
+                                    
+                                    if roi2 is not None:
+                                        mostrar_mm2 = st.checkbox("Mostrar área 2 en milímetros cuadrados", value=False,key=f"mm2_{k}")
+                                        
+                                        if mostrar_mm2:
+                                            area2=stats2['area']*mm_per_pixel**2
+                                            unidad2 = "mm^2"
+                                        else:
+                                            area2=stats2['area']
+                                            unidad2 = "píxeles"
+                                        st.image(fn.normalizar_0_255(roi2), caption="ROI 2", clamp=True, use_container_width=True)
+                                        st.write(f"🔢 Intensidad media ROI 2: {stats2['media']:.2f}")
+                                        st.write(f"➕ Suma de intensidades ROI 2: {stats2['suma']}")
+                                        st.write(f"📏 Área ROI 2: {area2:.2f} {unidad2}")
+                                    else:
+                                        st.write("Dibuja una región para seleccionar la ROI 2.")
+
+                                # Comparación de ROIs
+                                #f1, f2 = st.columns(2)
+                                #pixel_spacing_x = 0.5  # mm/pixel en dirección X
+                                #pixel_spacing_y = 0.5  # mm/pixel en dirección Y
+                                #mm_por_pixel
                                 
-                                if mostrar_mm1:
-                                    area1=stats1['area']*mm_per_pixel**2
-                                    unidad1 = "mm^2"
-                                else:
-                                    area1=stats1['area']
-                                    unidad1 = "píxeles"
-                                st.image(fn.normalizar_0_255(roi1), caption="ROI 1", clamp=True, use_container_width=True)
-                                st.write(f"🔢 Intensidad media ROI 1: {stats1['media']:.2f}")
-                                st.write(f"➕ Suma de intensidades ROI 1: {stats1['suma']}")
-                                st.write(f"📏 Área ROI 1: {area1:.2f} {unidad1}")
+                                with c1:
+                                    if roi1 is not None and roi2 is not None:
+                                        st.write(f"Diferencia de intensidad total: {abs(stats1['suma'] - stats2['suma'])}")
+                                        st.write(f"Diferencia de intensidad media: {abs(stats1['media'] - stats2['media']):.2f}")
+
+                                with c2:
+                                    st.subheader("🖼️ Imagen con superposición de ROIs")
+                                    fig, ax = plt.subplots()
+                                    ax.imshow(img_np, cmap="gray")
+
+                                    if patch1:
+                                        ax.add_patch(patch1)
+                                    if patch2:
+                                        ax.add_patch(patch2)
+
+                                    ax.set_title("Imagen con ROIs")
+                                    ax.legend()
+                                    st.pyplot(fig)
+
+                        with tabsrois[2]:  # Tercer tab: ROI vs tiempo
+                            st.subheader("📈 ROI vs. tiempo")
+
+                            if proy is not None and roi1 is not None and roi2 is not None and info1 and info2:
+                                N_frames = proy.shape[2]
+
+                                # Slider para elegir frame
+                                idx_frame = st.slider("Elegí el frame para mostrar con ROIs", 0, N_frames - 1, 0)
+
+                                frame = proy[:, :, idx_frame].astype(np.float32)
+                                wolu1, wolu2 = st.columns(2)
+
+                                # Mostrar frame con ROIs superpuestos
+                                fig, ax = plt.subplots()
+                                ax.imshow(frame, cmap='gray')
+
+                                # Reconstruir y superponer parches de ROI1 y ROI2
+                                patch_frame1 = fn.reconstruir_patch_desde_info(info1)
+                                patch_frame2 = fn.reconstruir_patch_desde_info(info2)
+
+                                if patch_frame1 is not None:
+                                    ax.add_patch(patch_frame1)
+                                if patch_frame2 is not None:
+                                    ax.add_patch(patch_frame2)
+
+                                ax.legend()
+                                ax.set_title(f"Frame {idx_frame} con ROIs")
+                                ax.axis('off')
+
+                                with wolu1:
+                                    st.pyplot(fig)
+
+                                # Calcular la curva ROI vs tiempo para ambas ROIs (una sola vez)
+                                intensidad_roi1 = []
+                                intensidad_roi2 = []
+                                for i in range(N_frames):
+                                    f = proy[:, :, i].astype(np.float32)
+                                    vals1 = f[mask1]
+                                    vals2 = f[mask2]
+                                    intensidad_roi1.append(np.mean(vals1))
+                                    intensidad_roi2.append(np.mean(vals2))
+
+                                # Graficar curvas
+                                fig2, ax2 = plt.subplots()
+                                ax2.plot(range(N_frames), intensidad_roi1, label="ROI 1", color="lime")
+                                ax2.plot(range(N_frames), intensidad_roi2, label="ROI 2", color="yellow")
+                                ax2.set_xlabel("Frame")
+                                ax2.set_ylabel("Intensidad media")
+                                ax2.set_title("Curva ROI vs. Tiempo")
+                                ax2.legend()
+
+                                with wolu2:
+                                    st.pyplot(fig2)
+
                             else:
-                                st.write("Dibuja una región para seleccionar la ROI 1.")
-                        with c2:
-                            roi2, patch2, stats2 = fn.obtener_roi_desde_canvas(canvas_result_2, scale, img_np, color="yellow", nombre="ROI 2")
-                            
-                            if roi2 is not None:
-                                mostrar_mm2 = st.checkbox("Mostrar área 2 en milímetros cuadrados", value=False)
-                                
-                                if mostrar_mm2:
-                                    area2=stats2['area']*mm_per_pixel**2
-                                    unidad2 = "mm^2"
-                                else:
-                                    area2=stats2['area']
-                                    unidad2 = "píxeles"
-                                st.image(fn.normalizar_0_255(roi2), caption="ROI 2", clamp=True, use_container_width=True)
-                                st.write(f"🔢 Intensidad media ROI 2: {stats2['media']:.2f}")
-                                st.write(f"➕ Suma de intensidades ROI 2: {stats2['suma']}")
-                                st.write(f"📏 Área ROI 2: {area2:.2f} {unidad2}")
-                            else:
-                                st.write("Dibuja una región para seleccionar la ROI 2.")
+                                st.warning("Dibujá ambas ROIs y cargá un archivo multiframe para generar la curva.")
 
-                        # Comparación de ROIs
-                        #f1, f2 = st.columns(2)
-                        #pixel_spacing_x = 0.5  # mm/pixel en dirección X
-                        #pixel_spacing_y = 0.5  # mm/pixel en dirección Y
-                        #mm_por_pixel
-                        with c1:
-                            if roi1 is not None and roi2 is not None:
-                                st.write(f"Diferencia de intensidad total: {abs(stats1['suma'] - stats2['suma'])}")
-                                st.write(f"Diferencia de intensidad media: {abs(stats1['media'] - stats2['media']):.2f}")
-
-                        with c2:
-                            st.subheader("🖼️ Imagen con superposición de ROIs")
-                            fig, ax = plt.subplots()
-                            ax.imshow(img_np, cmap="gray")
-
-                            if patch1:
-                                ax.add_patch(patch1)
-                            if patch2:
-                                ax.add_patch(patch2)
-
-                            ax.set_title("Imagen con ROIs")
-                            ax.legend()
-                            st.pyplot(fig)
                     
                     case "ROIs2":
                         with tolum1:
