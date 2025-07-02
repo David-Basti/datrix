@@ -3921,26 +3921,31 @@ match modulo:
 
                             resultado = img_np.copy()
 
+                            
                             if operacion == "Fusionar ROI 1 y ROI 2":
                                 mascara = np.logical_or(mask1, mask2)
-                                resultado[~mascara] = 0
+                                if mascara is not None:
+                                    resultado[~mascara] = 0
                                 caption = "Fusión ROI 1 y ROI 2"
 
                             elif operacion == "Intersecar ROI 1 y ROI 2":
                                 mascara = np.logical_and(mask1, mask2)
-                                resultado[~mascara] = 0
+                                if mascara is not None:
+                                    resultado[~mascara] = 0
                                 caption = "Intersección ROI 1 y ROI 2"
 
                             elif operacion == "ROI 1 sin ROI 2":
                                 mascara = np.logical_and(mask1, ~mask2)
-                                resultado[~mascara] = 0
+                                if mascara is not None:
+                                    resultado[~mascara] = 0
                                 caption = "ROI 1 sin ROI 2"
 
                             elif operacion == "ROI 2 sin ROI 1":
                                 mascara = np.logical_and(mask2, ~mask1)
-                                resultado[~mascara] = 0
+                                if mascara is not None:
+                                    resultado[~mascara] = 0
                                 caption = "ROI 2 sin ROI 1"
-
+                                
                             elif operacion == "Imagen sin ROI 1":
                                 resultado[mask1] = 0
                                 caption = "Imagen sin ROI 1"
