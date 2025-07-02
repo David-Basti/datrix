@@ -819,8 +819,8 @@ def extraer_roi(obj, scale, img_np):
 def obtener_roi_desde_canvas(canvas_result, scale, img_np, color="lime", nombre="ROI"):
     height_orig, width_orig = img_np.shape[:2]
 
-    if canvas_result.json_data and "objects" in canvas_result.json_data:
-        objs = canvas_result.json_data["objects"]
+    if canvas_result and "objects" in canvas_result:
+        objs = canvas_result["objects"]
         if len(objs) == 0:
             return None, None, None, None, None
 
