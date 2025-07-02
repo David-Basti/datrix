@@ -674,7 +674,7 @@ match modulo:
                                 orden = np.argsort(U)
                                 U_ord = U[orden]
                                 V_ord = V[orden]
-                                if len(W)==len(U):
+                                if W is not None and len(W)==len(U):
                                     W_ord = W[orden]
                                 else:
                                     W_ord = None
