@@ -40,11 +40,12 @@ from io import BytesIO
 from scipy.interpolate import UnivariateSpline
 
 icono = Image.open("logodatrix.jpg")
+##---------
 st.set_page_config(
     page_title="Datrix",
     page_icon=icono
 )
-###---------
+##---------
 #st.title("🧮 DaTrix")
 #titulo_personalizado("🧮 DaTrix", nivel=2, tamaño=56, color="black")
 # Función para convertir imagen local a base64
@@ -267,7 +268,7 @@ match modulo:
 
             with columna1:
                 st.header("⚙️ Operación")
-                operacion = st.radio("Elegí una operación", ["Ninguna", "Rango", "Transpuesta", "Determinante", "Inversa",
+                operacion = st.radio("Elegí una operación", ["Ninguna", "Rango", "Traspuesta", "Determinante", "Inversa",
                                             "Autovalores y autovectores"])
                 resultado = None
                 resulvect = None
@@ -281,7 +282,7 @@ match modulo:
                                 st.session_state["resulvect"] = None
                                 resultado = A
                                 st.session_state["resultado"] = resultado
-                            case "Transpuesta":
+                            case "Traspuesta":
                                 st.session_state["resulvect"] = None
                                 resultado = A.T
                                 st.session_state["resultado"] = resultado  # lo guardamos
@@ -607,7 +608,7 @@ match modulo:
                                     b = resultados['b']
                                     sign_b = '+' if b >= 0 else '-'
                                     b_abs = abs(b)
-                                    with st.expander("Ver resultados"):
+                                    with st.expander("Ver resultados"): 
                                         st.latex(rf"""
                                             \begin{{aligned}}
                                             y &= {a:.5f}x {sign_b} {b_abs:.5f} \\
@@ -618,9 +619,9 @@ match modulo:
                                         """)
                                 else:
                                     ecuacion = fn.formatear_ecuacion(resultados['coef'])
-                                    with st.expander("Ver resultados"):
+                                    with st.expander("Ver resultados"):  
                                         st.latex(ecuacion)
-    
+
                                         coef_str = r" \\ ".join([
                                             fn.formato_coeficiente(resultados['coef'][i], resultados['delta_coef'][i], i, grado)
                                             for i in range(len(resultados['coef']))
@@ -682,7 +683,7 @@ match modulo:
                             if len(np.unique(U_ord)) != len(U_ord):
                                 st.warning("Hay valores repetidos en U.")
                             else:
-                                from scipy.interpolate import UnivariateSpline
+                                
                                 spline = UnivariateSpline(U_ord, V_ord, w=(1/W_ord if W_ord is not None and len(W)==len(U) else None), s=suavizado)
 
                                 U_interp = np.linspace(U_ord.min(), U_ord.max(), 100000)
@@ -774,11 +775,12 @@ match modulo:
                                 )
 
                                 with col2:
-                                     if resultados and 'fig' in resultados and resultados['fig'] is not None:
+                                    if resultados and 'fig' in resultados and resultados['fig'] is not None:
                                         st.pyplot(resultados['fig'])
-                                     else:
+                                    else:
                                         st.warning("No se pudo generar el gráfico. Verifica que los datos no estén vacíos.")
                                         st.stop()
+
 
 
                                 st.markdown("### 📊 Resultados del ajuste exponencial")
@@ -794,7 +796,7 @@ match modulo:
                                 sign_b = '+' if b >= 0 else '-'
                                 b_abs = abs(b)
 
-                                with st.expander("Ver resultados"):                                
+                                with st.expander("Ver resultados"):                              
                                     st.latex(rf"""
                                         \begin{{aligned}}
                                         y &= {a:.5f} \cdot e^{{{b:.5f}x}} + {c:.5f} \\
@@ -938,17 +940,6 @@ match modulo:
                                         y_min = y
                                         x_min = x
 
-                            # 6. Filtrar puntos que también estén dentro de y_lines
-                            #mask = (y_eval >= min(y_lines)) & (y_eval <= max(y_lines))
-                            #x_in_rect = x_eval[mask]
-                            #y_in_rect = y_eval[mask]
-
-                            # 7. Calcular extremos dentro del rectángulo
-                            #if len(y_in_rect) > 0:
-                            #    y_min_abs = np.min(y_in_rect)
-                            #    y_max_abs = np.max(y_in_rect)
-                            #    x_min_abs = x_in_rect[np.argmin(y_in_rect)]
-                            #    x_max_abs = x_in_rect[np.argmax(y_in_rect)]
 
                             st.success(f"📈 Dentro del rectángulo:\n\n🔽 Mínimo f(x) = {y_min:.4f} en x = {x_min:.4f}\n🔼 Máximo f(x) = {y_max:.4f} en x = {x_max:.4f}")
                             with volu2:
@@ -1007,7 +998,7 @@ match modulo:
                                     y_lines = st.slider("Intervalo en Y (líneas horizontales)", 
                                                         min_value=float(y_min_full), max_value=float(y_max_full), 
                                                         value=(float(y_min_full), float(y_max_full)), 
-                                                        step=(y_max_full - y_min_full) / 100,format="%.4f")
+                                                        step=float((y_max_full - y_min_full) / 100) / 100,format="%.4f")
 
                                 # 5. Evaluar f(x) en intervalo de x_lines
                                 y_max = -np.inf
@@ -1025,21 +1016,6 @@ match modulo:
                                         if y < y_min:
                                             y_min = y
                                             x_min = x
-                                #x_eval = np.linspace(x_lines[0], x_lines[1], 1000)
-
-                                # 6. Filtrar puntos que también estén dentro de y_lines
-                                #mask = (y_eval >= min(y_lines)) & (y_eval <= max(y_lines))
-                                #x_in_rect = x_eval[mask]
-                                #y_in_rect = y_eval[mask]
-
-                                # 7. Calcular extremos dentro del rectángulo
-                                #if len(y_in_rect) > 0:
-                                #    y_min_abs = np.min(y_in_rect)
-                                #    y_max_abs = np.max(y_in_rect)
-                                #    x_min_abs = x_in_rect[np.argmin(y_in_rect)]
-                                #    x_max_abs = x_in_rect[np.argmax(y_in_rect)]
-                                #else:
-                                #    st.warning("⚠️ No hay puntos de la curva dentro del rectángulo definido.")
 
                                 st.success(f"📈 Dentro del rectángulo:\n\n🔽 Mínimo f(x) = {y_min:.4f} en x = {x_min:.4f}\n🔼 Máximo f(x) = {y_max:.4f} en x = {x_max:.4f}")
                                 
@@ -1063,11 +1039,12 @@ match modulo:
 
                                     #ax.legend()
                                     st.pyplot(figspline)
-
+                
                 if opcion == "Ajuste exponencial":
                     if U is not None and len(U) == len(V):
                         if xinicial <= xfinal:
                             volu1, volu2 = st.columns([0.3, 0.7])
+
 
                             f = resultados["f"]
                             x_full = resultados["x_plot"]
@@ -1126,11 +1103,11 @@ match modulo:
                                 st.pyplot(figexp)
 
                 if f is not None:
-                    # Calcular área
-                    # Límites de integración
                     curana = st.tabs(["Integración", "Resolución de ecuación"])
                     with curana[0]:
                         st.subheader("Integración")
+                        # Calcular área
+                        # Límites de integración
                         polum1,polum2 = st.columns([0.3,0.7])
                         with polum1:
                             a = st.number_input("Límite inferior de integración (a)", value=float(min(U)), min_value=float(min(U)), max_value=float(max(U)),format="%.4f")
@@ -1140,6 +1117,9 @@ match modulo:
                             with polum1:
                                 tipo_integracion = st.selectbox("Método de integración", ["simpson", "trapecio", "riemann"])
                                 area = fn.integral(f, a, b, h, tipo=tipo_integracion)
+                            with polum2:
+                                st.markdown(f"### 📐 Área bajo la curva entre {a} y {b}:")
+                                st.latex(rf"\int_{{{a}}}^{{{b}}} f(x)\,dx \approx {area:.5f}")
                                 if opcion == "Interpolación Spline":
                                     x_plot = U_interp
                                     y_plot = V_interp
@@ -1158,14 +1138,11 @@ match modulo:
                                 ax.set_title("Área bajo la curva")
                                 ax.legend()
                                 st.pyplot(fig_area)
-                            with polum2:
-                                st.markdown(f"### 📐 Área bajo la curva entre {a} y {b}:")
-                                st.latex(rf"\int_{{{a}}}^{{{b}}} f(x)\,dx \approx {area:.5f}")
                         else:
                             with polum2:
                                 st.warning("El paso h es absurdo.")
                     with curana[1]:
-                        st.subheader("Resoluación de ecuación")
+                        st.subheader("Resolución de ecuación")
                         col1, col2 = st.columns([0.3,0.7])
                         with col1:
                             p_val = st.number_input("Elegí el valor de f(x) = p", value=0.0, step=0.01, format="%.4f")
@@ -1195,19 +1172,20 @@ match modulo:
                                 return f(x) - p_val
                             dg = resultados["df"]
                             
-    
+
                         
                         with col1:
                             a_custom = st.number_input("Límite inferior", value=float(min(U)),format="%.4f")
-                            max_iter = st.number_input("Máximo de iteraciones de bisección", value=10) 
                             b_custom = st.number_input("Límite superior", value=float(max(U)),format="%.4f")
+
                             tol = st.number_input("Tolerancia de Newton-Raphson", value=1e-6, format="%.1e")
-    
+                            max_iter = st.number_input("Máximo de iteraciones de bisección", value=10)
+
                         #if st.button("🔧 Buscar raíz"):
                         try:
                             x_sol,_,_ = fn.biner2(g, dg,a_custom, b_custom, max_iter,tol)
                             st.success(f"✅ Solución: x ≈ {x_sol:.6f} tal que f(x) ≈ {p_val:.4f}")
-    
+
                             if opcion == "Interpolación Spline":
                                 x_plot = U_interp
                                 y_plot = V_interp
@@ -1217,7 +1195,7 @@ match modulo:
                             elif opcion == "Ajuste exponencial":
                                 x_plot = np.linspace(min(U), max(U), 300)
                                 y_plot = resultados["f"](x_plot)
-    
+
                             fig, ax = plt.subplots()
                             ax.plot(x_plot, y_plot, label="Función", color='blue')
                             ax.axhline(p_val, color='gray', linestyle='--', label=f"p = {p_val}")
@@ -1227,8 +1205,7 @@ match modulo:
                                 st.pyplot(fig)
                         except Exception as e:
                             st.error(f"❌ Error: {e}")
-        
-        
+    
 # ------------------------------
 # Mostrar resultado
 # ------------------------------
@@ -3922,7 +3899,6 @@ match modulo:
 
                             resultado = img_np.copy()
 
-                            #
                             if operacion == "Fusionar ROI 1 y ROI 2":
                                 mascara = np.logical_or(mask1, mask2)
                                 if mascara is not None:
@@ -3946,7 +3922,7 @@ match modulo:
                                 if mascara is not None:
                                     resultado[~mascara] = 0
                                 caption = "ROI 2 sin ROI 1"
-                                
+
                             elif operacion == "Imagen sin ROI 1":
                                 resultado[mask1] = 0
                                 caption = "Imagen sin ROI 1"
@@ -3960,6 +3936,8 @@ match modulo:
                                 caption = "Imagen sin ROI 1 ni ROI 2"
 
                             st.image(fn.normalizar_0_255(resultado), caption=caption, use_container_width=True)
+
+                        #subirarchivo = st.radio("Modo de subir archivo", ["Automático", "Manual (solo DICOM)"],horizontal=True )
 
                         with modotabs[1]:
                             
@@ -4440,7 +4418,7 @@ match modulo:
                                     )
                                 else:
                                     st.warning("Dibujá ambas ROIs y cargá un archivo multiframe para generar la curva.")  
-                                                    
+                                
                     case "ROIs2":
                         with tolum1:
                             # ROI 1 con centro + ancho/alto
