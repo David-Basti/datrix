@@ -816,6 +816,7 @@ def extraer_roi(obj, scale, img_np):
     y2 = min(img_np.shape[0], y1 + height)
     return img_np[y1:y2, x1:x2], left, top, width, height
 
+
 def extraer_puntos_path(path_data, scale):
     pts = []
     for cmd in path_data:
@@ -835,7 +836,8 @@ def extraer_puntos_path(path_data, scale):
             # otros comandos si aparecen se pueden ignorar o manejar aquí
             pass
     return np.array(pts, dtype=np.int32)
-
+import re
+from matplotlib.patches import Rectangle, Circle, Polygon
 def procesar_lista_de_objetos(objs, scale, img_np, color="lime"):
     from matplotlib.patches import Rectangle, Circle, Polygon
     import numpy as np
@@ -853,18 +855,34 @@ def procesar_lista_de_objetos(objs, scale, img_np, color="lime"):
     for obj in objs:
         shape = obj["type"]
         if shape == "rect":
-            left = int(obj["left"] / scale)
-            top = int(obj["top"] / scale)
-            width_rect = int(obj["width"] / scale)
-            height_rect = int(obj["height"] / scale)
-            mask[top:top+height_rect, left:left+width_rect] = 1
+            left = obj["left"] / scale
+            top = obj["top"] / scale
+            width_rect = obj["width"] / scale
+            height_rect = obj["height"] / scale
+            mask[int(top):int(top+height_rect), int(left):int(left+width_rect)] = 1
             last_patch = Rectangle((left, top), width_rect, height_rect, edgecolor=color, fill=False)
+            objeto_ajustado = {
+                "left": left,
+                "top": top,
+                "width": width_rect,
+                "height": height_rect
+            }
         elif shape == "circle":
-            cx = int((obj["left"] + obj["width"] / 2) / scale)
-            cy = int((obj["top"] + obj["height"] / 2) / scale)
-            radius = int(obj["width"] / 2 / scale)
-            cv2.circle(mask, (cx, cy), radius, 1, thickness=-1)
+            x = obj["left"] / scale
+            y = obj["top"] / scale
+            w = obj["width"] / scale
+            h = obj["height"] / scale
+            cx = x + w / 2
+            cy = y + h / 2
+            radius = w / 2
+            cv2.circle(mask, (int(cx), int(cy)), int(radius), 1, thickness=-1)
             last_patch = Circle((cx, cy), radius, edgecolor=color, fill=False)
+            objeto_ajustado = {
+                "left": x,
+                "top": y,
+                "width": w,
+                "height": h
+            }
         elif shape == "freedraw" or shape == "path":
             path_data = obj.get("path")
             if path_data:
@@ -872,6 +890,9 @@ def procesar_lista_de_objetos(objs, scale, img_np, color="lime"):
                 if len(pts_array) >= 3:
                     cv2.fillPoly(mask, [pts_array], 1)
                     last_patch = Polygon(pts_array, edgecolor=color, fill=False)
+                    objeto_ajustado = {
+                        "path": [(float(p[1]) / scale, float(p[2]) / scale) for p in path_data]
+                    }
 
 
 
@@ -888,16 +909,15 @@ def procesar_lista_de_objetos(objs, scale, img_np, color="lime"):
     }
 
     info = {
-    "tipo": shape,
-    "objeto": obj,
-    "color": color,
-    "label": f"ROI {color}",
-    "scale": scale
+        "tipo": shape,
+        "objeto": objeto_ajustado,
+        "color": color,
+        "label": f"ROI {color}",
     }
 
     return roi, last_patch, stats, mask.astype(bool), info
 
-def obtener_roi_desde_canvas(canvas_result, scale, img_np, color="lime", nombre="ROI"):
+def obtener_roi_desde_canvas2(canvas_result, scale, img_np, color="lime", nombre="ROI"):
     height_orig, width_orig = img_np.shape[:2]
 
     if canvas_result and "objects" in canvas_result:
@@ -1037,6 +1057,141 @@ def obtener_roi_desde_canvas(canvas_result, scale, img_np, color="lime", nombre=
     else:
         return None, None, None, None, None
 
+def obtener_roi_desde_canvas(canvas_result, scale, img_np, color="lime", nombre="ROI"):
+    height_orig, width_orig = img_np.shape[:2]
+
+    if canvas_result.json_data and "objects" in canvas_result.json_data:
+        objs = canvas_result.json_data["objects"]
+        if len(objs) == 0:
+            return None, None, None, None, None
+
+        obj = objs[-1]
+        tipo = obj["type"]
+
+        info_figura = {
+            "tipo": tipo,
+            "objeto": obj,
+            "color": color,
+            "label": nombre,
+            "scale": scale
+        }
+
+        if tipo == "rect":
+            left = int(obj["left"] / scale)
+            top = int(obj["top"] / scale)
+            width = int(obj["width"] / scale)
+            height = int(obj["height"] / scale)
+
+            x1 = max(0, left)
+            y1 = max(0, top)
+            x2 = min(width_orig, x1 + width)
+            y2 = min(height_orig, y1 + height)
+
+            roi = img_np[y1:y2, x1:x2]
+            patch = plt.Rectangle((x1, y1), x2 - x1, y2 - y1,
+                                  edgecolor=color, facecolor='none', linewidth=1.5, label=nombre)
+
+            mask_bin = np.zeros((height_orig, width_orig), dtype=bool)
+            mask_bin[y1:y2, x1:x2] = True
+
+            stats = {
+                "media": np.mean(roi),
+                "suma": np.sum(roi),
+                "area": roi.shape[0] * roi.shape[1]
+            }
+            return roi, patch, stats, mask_bin, info_figura
+
+        elif tipo == "circle":
+            left = int(obj["left"] / scale)
+            top = int(obj["top"] / scale)
+            width = int(obj.get("width", 0) / scale)
+            height = int(obj.get("height", 0) / scale)
+
+            x1 = max(0, left)
+            y1 = max(0, top)
+            x2 = min(width_orig, x1 + width)
+            y2 = min(height_orig, y1 + height)
+
+            roi = img_np[y1:y2, x1:x2]
+
+            cx = (x2 - x1) // 2
+            cy = (y2 - y1) // 2
+            rx = (x2 - x1) // 2
+            ry = (y2 - y1) // 2
+
+            yy, xx = np.ogrid[:y2 - y1, :x2 - x1]
+            mask_local = ((xx - cx)**2) / (rx**2) + ((yy - cy)**2) / (ry**2) <= 1
+
+            roi_masked = roi.copy()
+            if roi.ndim == 2:
+                roi_masked[~mask_local] = 0
+            else:
+                roi_masked[~mask_local] = 0
+
+            patch = Ellipse((x1 + cx, y1 + cy), 2*rx, 2*ry,
+                            edgecolor=color, facecolor='none', linewidth=1.5, label=nombre)
+
+            mask_bin = np.zeros((height_orig, width_orig), dtype=bool)
+            mask_bin[y1:y2, x1:x2] = mask_local
+
+            pixels_roi = roi[mask_local] if roi.ndim == 2 else roi[mask_local].reshape(-1, roi.shape[2])
+            stats = {
+                "media": float(np.mean(pixels_roi)) if pixels_roi.size > 0 else 0,
+                "suma": float(np.sum(pixels_roi)) if pixels_roi.size > 0 else 0,
+                "area": int(np.sum(mask_local))
+            }
+
+            return roi_masked, patch, stats, mask_bin, info_figura
+
+        elif tipo == "path":
+            points = [(int(p[1] / scale), int(p[2] / scale)) for p in obj["path"]]
+            if len(points) < 3:
+                return None, None, None, None, None
+
+            roi_mask = np.zeros(img_np.shape[:2], dtype=np.uint8)
+
+            try:
+                import cv2
+                pts = np.array(points, dtype=np.int32)
+                cv2.fillPoly(roi_mask, [pts], 1)
+            except ImportError:
+                from matplotlib.path import Path
+                poly_path = Path(points)
+                for y in range(height_orig):
+                    for x in range(width_orig):
+                        if poly_path.contains_point((x, y)):
+                            roi_mask[y, x] = 1
+
+            coords = np.argwhere(roi_mask)
+            if coords.size == 0:
+                return None, None, None, None, None
+
+            y1, x1 = coords.min(axis=0)
+            y2, x2 = coords.max(axis=0)
+
+            roi = img_np[y1:y2+1, x1:x2+1]
+            mask_crop = roi_mask[y1:y2+1, x1:x2+1]
+
+            if roi.ndim == 2:
+                roi = roi[:, :, np.newaxis]
+            roi_masked = roi * mask_crop[:, :, np.newaxis]
+
+            patch = Polygon(points, closed=True, edgecolor=color, facecolor='none', linewidth=1.5, label=nombre)
+
+            pixels_roi = roi[mask_crop == 1]
+            stats = {
+                "media": float(np.mean(pixels_roi)) if pixels_roi.size > 0 else 0,
+                "suma": float(np.sum(pixels_roi)) if pixels_roi.size > 0 else 0,
+                "area": int(np.sum(mask_crop))
+            }
+
+            if roi_masked.shape[2] == 1:
+                roi_masked = roi_masked[:, :, 0]
+
+            mask_bin = roi_mask.astype(bool)
+            return roi_masked, patch, stats, mask_bin, info_figura
+
+    return None, None, None, None, None
 def reconstruir_patch_desde_info(info):
     from matplotlib.patches import Rectangle, Ellipse, Polygon
 
@@ -1044,30 +1199,22 @@ def reconstruir_patch_desde_info(info):
     obj = info["objeto"]
     color = info["color"]
     label = info["label"]
-    scale = info.get("scale", 1.0)
 
     if tipo == "rect":
-        x = obj["left"] / scale
-        y = obj["top"] / scale
-        w = obj["width"] / scale
-        h = obj["height"] / scale
-        return Rectangle((x, y), w, h, edgecolor=color, facecolor='none', linewidth=1.5, label=label)
+        return Rectangle((obj["left"], obj["top"]), obj["width"], obj["height"],
+                         edgecolor=color, facecolor='none', linewidth=1.5, label=label)
 
     elif tipo == "circle":
-        x = obj["left"] / scale
-        y = obj["top"] / scale
-        w = obj["width"] / scale
-        h = obj["height"] / scale
-        cx = x + w / 2
-        cy = y + h / 2
-        return Ellipse((cx, cy), w, h, edgecolor=color, facecolor='none', linewidth=1.5, label=label)
+        cx = obj["left"] + obj["width"] / 2
+        cy = obj["top"] + obj["height"] / 2
+        return Ellipse((cx, cy), obj["width"], obj["height"],
+                       edgecolor=color, facecolor='none', linewidth=1.5, label=label)
 
     elif tipo == "path":
-        points = [(p[1] / scale, p[2] / scale) for p in obj["path"]]
-        return Polygon(points, closed=True, edgecolor=color, facecolor='none', linewidth=1.5, label=label)
+        return Polygon(obj["path"], closed=True,
+                       edgecolor=color, facecolor='none', linewidth=1.5, label=label)
 
     return None
-
 #EDICIONIMAGENES
 def inicializar_sesion_rgb():
     for k in ("F_r", "F_g", "F_b", "Ffilt_r", "Ffilt_g", "Ffilt_b"):
@@ -1496,7 +1643,7 @@ def RLE_polyfit2(volu1,volu2,U, V, grado, W=None, plot=True, titulo="", xlabel="
         ax.set_ylabel(ylabel)
         #ax.legend()
         ax.grid(False)
-
+        
         with volu1:
             ylimit2 = st.number_input(
                                 "Extremo inferior en (y) visible",
@@ -1743,15 +1890,15 @@ def RLE_exponential_fit(U, V, W=None, plot=True, titulo="", xlabel="", ylabel=""
                         min_value=float(min(V)-(np.max(W)+10.0 if W is not None else 10.0)),  # valor mínimo que se puede elegir
                         max_value=float(max(V)+(np.max(W)+10.0 if W is not None else 10.0)),  # valor máximo que se puede elegir
                         step=0.01,
-                        format="%.4f",key="yl21")
+                        format="%.4f",key="yl21exp")
     ylimit1 = st.number_input(
                         "Extremo superior en (y) visible",
                         value=float(max(V)),      # valor por defecto
                         min_value=float(min(V)-(np.max(W)+10.0 if W is not None else 10.0)),  # valor mínimo que se puede elegir
                         max_value=float(max(V)+(np.max(W)+10.0 if W is not None else 10.0)),  # valor máximo que se puede elegir
                         step=0.01,
-                        format="%.4f",key="yl11")
-    
+                        format="%.4f",key="yl11exp")
+
     # Gráfico
     fig = None
     if plot:
@@ -1841,3 +1988,7 @@ def biner2(g,dg,a,b,n,e):
       l += 1
   return c, np.array([a, b]), l
 
+def ajustar_mascara(mask, shape_objetivo):
+                                    if mask.shape != shape_objetivo:
+                                        return resize(mask.astype(float), shape_objetivo, order=0, preserve_range=True).astype(bool)
+                                    return mask
