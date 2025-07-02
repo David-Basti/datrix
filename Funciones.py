@@ -816,6 +816,67 @@ def extraer_roi(obj, scale, img_np):
     y2 = min(img_np.shape[0], y1 + height)
     return img_np[y1:y2, x1:x2], left, top, width, height
 
+def procesar_lista_de_objetos(objs, scale, img_np, color="lime"):
+    from matplotlib.patches import Rectangle, Circle, Polygon
+    import numpy as np
+    import cv2
+    import re
+
+    if not objs:
+        return None, None, None, None, None
+
+    height, width = img_np.shape[:2]
+    mask = np.zeros((height, width), dtype=np.uint8)
+
+    last_patch = None
+
+    for obj in objs:
+        shape = obj["type"]
+        if shape == "rect":
+            left = int(obj["left"] / scale)
+            top = int(obj["top"] / scale)
+            width_rect = int(obj["width"] / scale)
+            height_rect = int(obj["height"] / scale)
+            mask[top:top+height_rect, left:left+width_rect] = 1
+            last_patch = Rectangle((left, top), width_rect, height_rect, edgecolor=color, fill=False)
+        elif shape == "circle":
+            cx = int((obj["left"] + obj["width"] / 2) / scale)
+            cy = int((obj["top"] + obj["height"] / 2) / scale)
+            radius = int(obj["width"] / 2 / scale)
+            cv2.circle(mask, (cx, cy), radius, 1, thickness=-1)
+            last_patch = Circle((cx, cy), radius, edgecolor=color, fill=False)
+        elif shape == "freedraw" or shape == "path":
+            path_data = obj.get("path")
+            if path_data:
+                pts_array = extraer_puntos_path(path_data, scale)
+                if len(pts_array) >= 3:
+                    cv2.fillPoly(mask, [pts_array], 1)
+                    last_patch = Polygon(pts_array, edgecolor=color, fill=False)
+
+
+
+    if not np.any(mask):
+        return None, None, None, None, None
+
+    roi = img_np.copy()
+    roi[mask == 0] = 0
+
+    stats = {
+        "suma": float(np.sum(img_np[mask == 1])),
+        "media": float(np.mean(img_np[mask == 1])),
+        "area": int(np.sum(mask))
+    }
+
+    info = {
+    "tipo": shape,
+    "objeto": obj,
+    "color": color,
+    "label": f"ROI {color}",
+    "scale": scale
+    }
+
+    return roi, last_patch, stats, mask.astype(bool), info
+
 def obtener_roi_desde_canvas(canvas_result, scale, img_np, color="lime", nombre="ROI"):
     height_orig, width_orig = img_np.shape[:2]
 
@@ -985,7 +1046,7 @@ def reconstruir_patch_desde_info(info):
         points = [(p[1] / scale, p[2] / scale) for p in obj["path"]]
         return Polygon(points, closed=True, edgecolor=color, facecolor='none', linewidth=1.5, label=label)
 
-    return None    
+    return None
 
 #EDICIONIMAGENES
 def inicializar_sesion_rgb():
