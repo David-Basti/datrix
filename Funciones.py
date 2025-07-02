@@ -816,6 +816,26 @@ def extraer_roi(obj, scale, img_np):
     y2 = min(img_np.shape[0], y1 + height)
     return img_np[y1:y2, x1:x2], left, top, width, height
 
+def extraer_puntos_path(path_data, scale):
+    pts = []
+    for cmd in path_data:
+        tipo = cmd[0]
+        if tipo == "M" or tipo == "L":
+            # comando simple con 2 coords (x,y)
+            x = cmd[1]
+            y = cmd[2]
+            pts.append([int(x / scale), int(y / scale)])
+        elif tipo == "Q":
+            # curva cuadrática: punto control + punto final
+            # tomamos solo el punto final para aproximar
+            x = cmd[3]
+            y = cmd[4]
+            pts.append([int(x / scale), int(y / scale)])
+        else:
+            # otros comandos si aparecen se pueden ignorar o manejar aquí
+            pass
+    return np.array(pts, dtype=np.int32)
+
 def procesar_lista_de_objetos(objs, scale, img_np, color="lime"):
     from matplotlib.patches import Rectangle, Circle, Polygon
     import numpy as np
