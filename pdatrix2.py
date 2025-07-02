@@ -3901,25 +3901,25 @@ match modulo:
 #
                             if operacion == "Fusionar ROI 1 y ROI 2":
                                 mascara = np.logical_or(mask1, mask2)
-                                if mascara is not None:
+                                if mascara is not None and isinstance(mascara, np.ndarray) and mascara.dtype == bool:
                                     resultado[~mascara] = 0
                                 caption = "Fusión ROI 1 y ROI 2"
 
                             elif operacion == "Intersecar ROI 1 y ROI 2":
                                 mascara = np.logical_and(mask1, mask2)
-                                if mascara is not None:
+                                if mascara is not None and isinstance(mascara, np.ndarray) and mascara.dtype == bool:
                                     resultado[~mascara] = 0
                                 caption = "Intersección ROI 1 y ROI 2"
 
                             elif operacion == "ROI 1 sin ROI 2":
                                 mascara = np.logical_and(mask1, ~mask2)
-                                if mascara is not None:
+                                if mascara is not None and isinstance(mascara, np.ndarray) and mascara.dtype == bool:
                                     resultado[~mascara] = 0
                                 caption = "ROI 1 sin ROI 2"
 
                             elif operacion == "ROI 2 sin ROI 1":
                                 mascara = np.logical_and(mask2, ~mask1)
-                                if mascara is not None:
+                                if mascara is not None and isinstance(mascara, np.ndarray) and mascara.dtype == bool:
                                     resultado[~mascara] = 0
                                 caption = "ROI 2 sin ROI 1"
 
