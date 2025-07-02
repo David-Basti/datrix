@@ -37,6 +37,7 @@ import pandas as pd
 from matplotlib.patches import Rectangle, Ellipse, Polygon
 import base64
 from io import BytesIO
+from scipy.interpolate import UnivariateSpline
 
 icono = Image.open("logodatrix.jpg")
 st.set_page_config(
