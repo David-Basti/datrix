@@ -1775,6 +1775,7 @@ match modulo:
 
                     # Convertimos a imagen (solo el primer frame por ahora)
                     pixel_array = ds.pixel_array
+                    st.session_state["proy"] = pixel_array
                     is_multiframe = hasattr(ds, "NumberOfFrames") and ds.NumberOfFrames > 1
                     col1, col2 = st.columns([0.2,0.8])
 
@@ -3960,240 +3961,486 @@ match modulo:
 
                             st.image(fn.normalizar_0_255(resultado), caption=caption, use_container_width=True)
 
-                        with modotabs[1]:                    
-                            # Cargar máscaras e info de session_state
-                            mask1 = st.session_state.get("mask1")
-                            mask2 = st.session_state.get("mask2")
-                            info1 = st.session_state.get("info1")
-                            info2 = st.session_state.get("info2")
+                        with modotabs[1]:
+                            
+                            if subirarchivo == "Manual (solo DICOM)":                 
+                                # Cargar máscaras e info de session_state
+                                mask1 = st.session_state.get("mask1")
+                                mask2 = st.session_state.get("mask2")
+                                info1 = st.session_state.get("info1")
+                                info2 = st.session_state.get("info2")
 
-                            st.subheader("📈 ROI vs. tiempo")
+                                st.subheader("📈 ROI vs. tiempo")
 
-                            if proy is not None and mask1 is not None and mask2 is not None:
-                                import pandas as pd
-                                from io import BytesIO
+                                if proy is not None and mask1 is not None and mask2 is not None:
+                                    import pandas as pd
+                                    from io import BytesIO
 
-                                N_frames = proy.shape[2]
+                                    N_frames = proy.shape[2]
 
-                                # Tiempo por frame ingresado por el usuario
-                                tiempo_por_frame = st.number_input("⏱️ Tiempo por frame (segundos)", min_value=0.01, value=1.0, step=0.1, format="%.2f")
-                                tiempos = [i * tiempo_por_frame for i in range(N_frames)]
+                                    # Tiempo por frame ingresado por el usuario
+                                    tiempo_por_frame = st.number_input("⏱️ Tiempo por frame (segundos)", min_value=0.01, value=1.0, step=0.1, format="%.2f")
+                                    tiempos = [i * tiempo_por_frame for i in range(N_frames)]
 
-                                idx_frame = st.slider("Frame para visualizar", 0, N_frames - 1, 0)
-                                woli1, woli2 = st.columns(2)
-                                frame = proy[:, :, idx_frame].astype(np.float32)
+                                    idx_frame = st.slider("Frame para visualizar", 0, N_frames - 1, 0)
+                                    woli1, woli2 = st.columns(2)
+                                    frame = proy[:, :, idx_frame].astype(np.float32)
 
-                                # Mostrar frame con ROIs
-                                fig, ax = plt.subplots()
-                                ax.imshow(frame, cmap="gray")
-                                if info1:
-                                    ax.add_patch(fn.reconstruir_patch_desde_info(info1))
-                                if info2:
-                                    ax.add_patch(fn.reconstruir_patch_desde_info(info2))
-                                ax.set_title(f"Frame {idx_frame} con ROIs")
-                                ax.axis("off")
-                                if info1 or info2:
-                                    ax.legend()
-                                with woli1:
-                                    st.pyplot(fig)
-
-                                # Checkbox para mostrar área en mm²
-                                mm_per_pixel = st.session_state.get("escala_mm_por_pixel", 1.0)
-                                mostrar_mm = st.checkbox("Mostrar áreas en mm²", key="mm_curva")
-
-                                # Estadísticas del frame
-                                vals1 = frame[mask1]
-                                vals2 = frame[mask2]
-
-                                area_pix1 = np.sum(mask1)
-                                area_pix2 = np.sum(mask2)
-
-                                area1 = area_pix1 * mm_per_pixel**2 if mostrar_mm else area_pix1
-                                area2 = area_pix2 * mm_per_pixel**2 if mostrar_mm else area_pix2
-                                unidad_area = "mm²" if mostrar_mm else "píxeles"
-
-                                media1 = np.mean(vals1)
-                                suma1 = np.sum(vals1)
-
-                                media2 = np.mean(vals2)
-                                suma2 = np.sum(vals2)
-
-                                # Mostrar stats y diferencias
-                                st.markdown(f"### 📊 Estadísticas en frame {idx_frame}")
-
-                                col1f, col2f = st.columns(2)
-                                with col1f:
-                                    st.write("🔲 ROI 1 (verde)")
-                                    st.write(f"🔢 Intensidad media: {media1:.2f}")
-                                    st.write(f"➕ Suma intensidades: {suma1:.2f}")
-                                    st.write(f"📏 Área: {area1:.2f} {unidad_area}")
-                                with col2f:
-                                    st.write("🔲 ROI 2 (amarilla)")
-                                    st.write(f"🔢 Intensidad media: {media2:.2f}")
-                                    st.write(f"➕ Suma intensidades: {suma2:.2f}")
-                                    st.write(f"📏 Área: {area2:.2f} {unidad_area}")
-
-                                st.markdown("### 🔻 Diferencias")
-                                st.write(f"🔻 Diferencia suma intensidades: {abs(suma1 - suma2):.2f}")
-                                st.write(f"🔻 Diferencia media intensidades: {abs(media1 - media2):.2f}")
-
-                                # Calcular curvas de intensidad promedio
-                                intensidad_roi1 = [np.mean(proy[:, :, i][mask1]) for i in range(N_frames)]
-                                intensidad_roi2 = [np.mean(proy[:, :, i][mask2]) for i in range(N_frames)]
-
-                                # Mostrar curva
-                                fig2, ax2 = plt.subplots()
-                                ax2.plot(tiempos, intensidad_roi1, label="ROI 1", color="lime")
-                                ax2.plot(tiempos, intensidad_roi2, label="ROI 2", color="yellow")
-                                ax2.set_xlabel("Tiempo (s)")
-                                ax2.set_ylabel("Intensidad media")
-                                ax2.set_title("Curva ROI vs. Tiempo")
-                                ax2.legend()
-                                with woli2:
-                                    st.pyplot(fig2)
-                                
-
-                                f1 = UnivariateSpline(tiempos, intensidad_roi1, s=0)
-                                f2 = UnivariateSpline(tiempos, intensidad_roi2, s=0)
-                                # --- Análisis detallado spline ROI vs tiempo ---
-                                st.markdown("## 📊 Análisis de curvas")
-
-                                spline_opciones = st.radio("Elegí el ROI para analizar:", ["ROI 1 (verde)", "ROI 2 (amarilla)"])
-                                f = f1 if "1" in spline_opciones else f2
-                                datos = intensidad_roi1 if "1" in spline_opciones else intensidad_roi2
-
-                                # Evaluar f en todo el dominio
-                                x_full = np.linspace(tiempos[0], tiempos[-1], 1000)
-                                y_full = f(x_full)
-
-                                x_min_full, x_max_full = float(min(x_full)), float(max(x_full))
-                                y_min_full, y_max_full = float(min(y_full)), float(max(y_full))
-
-                                colcurv1, colcurv2 = st.columns([0.3, 0.7])
-                                with colcurv1:
-                                    x_lines = st.slider("Intervalo en X (líneas verticales)",
-                                                        min_value=x_min_full, max_value=x_max_full,
-                                                        value=(x_min_full, x_max_full),
-                                                        step=(x_max_full - x_min_full) / 100, format="%.2f")
-
-                                    y_lines = st.slider("Intervalo en Y (líneas horizontales)",
-                                                        min_value=y_min_full, max_value=y_max_full,
-                                                        value=(y_min_full, y_max_full),
-                                                        step=(y_max_full - y_min_full) / 100, format="%.2f")
-
-                                # Buscar máximos y mínimos dentro del rectángulo
-                                y_max = -np.inf
-                                x_max = None
-                                y_min = np.inf
-                                x_min = None
-
-                                for i in range(len(x_full)):
-                                    x = x_full[i]
-                                    y = y_full[i]
-                                    if x_lines[0] <= x <= x_lines[1] and y_lines[0] <= y <= y_lines[1]:
-                                        if y > y_max:
-                                            y_max = y
-                                            x_max = x
-                                        if y < y_min:
-                                            y_min = y
-                                            x_min = x
-
-                                st.success(f"📈 Dentro del rectángulo:\n\n🔽 Mínimo f(x) = {y_min:.2f} en x = {x_min:.2f}\n🔼 Máximo f(x) = {y_max:.2f} en x = {x_max:.2f}")
-
-                                with colcurv2:
-                                    fig_detalle, ax = plt.subplots()
-                                    ax.plot(x_full, y_full, label="Spline", color='blue')
-                                    ax.plot(x_min, y_min, 'gv', label='Mín.')
-                                    ax.plot(x_max, y_max, 'r^', label='Máx.')
-
-                                    ax.axvline(x=x_lines[0], color='cyan', linestyle='--', label=f'x₁ = {x_lines[0]:.2f}')
-                                    ax.axvline(x=x_lines[1], color='cyan', linestyle='--', label=f'x₂ = {x_lines[1]:.2f}')
-                                    ax.axhline(y=y_lines[0], color='y', linestyle='--', label=f'y₁ = {y_lines[0]:.2f}')
-                                    ax.axhline(y=y_lines[1], color='y', linestyle='--', label=f'y₂ = {y_lines[1]:.2f}')
-                                    ax.legend()
-                                    ax.set_xlabel("Tiempo (s)")
-                                    ax.set_ylabel("Intensidad")
-                                    st.pyplot(fig_detalle)
-
-                                # --- Análisis avanzado ---
-                                tab1, tab2 = st.tabs(["📐 Integración", "🔍 Resolver f(x) = p"])
-
-                                with tab1:
-                                    st.subheader("Área bajo la curva (integración)")
-                                    kol1int, kol2int = st.columns([0.3,0.7])
-                                    with kol1int:
-                                        a_int = st.number_input("Límite inferior (a)", value=float(tiempos[0]), format="%.2f")
-                                        b_int = st.number_input("Límite superior (b)", value=float(tiempos[-1]), format="%.2f")
-                                        h_int = st.number_input("Paso h", value=tiempo_por_frame, format="%.4f", min_value=1e-4)
-                                        metodo = st.selectbox("Método de integración", ["simpson", "trapecio", "riemann"])
-                                    if h_int <= abs(b_int - a_int):
-                                        area_spline = fn.integral(f, a_int, b_int, h=h_int, tipo=metodo)
-                                        with kol2int:
-                                            st.latex(rf"\int_{{{a_int}}}^{{{b_int}}} f(x)\,dx \approx {area_spline:.4f}")
-                                            # --- Mostrar gráfico con área sombreada ---
-                                            fig_area, ax = plt.subplots()
-                                            ax.plot(x_full, y_full, label="Spline", color="blue")
-                                            x_fill = np.linspace(a_int, b_int, 500)
-                                            y_fill = f(x_fill)
-                                            ax.fill_between(x_fill, y_fill, color='skyblue', alpha=0.4, label="Área bajo f(x)")
-                                            ax.set_xlabel("Tiempo (s)")
-                                            ax.set_ylabel("Intensidad")
-                                            ax.set_title("Área bajo la curva")
-                                            ax.legend()
-                                            st.pyplot(fig_area)
-                                    else:
-                                        with kol2int:
-                                            st.warning("El paso h es mayor que el intervalo.")
-
-                                with tab2:
-                                    st.subheader("Resolver ecuación f(x) = p")
-                                    col1re,col2re = st.columns([0.3,0.7])
-                                    with col1re:
-                                        p_val = st.number_input("Valor p", value=0.0, step=0.1)
-                                        a_bis = st.number_input("Límite inferior", value=float(tiempos[0]), format="%.2f")
-                                        b_bis = st.number_input("Límite superior", value=float(tiempos[-1]), format="%.2f")
-                                        tol = st.number_input("Tolerancia", value=1e-6, format="%.1e")
-                                        max_iter = st.number_input("Máx. iteraciones", value=20, step=1)
-
-                                    def g(x): return f(x) - p_val
-                                    dg = f.derivative()
-
-                                    try:
-                                        x_sol, _, _ = fn.biner2(g, dg, a_bis, b_bis, max_iter, tol)
-                                        st.success(f"✅ f(x) ≈ {p_val} → x ≈ {x_sol:.4f}")
-
-                                        fig_eq, ax = plt.subplots()
-                                        ax.plot(x_full, y_full, label="Spline", color='blue')
-                                        ax.axhline(p_val, color='gray', linestyle='--', label=f"p = {p_val}")
-                                        ax.plot(x_sol, f(x_sol), 'go', label=f"x ≈ {x_sol:.2f}")
+                                    # Mostrar frame con ROIs
+                                    fig, ax = plt.subplots()
+                                    ax.imshow(frame, cmap="gray")
+                                    if info1:
+                                        ax.add_patch(fn.reconstruir_patch_desde_info(info1))
+                                    if info2:
+                                        ax.add_patch(fn.reconstruir_patch_desde_info(info2))
+                                    ax.set_title(f"Frame {idx_frame} con ROIs")
+                                    ax.axis("off")
+                                    if info1 or info2:
                                         ax.legend()
-                                        with col2re:
-                                            st.pyplot(fig_eq)
-                                    except Exception as e:
-                                        st.error(f"❌ Error: {e}")
+                                    with woli1:
+                                        st.pyplot(fig)
 
-                                # Crear único DataFrame con todo junto
-                                df = pd.DataFrame({
-                                    "Tiempo (s)": tiempos,
-                                    "Intensidad ROI 1": intensidad_roi1,
-                                    "Intensidad ROI 2": intensidad_roi2
-                                })
+                                    # Checkbox para mostrar área en mm²
+                                    mm_per_pixel = st.session_state.get("escala_mm_por_pixel", 1.0)
+                                    mostrar_mm = st.checkbox("Mostrar áreas en mm²", key="mm_curva")
 
-                                # Crear Excel en memoria
-                                output_excel = BytesIO()
-                                with pd.ExcelWriter(output_excel, engine="xlsxwriter") as writer:
-                                    df.to_excel(writer, sheet_name="Curvas ROI", index=False)
-                                output_excel.seek(0)
+                                    # Estadísticas del frame
+                                    vals1 = frame[mask1]
+                                    vals2 = frame[mask2]
 
-                                # Botón de descarga
-                                st.download_button(
-                                    label="📥 Descargar curvas como Excel",
-                                    data=output_excel,
-                                    file_name="curvas_ROI.xlsx",
-                                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                                )
-                            else:
-                                st.warning("Dibujá ambas ROIs y cargá un archivo multiframe para generar la curva.")                    
+                                    area_pix1 = np.sum(mask1)
+                                    area_pix2 = np.sum(mask2)
+
+                                    area1 = area_pix1 * mm_per_pixel**2 if mostrar_mm else area_pix1
+                                    area2 = area_pix2 * mm_per_pixel**2 if mostrar_mm else area_pix2
+                                    unidad_area = "mm²" if mostrar_mm else "píxeles"
+
+                                    media1 = np.mean(vals1)
+                                    suma1 = np.sum(vals1)
+
+                                    media2 = np.mean(vals2)
+                                    suma2 = np.sum(vals2)
+
+                                    # Mostrar stats y diferencias
+                                    st.markdown(f"### 📊 Estadísticas en frame {idx_frame}")
+
+                                    col1f, col2f = st.columns(2)
+                                    with col1f:
+                                        st.write("🔲 ROI 1 (verde)")
+                                        st.write(f"🔢 Intensidad media: {media1:.2f}")
+                                        st.write(f"➕ Suma intensidades: {suma1:.2f}")
+                                        st.write(f"📏 Área: {area1:.2f} {unidad_area}")
+                                    with col2f:
+                                        st.write("🔲 ROI 2 (amarilla)")
+                                        st.write(f"🔢 Intensidad media: {media2:.2f}")
+                                        st.write(f"➕ Suma intensidades: {suma2:.2f}")
+                                        st.write(f"📏 Área: {area2:.2f} {unidad_area}")
+
+                                    st.markdown("### 🔻 Diferencias")
+                                    st.write(f"🔻 Diferencia suma intensidades: {abs(suma1 - suma2):.2f}")
+                                    st.write(f"🔻 Diferencia media intensidades: {abs(media1 - media2):.2f}")
+
+                                    # Calcular curvas de intensidad promedio
+                                    intensidad_roi1 = [np.mean(proy[:, :, i][mask1]) for i in range(N_frames)]
+                                    intensidad_roi2 = [np.mean(proy[:, :, i][mask2]) for i in range(N_frames)]
+
+                                    # Mostrar curva
+                                    fig2, ax2 = plt.subplots()
+                                    ax2.plot(tiempos, intensidad_roi1, label="ROI 1", color="lime")
+                                    ax2.plot(tiempos, intensidad_roi2, label="ROI 2", color="yellow")
+                                    ax2.set_xlabel("Tiempo (s)")
+                                    ax2.set_ylabel("Intensidad media")
+                                    ax2.set_title("Curva ROI vs. Tiempo")
+                                    ax2.legend()
+                                    with woli2:
+                                        st.pyplot(fig2)
+                                    
+
+                                    f1 = UnivariateSpline(tiempos, intensidad_roi1, s=0)
+                                    f2 = UnivariateSpline(tiempos, intensidad_roi2, s=0)
+                                    # --- Análisis detallado spline ROI vs tiempo ---
+                                    st.markdown("## 📊 Análisis de curvas")
+
+                                    spline_opciones = st.radio("Elegí el ROI para analizar:", ["ROI 1 (verde)", "ROI 2 (amarilla)"])
+                                    f = f1 if "1" in spline_opciones else f2
+                                    datos = intensidad_roi1 if "1" in spline_opciones else intensidad_roi2
+
+                                    # Evaluar f en todo el dominio
+                                    x_full = np.linspace(tiempos[0], tiempos[-1], 1000)
+                                    y_full = f(x_full)
+
+                                    x_min_full, x_max_full = float(min(x_full)), float(max(x_full))
+                                    y_min_full, y_max_full = float(min(y_full)), float(max(y_full))
+
+                                    colcurv1, colcurv2 = st.columns([0.3, 0.7])
+                                    with colcurv1:
+                                        x_lines = st.slider("Intervalo en X (líneas verticales)",
+                                                            min_value=x_min_full, max_value=x_max_full,
+                                                            value=(x_min_full, x_max_full),
+                                                            step=(x_max_full - x_min_full) / 100, format="%.2f")
+
+                                        y_lines = st.slider("Intervalo en Y (líneas horizontales)",
+                                                            min_value=y_min_full, max_value=y_max_full,
+                                                            value=(y_min_full, y_max_full),
+                                                            step=(y_max_full - y_min_full) / 100, format="%.2f")
+
+                                    # Buscar máximos y mínimos dentro del rectángulo
+                                    y_max = -np.inf
+                                    x_max = None
+                                    y_min = np.inf
+                                    x_min = None
+
+                                    for i in range(len(x_full)):
+                                        x = x_full[i]
+                                        y = y_full[i]
+                                        if x_lines[0] <= x <= x_lines[1] and y_lines[0] <= y <= y_lines[1]:
+                                            if y > y_max:
+                                                y_max = y
+                                                x_max = x
+                                            if y < y_min:
+                                                y_min = y
+                                                x_min = x
+
+                                    st.success(f"📈 Dentro del rectángulo:\n\n🔽 Mínimo f(x) = {y_min:.2f} en x = {x_min:.2f}\n🔼 Máximo f(x) = {y_max:.2f} en x = {x_max:.2f}")
+
+                                    with colcurv2:
+                                        fig_detalle, ax = plt.subplots()
+                                        ax.plot(x_full, y_full, label="Spline", color='blue')
+                                        ax.plot(x_min, y_min, 'gv', label='Mín.')
+                                        ax.plot(x_max, y_max, 'r^', label='Máx.')
+
+                                        ax.axvline(x=x_lines[0], color='cyan', linestyle='--', label=f'x₁ = {x_lines[0]:.2f}')
+                                        ax.axvline(x=x_lines[1], color='cyan', linestyle='--', label=f'x₂ = {x_lines[1]:.2f}')
+                                        ax.axhline(y=y_lines[0], color='y', linestyle='--', label=f'y₁ = {y_lines[0]:.2f}')
+                                        ax.axhline(y=y_lines[1], color='y', linestyle='--', label=f'y₂ = {y_lines[1]:.2f}')
+                                        ax.legend()
+                                        ax.set_xlabel("Tiempo (s)")
+                                        ax.set_ylabel("Intensidad")
+                                        st.pyplot(fig_detalle)
+
+                                    # --- Análisis avanzado ---
+                                    tab1, tab2 = st.tabs(["📐 Integración", "🔍 Resolver f(x) = p"])
+
+                                    with tab1:
+                                        st.subheader("Área bajo la curva (integración)")
+                                        kol1int, kol2int = st.columns([0.3,0.7])
+                                        with kol1int:
+                                            a_int = st.number_input("Límite inferior (a)", value=float(tiempos[0]), format="%.2f")
+                                            b_int = st.number_input("Límite superior (b)", value=float(tiempos[-1]), format="%.2f")
+                                            h_int = st.number_input("Paso h", value=tiempo_por_frame, format="%.4f", min_value=1e-4)
+                                            metodo = st.selectbox("Método de integración", ["simpson", "trapecio", "riemann"])
+                                        if h_int <= abs(b_int - a_int):
+                                            area_spline = fn.integral(f, a_int, b_int, h=h_int, tipo=metodo)
+                                            with kol2int:
+                                                st.latex(rf"\int_{{{a_int}}}^{{{b_int}}} f(x)\,dx \approx {area_spline:.4f}")
+                                                # --- Mostrar gráfico con área sombreada ---
+                                                fig_area, ax = plt.subplots()
+                                                ax.plot(x_full, y_full, label="Spline", color="blue")
+                                                x_fill = np.linspace(a_int, b_int, 500)
+                                                y_fill = f(x_fill)
+                                                ax.fill_between(x_fill, y_fill, color='skyblue', alpha=0.4, label="Área bajo f(x)")
+                                                ax.set_xlabel("Tiempo (s)")
+                                                ax.set_ylabel("Intensidad")
+                                                ax.set_title("Área bajo la curva")
+                                                ax.legend()
+                                                st.pyplot(fig_area)
+                                        else:
+                                            with kol2int:
+                                                st.warning("El paso h es mayor que el intervalo.")
+
+                                    with tab2:
+                                        st.subheader("Resolver ecuación f(x) = p")
+                                        col1re,col2re = st.columns([0.3,0.7])
+                                        with col1re:
+                                            p_val = st.number_input("Valor p", value=0.0, step=0.1)
+                                            a_bis = st.number_input("Límite inferior", value=float(tiempos[0]), format="%.2f")
+                                            b_bis = st.number_input("Límite superior", value=float(tiempos[-1]), format="%.2f")
+                                            tol = st.number_input("Tolerancia", value=1e-6, format="%.1e")
+                                            max_iter = st.number_input("Máx. iteraciones", value=20, step=1)
+
+                                        def g(x): return f(x) - p_val
+                                        dg = f.derivative()
+
+                                        try:
+                                            x_sol, _, _ = fn.biner2(g, dg, a_bis, b_bis, max_iter, tol)
+                                            st.success(f"✅ f(x) ≈ {p_val} → x ≈ {x_sol:.4f}")
+
+                                            fig_eq, ax = plt.subplots()
+                                            ax.plot(x_full, y_full, label="Spline", color='blue')
+                                            ax.axhline(p_val, color='gray', linestyle='--', label=f"p = {p_val}")
+                                            ax.plot(x_sol, f(x_sol), 'go', label=f"x ≈ {x_sol:.2f}")
+                                            ax.legend()
+                                            with col2re:
+                                                st.pyplot(fig_eq)
+                                        except Exception as e:
+                                            st.error(f"❌ Error: {e}")
+
+                                    # Crear único DataFrame con todo junto
+                                    df = pd.DataFrame({
+                                        "Tiempo (s)": tiempos,
+                                        "Intensidad ROI 1": intensidad_roi1,
+                                        "Intensidad ROI 2": intensidad_roi2
+                                    })
+
+                                    # Crear Excel en memoria
+                                    output_excel = BytesIO()
+                                    with pd.ExcelWriter(output_excel, engine="xlsxwriter") as writer:
+                                        df.to_excel(writer, sheet_name="Curvas ROI", index=False)
+                                    output_excel.seek(0)
+
+                                    # Botón de descarga
+                                    st.download_button(
+                                        label="📥 Descargar curvas como Excel",
+                                        data=output_excel,
+                                        file_name="curvas_ROI.xlsx",
+                                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                                    )
+                                else:
+                                    st.warning("Dibujá ambas ROIs y cargá un archivo multiframe para generar la curva.")  
+                            elif subirarchivo == "Automático":
+                                # Cargar máscaras e info de session_state
+                                mask1 = st.session_state.get("mask1")
+                                mask2 = st.session_state.get("mask2")
+                                info1 = st.session_state.get("info1")
+                                info2 = st.session_state.get("info2")
+
+                                st.subheader("📈 ROI vs. tiempo")
+                                proy = st.session_state.get("proy")
+                                if proy is not None and mask1 is not None and mask2 is not None:
+
+                                    # === BLOQUE AUTOMÁTICO ROI vs TIEMPO ===
+                                    N_frames = proy.shape[0]  # N_frames está en eje 0
+
+                                    # Tiempo por frame
+                                    tiempo_por_frame = st.number_input("⏱️ Tiempo por frame (segundos)", min_value=0.01, value=1.0, step=0.1, format="%.2f")
+                                    tiempos = [i * tiempo_por_frame for i in range(N_frames)]
+
+                                    # Selección de frame actual
+                                    idx_frame = st.slider("Frame para visualizar", 0, N_frames - 1, 0)
+                                    woli1, woli2 = st.columns(2)
+
+                                    frame = proy[idx_frame, :, :].astype(np.float32)
+
+                                    # Mostrar frame con ROIs
+                                    fig, ax = plt.subplots()
+                                    ax.imshow(frame, cmap="gray")
+                                    if info1:
+                                        ax.add_patch(fn.reconstruir_patch_desde_info(info1))
+                                    if info2:
+                                        ax.add_patch(fn.reconstruir_patch_desde_info(info2))
+                                    ax.set_title(f"Frame {idx_frame} con ROIs")
+                                    ax.axis("off")
+                                    if info1 or info2:
+                                        ax.legend()
+                                    with woli1:
+                                        st.pyplot(fig)
+
+                                    # Escala
+                                    mm_per_pixel = st.session_state.get("escala_mm_por_pixel", 1.0)
+                                    mostrar_mm = st.checkbox("Mostrar áreas en mm²", key="mm_curva")
+
+                                    # Asegurar que las máscaras coincidan en tamaño
+                                    shape_frame = frame.shape
+                                    if mask1.shape != shape_frame:
+                                        mask1_resized = resize(mask1.astype(float), shape_frame, order=0, preserve_range=True).astype(bool)
+                                    else:
+                                        mask1_resized = mask1
+
+                                    if mask2.shape != shape_frame:
+                                        mask2_resized = resize(mask2.astype(float), shape_frame, order=0, preserve_range=True).astype(bool)
+                                    else:
+                                        mask2_resized = mask2
+
+                                    # Estadísticas
+                                    vals1 = frame[mask1_resized]
+                                    vals2 = frame[mask2_resized]
+
+                                    area_pix1 = np.sum(mask1_resized)
+                                    area_pix2 = np.sum(mask2_resized)
+
+                                    area1 = area_pix1 * mm_per_pixel**2 if mostrar_mm else area_pix1
+                                    area2 = area_pix2 * mm_per_pixel**2 if mostrar_mm else area_pix2
+                                    unidad_area = "mm²" if mostrar_mm else "píxeles"
+
+                                    media1 = np.mean(vals1)
+                                    suma1 = np.sum(vals1)
+
+                                    media2 = np.mean(vals2)
+                                    suma2 = np.sum(vals2)
+
+                                    st.markdown(f"### 📊 Estadísticas en frame {idx_frame}")
+                                    col1f, col2f = st.columns(2)
+                                    with col1f:
+                                        st.write("🔲 ROI 1 (verde)")
+                                        st.write(f"🔢 Intensidad media: {media1:.2f}")
+                                        st.write(f"➕ Suma intensidades: {suma1:.2f}")
+                                        st.write(f"📏 Área: {area1:.2f} {unidad_area}")
+                                    with col2f:
+                                        st.write("🔲 ROI 2 (amarilla)")
+                                        st.write(f"🔢 Intensidad media: {media2:.2f}")
+                                        st.write(f"➕ Suma intensidades: {suma2:.2f}")
+                                        st.write(f"📏 Área: {area2:.2f} {unidad_area}")
+
+                                    st.markdown("### 🔻 Diferencias")
+                                    st.write(f"🔻 Diferencia suma intensidades: {abs(suma1 - suma2):.2f}")
+                                    st.write(f"🔻 Diferencia media intensidades: {abs(media1 - media2):.2f}")
+
+                                    # Curvas
+                                    intensidad_roi1 = [np.mean(proy[i, :, :][mask1_resized]) for i in range(N_frames)]
+                                    intensidad_roi2 = [np.mean(proy[i, :, :][mask2_resized]) for i in range(N_frames)]
+
+                                    fig2, ax2 = plt.subplots()
+                                    ax2.plot(tiempos, intensidad_roi1, label="ROI 1", color="lime")
+                                    ax2.plot(tiempos, intensidad_roi2, label="ROI 2", color="yellow")
+                                    ax2.set_xlabel("Tiempo (s)")
+                                    ax2.set_ylabel("Intensidad media")
+                                    ax2.set_title("Curva ROI vs. Tiempo")
+                                    ax2.legend()
+                                    with woli2:
+                                        st.pyplot(fig2)
+                                
+                                    f1 = UnivariateSpline(tiempos, intensidad_roi1, s=0)
+                                    f2 = UnivariateSpline(tiempos, intensidad_roi2, s=0)
+                                    # --- Análisis detallado spline ROI vs tiempo ---
+                                    st.markdown("## 📊 Análisis de curvas")
+
+                                    spline_opciones = st.radio("Elegí el ROI para analizar:", ["ROI 1 (verde)", "ROI 2 (amarilla)"])
+                                    f = f1 if "1" in spline_opciones else f2
+                                    datos = intensidad_roi1 if "1" in spline_opciones else intensidad_roi2
+
+                                    # Evaluar f en todo el dominio
+                                    x_full = np.linspace(tiempos[0], tiempos[-1], 1000)
+                                    y_full = f(x_full)
+
+                                    x_min_full, x_max_full = float(min(x_full)), float(max(x_full))
+                                    y_min_full, y_max_full = float(min(y_full)), float(max(y_full))
+
+                                    colcurv1, colcurv2 = st.columns([0.3, 0.7])
+                                    with colcurv1:
+                                        x_lines = st.slider("Intervalo en X (líneas verticales)",
+                                                            min_value=x_min_full, max_value=x_max_full,
+                                                            value=(x_min_full, x_max_full),
+                                                            step=(x_max_full - x_min_full) / 100, format="%.2f")
+
+                                        y_lines = st.slider("Intervalo en Y (líneas horizontales)",
+                                                            min_value=y_min_full, max_value=y_max_full,
+                                                            value=(y_min_full, y_max_full),
+                                                            step=(y_max_full - y_min_full) / 100, format="%.2f")
+
+                                    # Buscar máximos y mínimos dentro del rectángulo
+                                    y_max = -np.inf
+                                    x_max = None
+                                    y_min = np.inf
+                                    x_min = None
+
+                                    for i in range(len(x_full)):
+                                        x = x_full[i]
+                                        y = y_full[i]
+                                        if x_lines[0] <= x <= x_lines[1] and y_lines[0] <= y <= y_lines[1]:
+                                            if y > y_max:
+                                                y_max = y
+                                                x_max = x
+                                            if y < y_min:
+                                                y_min = y
+                                                x_min = x
+
+                                    st.success(f"📈 Dentro del rectángulo:\n\n🔽 Mínimo f(x) = {y_min:.2f} en x = {x_min:.2f}\n🔼 Máximo f(x) = {y_max:.2f} en x = {x_max:.2f}")
+
+                                    with colcurv2:
+                                        fig_detalle, ax = plt.subplots()
+                                        ax.plot(x_full, y_full, label="Spline", color='blue')
+                                        ax.plot(x_min, y_min, 'gv', label='Mín.')
+                                        ax.plot(x_max, y_max, 'r^', label='Máx.')
+
+                                        ax.axvline(x=x_lines[0], color='cyan', linestyle='--', label=f'x₁ = {x_lines[0]:.2f}')
+                                        ax.axvline(x=x_lines[1], color='cyan', linestyle='--', label=f'x₂ = {x_lines[1]:.2f}')
+                                        ax.axhline(y=y_lines[0], color='y', linestyle='--', label=f'y₁ = {y_lines[0]:.2f}')
+                                        ax.axhline(y=y_lines[1], color='y', linestyle='--', label=f'y₂ = {y_lines[1]:.2f}')
+                                        ax.legend()
+                                        ax.set_xlabel("Tiempo (s)")
+                                        ax.set_ylabel("Intensidad")
+                                        st.pyplot(fig_detalle)
+
+                                    # --- Análisis avanzado ---
+                                    tab1, tab2 = st.tabs(["📐 Integración", "🔍 Resolver f(x) = p"])
+
+                                    with tab1:
+                                        st.subheader("Área bajo la curva (integración)")
+                                        kol1int, kol2int = st.columns([0.3,0.7])
+                                        with kol1int:
+                                            a_int = st.number_input("Límite inferior (a)", value=float(tiempos[0]), format="%.2f")
+                                            b_int = st.number_input("Límite superior (b)", value=float(tiempos[-1]), format="%.2f")
+                                            h_int = st.number_input("Paso h", value=tiempo_por_frame, format="%.4f", min_value=1e-4)
+                                            metodo = st.selectbox("Método de integración", ["simpson", "trapecio", "riemann"])
+                                        if h_int <= abs(b_int - a_int):
+                                            area_spline = fn.integral(f, a_int, b_int, h=h_int, tipo=metodo)
+                                            with kol2int:
+                                                st.latex(rf"\int_{{{a_int}}}^{{{b_int}}} f(x)\,dx \approx {area_spline:.4f}")
+                                                # --- Mostrar gráfico con área sombreada ---
+                                                fig_area, ax = plt.subplots()
+                                                ax.plot(x_full, y_full, label="Spline", color="blue")
+                                                x_fill = np.linspace(a_int, b_int, 500)
+                                                y_fill = f(x_fill)
+                                                ax.fill_between(x_fill, y_fill, color='skyblue', alpha=0.4, label="Área bajo f(x)")
+                                                ax.set_xlabel("Tiempo (s)")
+                                                ax.set_ylabel("Intensidad")
+                                                ax.set_title("Área bajo la curva")
+                                                ax.legend()
+                                                st.pyplot(fig_area)
+                                        else:
+                                            with kol2int:
+                                                st.warning("El paso h es mayor que el intervalo.")
+
+                                    with tab2:
+                                        st.subheader("Resolver ecuación f(x) = p")
+                                        col1re,col2re = st.columns([0.3,0.7])
+                                        with col1re:
+                                            p_val = st.number_input("Valor p", value=0.0, step=0.1)
+                                            a_bis = st.number_input("Límite inferior", value=float(tiempos[0]), format="%.2f")
+                                            b_bis = st.number_input("Límite superior", value=float(tiempos[-1]), format="%.2f")
+                                            tol = st.number_input("Tolerancia", value=1e-6, format="%.1e")
+                                            max_iter = st.number_input("Máx. iteraciones", value=20, step=1)
+
+                                        def g(x): return f(x) - p_val
+                                        dg = f.derivative()
+
+                                        try:
+                                            x_sol, _, _ = fn.biner2(g, dg, a_bis, b_bis, max_iter, tol)
+                                            st.success(f"✅ f(x) ≈ {p_val} → x ≈ {x_sol:.4f}")
+
+                                            fig_eq, ax = plt.subplots()
+                                            ax.plot(x_full, y_full, label="Spline", color='blue')
+                                            ax.axhline(p_val, color='gray', linestyle='--', label=f"p = {p_val}")
+                                            ax.plot(x_sol, f(x_sol), 'go', label=f"x ≈ {x_sol:.2f}")
+                                            ax.legend()
+                                            with col2re:
+                                                st.pyplot(fig_eq)
+                                        except Exception as e:
+                                            st.error(f"❌ Error: {e}")
+
+                                    # Crear único DataFrame con todo junto
+                                    df = pd.DataFrame({
+                                        "Tiempo (s)": tiempos,
+                                        "Intensidad ROI 1": intensidad_roi1,
+                                        "Intensidad ROI 2": intensidad_roi2
+                                    })
+
+                                    # Crear Excel en memoria
+                                    output_excel = BytesIO()
+                                    with pd.ExcelWriter(output_excel, engine="xlsxwriter") as writer:
+                                        df.to_excel(writer, sheet_name="Curvas ROI", index=False)
+                                    output_excel.seek(0)
+
+                                    # Botón de descarga
+                                    st.download_button(
+                                        label="📥 Descargar curvas como Excel",
+                                        data=output_excel,
+                                        file_name="curvas_ROI.xlsx",
+                                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                                    )
+                                else:
+                                    st.warning("Dibujá ambas ROIs y cargá un archivo multiframe para generar la curva.")  
+                                                    
                     case "ROIs2":
                         with tolum1:
                             # ROI 1 con centro + ancho/alto
