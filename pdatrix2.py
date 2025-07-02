@@ -1127,83 +1127,88 @@ match modulo:
                 if f is not None:
                     # Calcular área
                     # Límites de integración
-                    st.subheader("Integración")
-                    polum1,polum2 = st.columns([0.3,0.7])
-                    with polum1:
-                        a = st.number_input("Límite inferior de integración (a)", value=float(min(U)), min_value=float(min(U)), max_value=float(max(U)),format="%.4f")
-                        b = st.number_input("Límite superior de integración (b)", value=float(max(U)), min_value=float(min(U)), max_value=float(max(U)),format="%.4f")
-                        h = st.number_input("Paso de integración (h)", value=0.01, min_value=1e-4, format="%.4f")
-                    if h <= abs(b-a):
+                    curana = st.tabs(["Integración", "Resolución de ecuación"])
+                    with curana[0]:
+                        st.subheader("Integración")
+                        polum1,polum2 = st.columns([0.3,0.7])
                         with polum1:
-                            tipo_integracion = st.selectbox("Método de integración", ["simpson", "trapecio", "riemann"])
-                            area = fn.integral(f, a, b, h, tipo=tipo_integracion)
-                        with polum2:
-                            st.markdown(f"### 📐 Área bajo la curva entre {a} y {b}:")
-                            st.latex(rf"\int_{{{a}}}^{{{b}}} f(x)\,dx \approx {area:.5f}")
-                    else:
-                        with polum2:
-                            st.warning("El paso h es absurdo.")
-                    st.subheader("Resoluación de ecuación")
-                    p_val = st.number_input("Elegí el valor de f(x) = p", value=0.0, step=0.01, format="%.4f")
-                    if opcion == "Interpolación Spline":
-                        # Función g(x)
-                        def g(x):
-                            return f(x) - p_val
-                        # Derivada de g(x)
-                        dg = f.derivative()  # esta es f'(x)
-                    elif opcion == "Ajuste polinómico": 
-                        c = np.arange(0,grado+1,1)
-                        c = c[::-1]
-                        u = sp.symbols("u")
-                        h=0
-                        for k in range(len(c)):
-                            h+=resultadospoli['coef'][k]*u**c[k]
-                        gsym = sp.sympify(h-p_val)
-                        dgsym = sp.diff(gsym, u)*2 / (umax - umin)
-                        #st.latex(gsym)
-                        #st.latex(dgsym)
-                        g_u = sp.lambdify(u, gsym, "math")   # función evaluable
-                        dg_u = sp.lambdify(u, dgsym, "math") # derivada evaluable
-                        g = lambda x: float(g_u(escalar(x)))
-                        dg = lambda x: float(dg_u(escalar(x)))
-                    elif "Ajuste exponencial":
-                        def g(x):
-                            return f(x) - p_val
-                        dg = resultados["df"]
-                        
-
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        a_custom = st.number_input("Límite inferior", value=float(min(U)),format="%.4f")
-                        max_iter = st.number_input("Máximo de iteraciones de bisección", value=10)
-                    with col2:
-                        b_custom = st.number_input("Límite superior", value=float(max(U)),format="%.4f")
-                        tol = st.number_input("Tolerancia de Newton-Raphson", value=1e-6, format="%.1e")
-
-                    #if st.button("🔧 Buscar raíz"):
-                    try:
-                        x_sol,_,_ = fn.biner2(g, dg,a_custom, b_custom, max_iter,tol)
-                        st.success(f"✅ Solución: x ≈ {x_sol:.6f} tal que f(x) ≈ {p_val:.4f}")
-
+                            a = st.number_input("Límite inferior de integración (a)", value=float(min(U)), min_value=float(min(U)), max_value=float(max(U)),format="%.4f")
+                            b = st.number_input("Límite superior de integración (b)", value=float(max(U)), min_value=float(min(U)), max_value=float(max(U)),format="%.4f")
+                            h = st.number_input("Paso de integración (h)", value=0.01, min_value=1e-4, format="%.4f")
+                        if h <= abs(b-a):
+                            with polum1:
+                                tipo_integracion = st.selectbox("Método de integración", ["simpson", "trapecio", "riemann"])
+                                area = fn.integral(f, a, b, h, tipo=tipo_integracion)
+                            with polum2:
+                                st.markdown(f"### 📐 Área bajo la curva entre {a} y {b}:")
+                                st.latex(rf"\int_{{{a}}}^{{{b}}} f(x)\,dx \approx {area:.5f}")
+                        else:
+                            with polum2:
+                                st.warning("El paso h es absurdo.")
+                    with curana[1]:
+                        st.subheader("Resoluación de ecuación")
+                        col1, col2 = st.columns([0.3,0.7)
+                        with col1:
+                            p_val = st.number_input("Elegí el valor de f(x) = p", value=0.0, step=0.01, format="%.4f")
                         if opcion == "Interpolación Spline":
-                            x_plot = U_interp
-                            y_plot = V_interp
-                        elif opcion == "Ajuste polinómico":
-                            x_plot = resultadospoli["U_plot"]
-                            y_plot = resultadospoli["V_plot"]
-                        elif opcion == "Ajuste exponencial":
-                            x_plot = np.linspace(min(U), max(U), 300)
-                            y_plot = resultados["f"](x_plot)
-
-                        fig, ax = plt.subplots()
-                        ax.plot(x_plot, y_plot, label="Función", color='blue')
-                        ax.axhline(p_val, color='gray', linestyle='--', label=f"p = {p_val}")
-                        ax.plot(x_sol, f(x_sol), 'go', label=f"x ≈ {x_sol:.4f}")
-                        ax.legend()
-                        st.pyplot(fig)
-                    except Exception as e:
-                        st.error(f"❌ Error: {e}")
+                            # Función g(x)
+                            def g(x):
+                                return f(x) - p_val
+                            # Derivada de g(x)
+                            dg = f.derivative()  # esta es f'(x)
+                        elif opcion == "Ajuste polinómico": 
+                            c = np.arange(0,grado+1,1)
+                            c = c[::-1]
+                            u = sp.symbols("u")
+                            h=0
+                            for k in range(len(c)):
+                                h+=resultadospoli['coef'][k]*u**c[k]
+                            gsym = sp.sympify(h-p_val)
+                            dgsym = sp.diff(gsym, u)*2 / (umax - umin)
+                            #st.latex(gsym)
+                            #st.latex(dgsym)
+                            g_u = sp.lambdify(u, gsym, "math")   # función evaluable
+                            dg_u = sp.lambdify(u, dgsym, "math") # derivada evaluable
+                            g = lambda x: float(g_u(escalar(x)))
+                            dg = lambda x: float(dg_u(escalar(x)))
+                        elif "Ajuste exponencial":
+                            def g(x):
+                                return f(x) - p_val
+                            dg = resultados["df"]
+                            
     
+                        
+                        with col1:
+                            a_custom = st.number_input("Límite inferior", value=float(min(U)),format="%.4f")
+                            max_iter = st.number_input("Máximo de iteraciones de bisección", value=10) 
+                            b_custom = st.number_input("Límite superior", value=float(max(U)),format="%.4f")
+                            tol = st.number_input("Tolerancia de Newton-Raphson", value=1e-6, format="%.1e")
+    
+                        #if st.button("🔧 Buscar raíz"):
+                        try:
+                            x_sol,_,_ = fn.biner2(g, dg,a_custom, b_custom, max_iter,tol)
+                            st.success(f"✅ Solución: x ≈ {x_sol:.6f} tal que f(x) ≈ {p_val:.4f}")
+    
+                            if opcion == "Interpolación Spline":
+                                x_plot = U_interp
+                                y_plot = V_interp
+                            elif opcion == "Ajuste polinómico":
+                                x_plot = resultadospoli["U_plot"]
+                                y_plot = resultadospoli["V_plot"]
+                            elif opcion == "Ajuste exponencial":
+                                x_plot = np.linspace(min(U), max(U), 300)
+                                y_plot = resultados["f"](x_plot)
+    
+                            fig, ax = plt.subplots()
+                            ax.plot(x_plot, y_plot, label="Función", color='blue')
+                            ax.axhline(p_val, color='gray', linestyle='--', label=f"p = {p_val}")
+                            ax.plot(x_sol, f(x_sol), 'go', label=f"x ≈ {x_sol:.4f}")
+                            ax.legend()
+                            with col2:
+                                st.pyplot(fig)
+                        except Exception as e:
+                            st.error(f"❌ Error: {e}")
+        
         
 # ------------------------------
 # Mostrar resultado
