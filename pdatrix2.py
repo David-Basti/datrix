@@ -1147,7 +1147,7 @@ match modulo:
                                 st.warning("El paso h es absurdo.")
                     with curana[1]:
                         st.subheader("Resoluación de ecuación")
-                        col1, col2 = st.columns([0.3,0.7)
+                        col1, col2 = st.columns([0.3,0.7])
                         with col1:
                             p_val = st.number_input("Elegí el valor de f(x) = p", value=0.0, step=0.01, format="%.4f")
                         if opcion == "Interpolación Spline":
