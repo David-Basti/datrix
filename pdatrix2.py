@@ -3767,7 +3767,7 @@ match modulo:
                                         ax.plot(centro[1], centro[0], "co", label="Centro")
                                     ax.set_title("Imagen original con línea de perfil")
                                     fn.mostrar_figura_como_imagen(fig)
-                                        case "ROIs":
+                    case "ROIs":
                         st.subheader("ROI 1 y ROI 2")
 
                         # Preparar imagen base
