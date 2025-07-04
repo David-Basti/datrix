@@ -64,12 +64,12 @@ st.markdown(
             <img src='data:image/jpeg;base64,{img_base64}' width='56'/>
             DaTrix
         </h1>
-        <p style='font-size: 20px;'>Herramientas interactivas para álgebra lineal, procesamiento de imágenes médicas y simulación tomográfica.</p>
+        <p style='font-size: 20px;'>App hecha con amor.</p>
     </div>
     """,
     unsafe_allow_html=True
 )
-#Una app para operaciones con matrices, procesamiento de imágenes y simulaciones de reconstrucción tomográfica.
+#Herramientas interactivas para álgebra lineal, procesamiento de imágenes médicas y simulación tomográfica
 
 #st.write("Una app para operaciones con matrices, procesamiento de imágenes y simulaciones de reconstrucción tomográfica.")
 
