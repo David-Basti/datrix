@@ -75,7 +75,7 @@ Simulador de reconstrución tomográfica de fantomas matemáticos.
 
 **Curva ROI vs. tiempo**
 
-
+<img src="capturas/ROISejemplo.jpg" width="600"/>
 
 ### Reconstrucción Tomográfica
 
