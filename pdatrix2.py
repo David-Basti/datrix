@@ -69,7 +69,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-#Herramientas interactivas para álgebra lineal, procesamiento de imágenes médicas y simulación tomográfica
+#Una app para operaciones con matrices, procesamiento de imágenes y simulaciones de reconstrucción tomográfica.
 
 #st.write("Una app para operaciones con matrices, procesamiento de imágenes y simulaciones de reconstrucción tomográfica.")
 
@@ -687,7 +687,7 @@ match modulo:
                                 
                                 spline = UnivariateSpline(U_ord, V_ord, w=(1/W_ord if W_ord is not None and len(W)==len(U) else None), s=suavizado)
 
-                                U_interp = np.linspace(U_ord.min(), U_ord.max(), 100000)
+                                U_interp = np.linspace(U_ord.min(), U_ord.max(), 1000)
                                 V_interp = spline(U_interp)
 
                                 ylimit2 = st.number_input(
@@ -1128,7 +1128,7 @@ match modulo:
                                     x_plot = resultadospoli["U_plot"]
                                     y_plot = resultadospoli["V_plot"]
                                 elif opcion == "Ajuste exponencial":
-                                    x_plot = np.linspace(min(U), max(U), 300)
+                                    x_plot = np.linspace(min(U), max(U), 1000)
                                     y_plot = resultados["f"](x_plot)
                                 # --- Mostrar gráfico con área sombreada ---
                                 fig_area, ax = plt.subplots()
@@ -1194,7 +1194,7 @@ match modulo:
                                 x_plot = resultadospoli["U_plot"]
                                 y_plot = resultadospoli["V_plot"]
                             elif opcion == "Ajuste exponencial":
-                                x_plot = np.linspace(min(U), max(U), 300)
+                                x_plot = np.linspace(min(U), max(U), 1000)
                                 y_plot = resultados["f"](x_plot)
 
                             fig, ax = plt.subplots()
@@ -1206,49 +1206,59 @@ match modulo:
                                 st.pyplot(fig)
                         except Exception as e:
                             st.error(f"❌ Error: {e}")
-                        with curana[2]:
-                            st.subheader("Análisis de Fourier del perfil")
-    
-                            dt = np.mean(np.diff(U))  # Paso promedio (puede ser constante)
-                            N = len(V)
-    
-                            # FFT y centrado
-                            fft_vals = np.fft.fft(V)
-                            fft_vals_shifted = np.fft.fftshift(fft_vals)
-                            EM = np.abs(fft_vals_shifted)
-    
-                            # Frecuencias normalizadas: radianes por muestra
-                            freqs = np.fft.fftshift(np.fft.fftfreq(N))       # ciclos/muestra
-                            freqs_rad = 2 * np.pi * freqs   
-    
-                            fmax = np.max(freqs_rad)
-                            fmin = np.min(freqs_rad)
+                    with curana[2]:
+                        st.subheader("Análisis de Fourier del perfil")
+
+                        # === 1. Sobremuestreo ===
+                        M = 1000
+                        #aosdmow
+                        # === 2. FFT con zero-padding ===
+                        N_fft = 2**14  # largo total con padding (16384 puntos), potencia de 2 para rendimiento
+                        V_padded = np.zeros(N_fft)
+                        V_padded[:M] = y_plot  # colocamos la función interpolada al inicio
+
+                        # Tiempo entre muestras
+                        dt = (U[-1] - U[0]) / (M - 1)
+                        fm = 1 / dt  # frecuencia de muestreo
+                        nyquist = fm / 2
+
+                        # === 3. FFT centrada ===
+                        fft_vals = np.fft.fft(V_padded)
+                        fft_vals_shifted = np.fft.fftshift(fft_vals)
+                        EM = np.abs(fft_vals_shifted)
+
+                        # === 4. Eje de frecuencias ===
+                        freqs = np.fft.fftshift(np.fft.fftfreq(N_fft, d=dt))  # Hz
+                        freqs_rad = 2 * np.pi * freqs  # rad/s
+                        aol1,aol2=st.columns(2)
+
+                        # Inputs para rango de frecuencia en rad/s
+                        min_freq = float(freqs_rad[0])
+                        max_freq = float(freqs_rad[-1])
+
+                        with aol1:
+                            freq_start = st.number_input("Frecuencia inicial (rad/s)", min_value=min_freq, max_value=max_freq, value=min_freq, format="%.4f")
+                        with aol2:
+                            freq_end = st.number_input("Frecuencia final (rad/s)", min_value=min_freq, max_value=max_freq, value=max_freq, format="%.4f")
+
+                        if freq_start > freq_end:
+                            st.error("La frecuencia inicial debe ser menor o igual a la frecuencia final.")
+                        else:
+                            filtro = (freqs_rad >= freq_start) & (freqs_rad <= freq_end)
+
+                            col1, col2 = st.columns(2)
+
                             
-                        
-    
-                            # Slider de rango en rad/muestra
-                            frec_range = st.slider(
-                                "Rango de frecuencias (rad/muestra)",
-                                min_value=-np.pi,
-                                max_value=np.pi,
-                                value=(-np.pi, np.pi),
-                                step=0.01,
-                                format="%.2f"
-                            )
-                            dol1,dol2=st.columns(2)
-                            sol1,sol2=st.columns(2)
-    
-                            filtro = (freqs_rad >= frec_range[0]) & (freqs_rad <= frec_range[1])
-    
                             fig_mag, ax_mag = plt.subplots()
                             ax_mag.plot(freqs_rad[filtro], EM[filtro], color='blue')
                             ax_mag.set_title("Espectro de Magnitud (centrado)")
                             ax_mag.set_xlabel("Frecuencia angular (rad/s)")
                             ax_mag.set_ylabel("Magnitud")
                             ax_mag.grid(True)
-                            with sol1:
+                            with col1:
                                 st.pyplot(fig_mag)
-                            with dol2:
+
+                            with aol2:
                                 mostrar_fase = st.checkbox("Mostrar fase", value=False)
                             if mostrar_fase:
                                 fase = np.angle(fft_vals_shifted)
@@ -1260,9 +1270,8 @@ match modulo:
                                 ax_fase.set_xlabel("Frecuencia angular (rad/s)")
                                 ax_fase.set_ylabel("Fase (rad)")
                                 ax_fase.grid(True)
-                                with sol2:
+                                with col2:
                                     st.pyplot(fig_fase)
-        
 # ------------------------------
 # Mostrar resultado
 # ------------------------------
@@ -3821,7 +3830,7 @@ match modulo:
                                         ax.plot(centro[1], centro[0], "co", label="Centro")
                                     ax.set_title("Imagen original con línea de perfil")
                                     fn.mostrar_figura_como_imagen(fig)
-                            
+
                             if columna is not None:
                                 f = UnivariateSpline(distances, df[columna], s=0)
                                 tab1, tab2, tab3 = st.tabs(["📐 Integración", "🔍 Resolver f(x) = p", "🔉 Transformada de Fourier"])
@@ -3882,61 +3891,68 @@ match modulo:
                                         st.error(f"❌ Error: {e}")
 
                                 with tab3:
-                                    st.subheader("Análisis de Fourier del perfil")
+                                    # === 1. Interpolación con spline ===
+                                        spline = UnivariateSpline(distances, df[columna], s=0)
+                                        M = 2048  # sobremuestreo para buena resolución
+                                        x_interp = np.linspace(distances[0], distances[-1], M)
+                                        y_interp = spline(x_interp)
 
-                                    dt = np.mean(np.diff(distances))  # Paso promedio (puede ser constante)
-                                    N = len(distances)
+                                        # === 2. Zero-padding antes de FFT ===
+                                        N_fft = 2**14  # gran potencia de 2 para buena resolución
+                                        y_padded = np.zeros(N_fft)
+                                        y_padded[:M] = y_interp  # función interpolada + ceros
 
-                                    fft_vals = np.fft.fft(df[columna])
-                                    fft_vals_shifted = np.fft.fftshift(fft_vals)
+                                        dt = (distances[-1] - distances[0]) / (M - 1)  # paso espacial
+                                        fm = 1 / dt
+                                        nyquist = fm / 2
 
-                                    EM = np.abs(fft_vals_shifted)
+                                        # === 3. FFT física (sin normalizar) ===
+                                        fft_vals = np.fft.fft(y_padded)
+                                        fft_vals_shifted = np.fft.fftshift(fft_vals)
+                                        EM = np.abs(fft_vals_shifted)
 
-                                    # Frecuencias normalizadas: radianes por muestra
-                                    freqs = np.fft.fftshift(np.fft.fftfreq(N))       # ciclos/muestra
-                                    freqs_rad = 2 * np.pi * freqs   
+                                        # Frecuencia angular en rad/unidad física (ej: rad/mm)
+                                        freqs = np.fft.fftshift(np.fft.fftfreq(N_fft, d=dt))
+                                        freqs_rad = 2 * np.pi * freqs
 
-                                    fmax_abs = np.max(np.abs(freqs_rad))
-                                    fmin = -fmax_abs
-                                    fmax = fmax_abs
+                                        # === 4. Rango interactivo ===
+                                        st.markdown("### Rango de frecuencias (rad/unidad física)")
+                                        col1, col2 = st.columns(2)
+                                        with col1:
+                                            f_ini = st.number_input("Frecuencia inicial", value=float(freqs_rad[0]), format="%.4f")
+                                        with col2:
+                                            f_fin = st.number_input("Frecuencia final", value=float(freqs_rad[-1]), format="%.4f")
 
-                                    # Slider de rango en rad/muestra
-                                    frec_range = st.slider(
-                                        "Rango de frecuencias (rad/muestra)",
-                                        min_value=-np.pi,
-                                        max_value=np.pi,
-                                        value=(-np.pi, np.pi),
-                                        step=0.01,
-                                        format="%.2f"
-                                    )
+                                        filtro = (freqs_rad >= f_ini) & (freqs_rad <= f_fin)
+                                        dol1, dol2 = st.columns(2)
+                                        sol1, sol2 = st.columns(2)
 
-                                    dol1,dol2=st.columns(2)
-                                    sol1,sol2=st.columns(2)
+                                        # Gráfico magnitud
+                                        fig_mag, ax_mag = plt.subplots()
+                                        ax_mag.plot(freqs_rad[filtro], EM[filtro], color='blue')
+                                        ax_mag.set_title("Espectro de Magnitud (centrado)")
+                                        ax_mag.set_xlabel("Frecuencia angular (rad/unidad)")
+                                        ax_mag.set_ylabel("Magnitud")
+                                        ax_mag.grid(True)
+                                        with sol1:
+                                            st.pyplot(fig_mag)
 
-                                    filtro = (freqs_rad >= frec_range[0]) & (freqs_rad <= frec_range[1])
+                                        # Gráfico de fase
+                                        with dol2:
+                                            mostrar_fase = st.checkbox("Mostrar fase", value=False)
+                                        if mostrar_fase:
+                                            fase = np.angle(fft_vals_shifted)
+                                            fig_fase, ax_fase = plt.subplots()
+                                            markerline, stemlines, baseline = ax_fase.stem(freqs_rad[filtro], fase[filtro], basefmt=" ")
+                                            plt.setp(markerline, color='orange', marker='o')
+                                            plt.setp(stemlines, color='orange')
+                                            ax_fase.set_title("Espectro de Fase (centrado y discreto)")
+                                            ax_fase.set_xlabel("Frecuencia angular (rad/unidad)")
+                                            ax_fase.set_ylabel("Fase (rad)")
+                                            ax_fase.grid(True)
+                                            with sol2:
+                                                st.pyplot(fig_fase)
 
-                                    fig_mag, ax_mag = plt.subplots()
-                                    ax_mag.plot(freqs_rad[filtro], EM[filtro], color='blue')
-                                    ax_mag.set_title("Espectro de Magnitud (centrado)")
-                                    ax_mag.set_xlabel("Frecuencia angular (rad/s)")
-                                    ax_mag.set_ylabel("Magnitud")
-                                    ax_mag.grid(True)
-                                    with sol1:
-                                        st.pyplot(fig_mag)
-                                    with dol2:
-                                        mostrar_fase = st.checkbox("Mostrar fase", value=False)
-                                    if mostrar_fase:
-                                        fase = np.angle(fft_vals_shifted)
-                                        fig_fase, ax_fase = plt.subplots()
-                                        markerline, stemlines, baseline = ax_fase.stem(freqs_rad[filtro], fase[filtro], basefmt=" ")
-                                        plt.setp(markerline, color='orange', marker='o')
-                                        plt.setp(stemlines, color='orange')
-                                        ax_fase.set_title("Espectro de Fase (centrado y discreto)")
-                                        ax_fase.set_xlabel("Frecuencia angular (rad/s)")
-                                        ax_fase.set_ylabel("Fase (rad)")
-                                        ax_fase.grid(True)
-                                        with sol2:
-                                            st.pyplot(fig_fase)
                     case "ROIs":
                         st.subheader("ROI 1 y ROI 2")
 
@@ -4071,7 +4087,7 @@ match modulo:
                             )
 
                             resultado = img_np.copy()
-#
+
                             if operacion == "Fusionar ROI 1 y ROI 2":
                                 mascara = np.logical_or(mask1, mask2)
                                 if mascara is not None and isinstance(mascara, np.ndarray) and mascara.dtype == bool:
@@ -4195,10 +4211,14 @@ match modulo:
                                     intensidad_roi1 = [np.mean(proy[:, :, i][mask1]) for i in range(N_frames)]
                                     intensidad_roi2 = [np.mean(proy[:, :, i][mask2]) for i in range(N_frames)]
 
+                                    f1 = UnivariateSpline(tiempos, intensidad_roi1, s=0)
+                                    f2 = UnivariateSpline(tiempos, intensidad_roi2, s=0)
+                                    x_full = np.linspace(tiempos[0], tiempos[-1], 1000)
+
                                     # Mostrar curva
                                     fig2, ax2 = plt.subplots()
-                                    ax2.plot(tiempos, intensidad_roi1, label="ROI 1", color="lime")
-                                    ax2.plot(tiempos, intensidad_roi2, label="ROI 2", color="yellow")
+                                    ax2.plot(x_full, f1(x_full), label="ROI 1", color="lime")
+                                    ax2.plot(x_full, f2(x_full), label="ROI 2", color="yellow")
                                     ax2.set_xlabel("Tiempo (s)")
                                     ax2.set_ylabel("Intensidad media")
                                     ax2.set_title("Curva ROI vs. Tiempo")
@@ -4206,9 +4226,6 @@ match modulo:
                                     with woli2:
                                         st.pyplot(fig2)
                                     
-
-                                    f1 = UnivariateSpline(tiempos, intensidad_roi1, s=0)
-                                    f2 = UnivariateSpline(tiempos, intensidad_roi2, s=0)
                                     # --- Análisis detallado spline ROI vs tiempo ---
                                     st.markdown("## 📊 Análisis de curvas")
 
@@ -4217,7 +4234,6 @@ match modulo:
                                     datos = intensidad_roi1 if "1" in spline_opciones else intensidad_roi2
 
                                     # Evaluar f en todo el dominio
-                                    x_full = np.linspace(tiempos[0], tiempos[-1], 1000)
                                     y_full = f(x_full)
 
                                     x_min_full, x_max_full = float(min(x_full)), float(max(x_full))
@@ -4270,7 +4286,7 @@ match modulo:
                                         st.pyplot(fig_detalle)
 
                                     # --- Análisis avanzado ---
-                                    tab1, tab2 = st.tabs(["📐 Integración", "🔍 Resolver f(x) = p", "🔉 Transformada de Fourier"])
+                                    tab1, tab2, tab3 = st.tabs(["📐 Integración", "🔍 Resolver f(x) = p", "🔉 Transformada de Fourier"])
 
                                     with tab1:
                                         st.subheader("Área bajo la curva (integración)")
@@ -4326,67 +4342,62 @@ match modulo:
                                         except Exception as e:
                                             st.error(f"❌ Error: {e}")
                                     with tab3:
-                                        st.subheader("Análisis de Fourier de f(x)")
+                                        # === 1. Interpolación spline + sobremuestreo ===
+                                        spline = UnivariateSpline(tiempos, datos, s=0)
+                                        M = 2048  # cantidad de puntos para interpolar
+                                        x_interp = np.linspace(tiempos[0], tiempos[-1], M)
+                                        y_interp = spline(x_interp)
 
-                                        # Evaluar f(x) en puntos equiespaciados
-                                        x_vals = np.array(tiempos)
-                                        y_vals = np.array(datos)  # intensidad_roi1 o intensidad_roi2
+                                        # === 2. Zero-padding antes de la FFT ===
+                                        N_fft = 2**14  # potencia de 2 para buena resolución espectral
+                                        y_padded = np.zeros(N_fft)
+                                        y_padded[:M] = y_interp
 
-                                        dt = tiempo_por_frame
-                                        N = len(y_vals)
+                                        # === 3. Parámetros temporales ===
+                                        dt = (tiempos[-1] - tiempos[0]) / (M - 1)
                                         fm = 1 / dt
                                         nyquist = fm / 2
 
-                                        # FFT y centrado
-                                        fft_vals = np.fft.fft(y_vals)
+                                        # === 4. FFT física centrada ===
+                                        fft_vals = np.fft.fft(y_padded)
                                         fft_vals_shifted = np.fft.fftshift(fft_vals)
                                         EM = np.abs(fft_vals_shifted)
-                                        # Frecuencias normalizadas: radianes por muestra
-                                        freqs = np.fft.fftshift(np.fft.fftfreq(N))       # ciclos/muestra
-                                        freqs_rad = 2 * np.pi * freqs   
 
-                                        fmax = np.max(freqs_rad)
-                                        fmin = np.min(freqs_rad)
-                                        
+                                        # === 5. Frecuencia angular real ===
+                                        freqs = np.fft.fftshift(np.fft.fftfreq(N_fft, d=dt))  # Hz
+                                        freqs_rad = 2 * np.pi * freqs  # rad/s
 
-                                        # Slider de rango en rad/muestra
-                                        frec_range = st.slider(
-                                            "Rango de frecuencias (rad/muestra)",
-                                            min_value=-np.pi,
-                                            max_value=np.pi,
-                                            value=(-np.pi, np.pi),
-                                            step=0.01,
-                                            format="%.2f"
-                                        )
+                                        # === 6. Selección de rango interactivo ===
+                                        st.markdown("### Rango de frecuencias (rad/s)")
+                                        colf1, colf2 = st.columns(2)
+                                        with colf1:
+                                            f_ini = st.number_input("Frecuencia inicial", value=float(freqs_rad[0]), format="%.2f")
+                                        with colf2:
+                                            f_fin = st.number_input("Frecuencia final", value=float(freqs_rad[-1]), format="%.2f")
 
+                                        filtro = (freqs_rad >= f_ini) & (freqs_rad <= f_fin)
                                         dol1,dol2=st.columns(2)
                                         sol1,sol2=st.columns(2)
 
-                                        filtro = (freqs_rad >= frec_range[0]) & (freqs_rad <= frec_range[1])
-
-                                        # Gráfico del espectro de magnitud centrado
+                                        # === 7. Espectro de magnitud ===
                                         fig_mag, ax_mag = plt.subplots()
                                         ax_mag.plot(freqs_rad[filtro], EM[filtro], color='blue')
-                                        ax_mag.set_title("Espectro de Magnitud (centrado)")
+                                        ax_mag.set_title("Espectro de Magnitud (alta resolución)")
                                         ax_mag.set_xlabel("Frecuencia angular (rad/s)")
                                         ax_mag.set_ylabel("Magnitud")
                                         ax_mag.grid(True)
                                         with sol1:
                                             st.pyplot(fig_mag)
 
-                                        # Fase (opcional)
+                                        # === 8. Fase (opcional) ===
                                         with dol2:
                                             mostrar_fase = st.checkbox("Mostrar fase", value=False)
                                         if mostrar_fase:
                                             fase = np.angle(fft_vals_shifted)
-                                            # fase = np.unwrap(np.angle(fft_vals_shifted))  # si querés fase continua
-
                                             fig_fase, ax_fase = plt.subplots()
                                             markerline, stemlines, baseline = ax_fase.stem(freqs_rad[filtro], fase[filtro], basefmt=" ")
-                                            
                                             plt.setp(markerline, color='orange', marker='o')
                                             plt.setp(stemlines, color='orange')
-                                            
                                             ax_fase.set_title("Espectro de Fase (centrado y discreto)")
                                             ax_fase.set_xlabel("Frecuencia angular (rad/s)")
                                             ax_fase.set_ylabel("Fase (rad)")
@@ -4581,7 +4592,7 @@ match modulo:
                                         st.pyplot(fig_detalle)
 
                                     # --- Análisis avanzado ---
-                                    tab1, tab2, tab3 = st.tabs(["📐 Integración", "🔍 Resolver f(x) = p", "🔉 Transformada de Fourier"])
+                                    tab1,tab2,tab3 = st.tabs(["📐 Integración", "🔍 Resolver f(x) = p", "🔉 Transformada de Fourier"])
 
                                     with tab1:
                                         st.subheader("Área bajo la curva (integración)")
@@ -4636,74 +4647,74 @@ match modulo:
                                                 st.pyplot(fig_eq)
                                         except Exception as e:
                                             st.error(f"❌ Error: {e}")
+                                    
                                     with tab3:
-                                        st.subheader("Análisis de Fourier de f(x)")
+                                        # === 1. Interpolación spline + sobremuestreo ===
+                                        spline = UnivariateSpline(tiempos, datos, s=0)
+                                        M = 2048  # cantidad de puntos para interpolar
+                                        x_interp = np.linspace(tiempos[0], tiempos[-1], M)
+                                        y_interp = spline(x_interp)
 
-                                        # Evaluar f(x) en puntos equiespaciados
-                                        x_vals = np.array(tiempos)
-                                        y_vals = np.array(datos)  # intensidad_roi1 o intensidad_roi2
+                                        # === 2. Zero-padding antes de la FFT ===
+                                        N_fft = 2**14  # potencia de 2 para buena resolución espectral
+                                        y_padded = np.zeros(N_fft)
+                                        y_padded[:M] = y_interp
 
-                                        dt = tiempo_por_frame
-                                        N = len(y_vals)
+                                        # === 3. Parámetros temporales ===
+                                        dt = (tiempos[-1] - tiempos[0]) / (M - 1)
                                         fm = 1 / dt
                                         nyquist = fm / 2
 
-                                        # FFT y centrado
-                                        fft_vals = np.fft.fft(y_vals)
+                                        # === 4. FFT física centrada ===
+                                        fft_vals = np.fft.fft(y_padded)
                                         fft_vals_shifted = np.fft.fftshift(fft_vals)
                                         EM = np.abs(fft_vals_shifted)
-                                        # Frecuencias normalizadas: radianes por muestra
-                                        freqs = np.fft.fftshift(np.fft.fftfreq(N))       # ciclos/muestra
-                                        freqs_rad = 2 * np.pi * freqs   
 
-                                        fmax = np.max(freqs_rad)
-                                        fmin = np.min(freqs_rad)
-                                        
+                                        # === 5. Frecuencia angular real ===
+                                        freqs = np.fft.fftshift(np.fft.fftfreq(N_fft, d=dt))  # Hz
+                                        freqs_rad = 2 * np.pi * freqs  # rad/s
 
-                                        # Slider de rango en rad/muestra
-                                        frec_range = st.slider(
-                                            "Rango de frecuencias (rad/muestra)",
-                                            min_value=-np.pi,
-                                            max_value=np.pi,
-                                            value=(-np.pi, np.pi),
-                                            step=0.01,
-                                            format="%.2f"
-                                        )
+                                        # === 6. Selección de rango interactivo ===
+                                        st.markdown("### Rango de frecuencias (rad/s)")
+                                        colf1, colf2 = st.columns(2)
+                                        with colf1:
+                                            f_ini = st.number_input("Frecuencia inicial", value=float(freqs_rad[0]), format="%.2f")
+                                        with colf2:
+                                            f_fin = st.number_input("Frecuencia final", value=float(freqs_rad[-1]), format="%.2f")
 
+                                        filtro = (freqs_rad >= f_ini) & (freqs_rad <= f_fin)
                                         dol1,dol2=st.columns(2)
                                         sol1,sol2=st.columns(2)
 
-                                        filtro = (freqs_rad >= frec_range[0]) & (freqs_rad <= frec_range[1])
-
-                                        # Gráfico del espectro de magnitud centrado
+                                        # === 7. Espectro de magnitud ===
                                         fig_mag, ax_mag = plt.subplots()
                                         ax_mag.plot(freqs_rad[filtro], EM[filtro], color='blue')
-                                        ax_mag.set_title("Espectro de Magnitud (centrado)")
+                                        ax_mag.set_title("Espectro de Magnitud (alta resolución)")
                                         ax_mag.set_xlabel("Frecuencia angular (rad/s)")
                                         ax_mag.set_ylabel("Magnitud")
                                         ax_mag.grid(True)
                                         with sol1:
                                             st.pyplot(fig_mag)
 
-                                        # Fase (opcional)
+                                        # === 8. Fase (opcional) ===
                                         with dol2:
                                             mostrar_fase = st.checkbox("Mostrar fase", value=False)
                                         if mostrar_fase:
                                             fase = np.angle(fft_vals_shifted)
-                                            # fase = np.unwrap(np.angle(fft_vals_shifted))  # si querés fase continua
-
                                             fig_fase, ax_fase = plt.subplots()
                                             markerline, stemlines, baseline = ax_fase.stem(freqs_rad[filtro], fase[filtro], basefmt=" ")
-                                            
                                             plt.setp(markerline, color='orange', marker='o')
                                             plt.setp(stemlines, color='orange')
-                                            
                                             ax_fase.set_title("Espectro de Fase (centrado y discreto)")
                                             ax_fase.set_xlabel("Frecuencia angular (rad/s)")
                                             ax_fase.set_ylabel("Fase (rad)")
                                             ax_fase.grid(True)
                                             with sol2:
                                                 st.pyplot(fig_fase)
+                                        #st.info(f"""
+                                        #    La frecuencia de muestreo es {fm:.2f} Hz → frecuencia de Nyquist: {nyquist:.2f} Hz ({2*np.pi*nyquist:.2f} rad/s).
+                                        #    Se usa `fftshift` para centrar el espectro como en MATLAB.
+                                        #""")
 
                                     # Crear único DataFrame con todo junto
                                     df = pd.DataFrame({
@@ -4725,9 +4736,8 @@ match modulo:
                                         file_name="curvas_ROI.xlsx",
                                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                                     )
-                                else:
-                                    st.warning("Dibujá ambas ROIs y cargá un archivo multiframe para generar la curva.")  
-                                
+
+                                    
                     case "ROIs2":
                         with tolum1:
                             # ROI 1 con centro + ancho/alto
@@ -4874,6 +4884,6 @@ match modulo:
         ### 💙 ¿Te gustó la app?
         Apoyá el proyecto con una donación:
         [📲 Donar vía MercadoPago](http://link.mercadopago.com.ar/datrix)
-        Más información en:
+         Más información en:
         [⭐ Dejame una estrella](https://github.com/David-Basti/datrix/stargazers)
         """)
