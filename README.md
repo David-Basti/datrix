@@ -91,6 +91,25 @@ Simulador de reconstrución tomográfica de fantomas matemáticos.
 
 ---
 
+## Tecnologías utilizadas
+
+Este proyecto fue desarrollado en Python utilizando las siguientes bibliotecas:
+
+- [**Streamlit**](https://streamlit.io/) `v1.45.1` – Framework principal para crear la app web
+- [**NumPy**](https://numpy.org/) – Álgebra lineal y operaciones matriciales
+- [**Matplotlib**](https://matplotlib.org/) – Gráficos 2D y visualizaciones
+- [**SymPy**](https://www.sympy.org/en/index.html) – Cálculo simbólico
+- [**SciPy**](https://scipy.org/) – Métodos numéricos (interpolación, ajuste, resolución de ecuaciones)
+- [**Pandas**](https://pandas.pydata.org/) – Análisis y manipulación de datos
+- [**scikit-image**](https://scikit-image.org/) – Procesamiento de imágenes
+- [**OpenCV** (headless)](https://opencv.org/) – Edición y filtrado de imágenes
+- [**Pillow**](https://python-pillow.org/) – Manejo de imágenes (carga, guardado, conversión)
+- [**Pydicom**](https://pydicom.github.io/) – Lectura y análisis de archivos DICOM
+- [**ImageIO**](https://imageio.github.io/) – Lectura de imágenes multiformato
+- [**XlsxWriter**](https://xlsxwriter.readthedocs.io/) – Exportación de datos a archivos Excel `.xlsx`
+- [**openpyxl**](https://openpyxl.readthedocs.io/) – Lectura y edición de archivos Excel
+- [**streamlit-drawable-canvas**](https://github.com/andfanilo/streamlit-drawable-canvas) `v0.5.2` – Herramienta para dibujar ROIs y anotaciones
+
 ## Futuras mejoras
 
 - **Álgebra:** transformada de Fourier para curvas.
