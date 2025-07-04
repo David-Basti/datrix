@@ -1104,7 +1104,7 @@ match modulo:
                                 st.pyplot(figexp)
 
                 if f is not None:
-                    curana = st.tabs(["Integración", "Resolución de ecuación"])
+                    curana = st.tabs(["Integración", "Resolución de ecuación", "Transformada de Fourier"])
                     with curana[0]:
                         st.subheader("Integración")
                         # Calcular área
@@ -1206,7 +1206,63 @@ match modulo:
                                 st.pyplot(fig)
                         except Exception as e:
                             st.error(f"❌ Error: {e}")
+                        with curana[2]:
+                            st.subheader("Análisis de Fourier del perfil")
     
+                            dt = np.mean(np.diff(U))  # Paso promedio (puede ser constante)
+                            N = len(V)
+    
+                            # FFT y centrado
+                            fft_vals = np.fft.fft(V)
+                            fft_vals_shifted = np.fft.fftshift(fft_vals)
+                            EM = np.abs(fft_vals_shifted)
+    
+                            # Frecuencias normalizadas: radianes por muestra
+                            freqs = np.fft.fftshift(np.fft.fftfreq(N))       # ciclos/muestra
+                            freqs_rad = 2 * np.pi * freqs   
+    
+                            fmax = np.max(freqs_rad)
+                            fmin = np.min(freqs_rad)
+                            
+                        
+    
+                            # Slider de rango en rad/muestra
+                            frec_range = st.slider(
+                                "Rango de frecuencias (rad/muestra)",
+                                min_value=-np.pi,
+                                max_value=np.pi,
+                                value=(-np.pi, np.pi),
+                                step=0.01,
+                                format="%.2f"
+                            )
+                            dol1,dol2=st.columns(2)
+                            sol1,sol2=st.columns(2)
+    
+                            filtro = (freqs_rad >= frec_range[0]) & (freqs_rad <= frec_range[1])
+    
+                            fig_mag, ax_mag = plt.subplots()
+                            ax_mag.plot(freqs_rad[filtro], EM[filtro], color='blue')
+                            ax_mag.set_title("Espectro de Magnitud (centrado)")
+                            ax_mag.set_xlabel("Frecuencia angular (rad/s)")
+                            ax_mag.set_ylabel("Magnitud")
+                            ax_mag.grid(True)
+                            with sol1:
+                                st.pyplot(fig_mag)
+                            with dol2:
+                                mostrar_fase = st.checkbox("Mostrar fase", value=False)
+                            if mostrar_fase:
+                                fase = np.angle(fft_vals_shifted)
+                                fig_fase, ax_fase = plt.subplots()
+                                markerline, stemlines, baseline = ax_fase.stem(freqs_rad[filtro], fase[filtro], basefmt=" ")
+                                plt.setp(markerline, color='orange', marker='o')
+                                plt.setp(stemlines, color='orange')
+                                ax_fase.set_title("Espectro de Fase (centrado y discreto)")
+                                ax_fase.set_xlabel("Frecuencia angular (rad/s)")
+                                ax_fase.set_ylabel("Fase (rad)")
+                                ax_fase.grid(True)
+                                with sol2:
+                                    st.pyplot(fig_fase)
+        
 # ------------------------------
 # Mostrar resultado
 # ------------------------------
@@ -3765,6 +3821,122 @@ match modulo:
                                         ax.plot(centro[1], centro[0], "co", label="Centro")
                                     ax.set_title("Imagen original con línea de perfil")
                                     fn.mostrar_figura_como_imagen(fig)
+                            
+                            if columna is not None:
+                                f = UnivariateSpline(distances, df[columna], s=0)
+                                tab1, tab2, tab3 = st.tabs(["📐 Integración", "🔍 Resolver f(x) = p", "🔉 Transformada de Fourier"])
+                                with tab1:
+                                    st.subheader("Área bajo la curva (integración)")
+                                    col1, col2 = st.columns([0.3, 0.7])
+                                    with col1:
+                                        a_int = st.number_input("Límite inferior (a)", value=float(distances[0]), format="%.2f")
+                                        b_int = st.number_input("Límite superior (b)", value=float(distances[-1]), format="%.2f")
+                                        h_int = st.number_input("Paso h", value=(distances[-1] - distances[0]) / len(distances), format="%.4f", min_value=1e-4)
+                                        metodo = st.selectbox("Método de integración", ["simpson", "trapecio", "riemann"])
+                                    with col2:
+                                        if h_int <= abs(b_int - a_int):
+                                            area = fn.integral(f, a_int, b_int, h=h_int, tipo=metodo)
+                                            st.latex(rf"\int_{{{a_int}}}^{{{b_int}}} f(x)\,dx \approx {area:.4f}")
+                                            fig, ax = plt.subplots()
+                                            ax.plot(distances, df[columna], label="Perfil de intensidad", color="blue")
+                                            x_fill = np.linspace(a_int, b_int, 500)
+                                            y_fill = f(x_fill)
+                                            ax.fill_between(x_fill, y_fill, color='skyblue', alpha=0.4)
+                                            ax.set_xlabel("Posición (píxeles o mm)")
+                                            ax.set_ylabel("Intensidad")
+                                            ax.set_title("Área bajo el perfil")
+                                            ax.legend()
+                                            st.pyplot(fig)
+                                        else:
+                                            st.warning("El paso h es mayor que el intervalo.")
+
+                                with tab2:
+                                    st.subheader("Resolver ecuación f(x) = p")
+                                    col1, col2 = st.columns([0.3, 0.7])
+                                    with col1:
+                                        p_val = st.number_input("Valor p", value=float(df[columna].mean()), step=0.1)
+                                        a_bis = st.number_input("Límite inferior", value=float(distances[0]), format="%.2f")
+                                        b_bis = st.number_input("Límite superior", value=float(distances[-1]), format="%.2f")
+                                        tol = st.number_input("Tolerancia", value=1e-6, format="%.1e")
+                                        max_iter = st.number_input("Máx. iteraciones", value=20, step=1)
+
+                                    def g(x): 
+                                        return f(x) - p_val
+
+                                    # Derivada numérica simple (puede mejorar si querés)
+                                    def dg(x, h=1e-5):
+                                        return (g(x + h) - g(x - h)) / (2 * h)
+
+                                    try:
+                                        x_sol, _, _ = fn.biner2(g, dg, a_bis, b_bis, max_iter, tol)
+                                        st.success(f"✅ f(x) ≈ {p_val} → x ≈ {x_sol:.4f}")
+
+                                        fig, ax = plt.subplots()
+                                        ax.plot(distances, df[columna], label="Perfil de intensidad", color="blue")
+                                        ax.axhline(p_val, color='gray', linestyle='--', label=f"p = {p_val}")
+                                        ax.plot(x_sol, f(x_sol), 'go', label=f"x ≈ {x_sol:.2f}")
+                                        ax.legend()
+                                        with col2:
+                                            st.pyplot(fig)
+                                    except Exception as e:
+                                        st.error(f"❌ Error: {e}")
+
+                                with tab3:
+                                    st.subheader("Análisis de Fourier del perfil")
+
+                                    dt = np.mean(np.diff(distances))  # Paso promedio (puede ser constante)
+                                    N = len(distances)
+
+                                    fft_vals = np.fft.fft(df[columna])
+                                    fft_vals_shifted = np.fft.fftshift(fft_vals)
+
+                                    EM = np.abs(fft_vals_shifted)
+
+                                    # Frecuencias normalizadas: radianes por muestra
+                                    freqs = np.fft.fftshift(np.fft.fftfreq(N))       # ciclos/muestra
+                                    freqs_rad = 2 * np.pi * freqs   
+
+                                    fmax_abs = np.max(np.abs(freqs_rad))
+                                    fmin = -fmax_abs
+                                    fmax = fmax_abs
+
+                                    # Slider de rango en rad/muestra
+                                    frec_range = st.slider(
+                                        "Rango de frecuencias (rad/muestra)",
+                                        min_value=-np.pi,
+                                        max_value=np.pi,
+                                        value=(-np.pi, np.pi),
+                                        step=0.01,
+                                        format="%.2f"
+                                    )
+
+                                    dol1,dol2=st.columns(2)
+                                    sol1,sol2=st.columns(2)
+
+                                    filtro = (freqs_rad >= frec_range[0]) & (freqs_rad <= frec_range[1])
+
+                                    fig_mag, ax_mag = plt.subplots()
+                                    ax_mag.plot(freqs_rad[filtro], EM[filtro], color='blue')
+                                    ax_mag.set_title("Espectro de Magnitud (centrado)")
+                                    ax_mag.set_xlabel("Frecuencia angular (rad/s)")
+                                    ax_mag.set_ylabel("Magnitud")
+                                    ax_mag.grid(True)
+                                    with sol1:
+                                        st.pyplot(fig_mag)
+                                    with dol2:
+                                        mostrar_fase = st.checkbox("Mostrar fase", value=False)
+                                    if mostrar_fase:
+                                        fase = np.angle(fft_vals_shifted)
+                                        fig_fase, ax_fase = plt.subplots()
+                                        markerline, stemlines, baseline = ax_fase.stem(freqs_rad[filtro], fase[filtro], basefmt=" ")
+                                        plt.setp(markerline, color='orange', marker='o')
+                                        plt.setp(stemlines, color='orange')
+                                        ax_fase.set_title("Espectro de Fase (centrado y discreto)")
+                                        ax_fase.set_xlabel("Frecuencia angular (rad/s)")
+                                        ax_fase.set_ylabel("Fase (rad)")
+                                        ax_fase.grid(True)
+                                        with sol2:
+                                            st.pyplot(fig_fase)
                     case "ROIs":
                         st.subheader("ROI 1 y ROI 2")
 
@@ -4153,6 +4325,74 @@ match modulo:
                                                 st.pyplot(fig_eq)
                                         except Exception as e:
                                             st.error(f"❌ Error: {e}")
+                                    with tab3:
+                                        st.subheader("Análisis de Fourier de f(x)")
+
+                                        # Evaluar f(x) en puntos equiespaciados
+                                        x_vals = np.array(tiempos)
+                                        y_vals = np.array(datos)  # intensidad_roi1 o intensidad_roi2
+
+                                        dt = tiempo_por_frame
+                                        N = len(y_vals)
+                                        fm = 1 / dt
+                                        nyquist = fm / 2
+
+                                        # FFT y centrado
+                                        fft_vals = np.fft.fft(y_vals)
+                                        fft_vals_shifted = np.fft.fftshift(fft_vals)
+                                        EM = np.abs(fft_vals_shifted)
+                                        # Frecuencias normalizadas: radianes por muestra
+                                        freqs = np.fft.fftshift(np.fft.fftfreq(N))       # ciclos/muestra
+                                        freqs_rad = 2 * np.pi * freqs   
+
+                                        fmax = np.max(freqs_rad)
+                                        fmin = np.min(freqs_rad)
+                                        
+
+                                        # Slider de rango en rad/muestra
+                                        frec_range = st.slider(
+                                            "Rango de frecuencias (rad/muestra)",
+                                            min_value=-np.pi,
+                                            max_value=np.pi,
+                                            value=(-np.pi, np.pi),
+                                            step=0.01,
+                                            format="%.2f"
+                                        )
+
+                                        dol1,dol2=st.columns(2)
+                                        sol1,sol2=st.columns(2)
+
+                                        filtro = (freqs_rad >= frec_range[0]) & (freqs_rad <= frec_range[1])
+
+                                        # Gráfico del espectro de magnitud centrado
+                                        fig_mag, ax_mag = plt.subplots()
+                                        ax_mag.plot(freqs_rad[filtro], EM[filtro], color='blue')
+                                        ax_mag.set_title("Espectro de Magnitud (centrado)")
+                                        ax_mag.set_xlabel("Frecuencia angular (rad/s)")
+                                        ax_mag.set_ylabel("Magnitud")
+                                        ax_mag.grid(True)
+                                        with sol1:
+                                            st.pyplot(fig_mag)
+
+                                        # Fase (opcional)
+                                        with dol2:
+                                            mostrar_fase = st.checkbox("Mostrar fase", value=False)
+                                        if mostrar_fase:
+                                            fase = np.angle(fft_vals_shifted)
+                                            # fase = np.unwrap(np.angle(fft_vals_shifted))  # si querés fase continua
+
+                                            fig_fase, ax_fase = plt.subplots()
+                                            markerline, stemlines, baseline = ax_fase.stem(freqs_rad[filtro], fase[filtro], basefmt=" ")
+                                            
+                                            plt.setp(markerline, color='orange', marker='o')
+                                            plt.setp(stemlines, color='orange')
+                                            
+                                            ax_fase.set_title("Espectro de Fase (centrado y discreto)")
+                                            ax_fase.set_xlabel("Frecuencia angular (rad/s)")
+                                            ax_fase.set_ylabel("Fase (rad)")
+                                            ax_fase.grid(True)
+                                            with sol2:
+                                                st.pyplot(fig_fase)
 
                                     # Crear único DataFrame con todo junto
                                     df = pd.DataFrame({
@@ -4396,6 +4636,74 @@ match modulo:
                                                 st.pyplot(fig_eq)
                                         except Exception as e:
                                             st.error(f"❌ Error: {e}")
+                                    with tab3:
+                                        st.subheader("Análisis de Fourier de f(x)")
+
+                                        # Evaluar f(x) en puntos equiespaciados
+                                        x_vals = np.array(tiempos)
+                                        y_vals = np.array(datos)  # intensidad_roi1 o intensidad_roi2
+
+                                        dt = tiempo_por_frame
+                                        N = len(y_vals)
+                                        fm = 1 / dt
+                                        nyquist = fm / 2
+
+                                        # FFT y centrado
+                                        fft_vals = np.fft.fft(y_vals)
+                                        fft_vals_shifted = np.fft.fftshift(fft_vals)
+                                        EM = np.abs(fft_vals_shifted)
+                                        # Frecuencias normalizadas: radianes por muestra
+                                        freqs = np.fft.fftshift(np.fft.fftfreq(N))       # ciclos/muestra
+                                        freqs_rad = 2 * np.pi * freqs   
+
+                                        fmax = np.max(freqs_rad)
+                                        fmin = np.min(freqs_rad)
+                                        
+
+                                        # Slider de rango en rad/muestra
+                                        frec_range = st.slider(
+                                            "Rango de frecuencias (rad/muestra)",
+                                            min_value=-np.pi,
+                                            max_value=np.pi,
+                                            value=(-np.pi, np.pi),
+                                            step=0.01,
+                                            format="%.2f"
+                                        )
+
+                                        dol1,dol2=st.columns(2)
+                                        sol1,sol2=st.columns(2)
+
+                                        filtro = (freqs_rad >= frec_range[0]) & (freqs_rad <= frec_range[1])
+
+                                        # Gráfico del espectro de magnitud centrado
+                                        fig_mag, ax_mag = plt.subplots()
+                                        ax_mag.plot(freqs_rad[filtro], EM[filtro], color='blue')
+                                        ax_mag.set_title("Espectro de Magnitud (centrado)")
+                                        ax_mag.set_xlabel("Frecuencia angular (rad/s)")
+                                        ax_mag.set_ylabel("Magnitud")
+                                        ax_mag.grid(True)
+                                        with sol1:
+                                            st.pyplot(fig_mag)
+
+                                        # Fase (opcional)
+                                        with dol2:
+                                            mostrar_fase = st.checkbox("Mostrar fase", value=False)
+                                        if mostrar_fase:
+                                            fase = np.angle(fft_vals_shifted)
+                                            # fase = np.unwrap(np.angle(fft_vals_shifted))  # si querés fase continua
+
+                                            fig_fase, ax_fase = plt.subplots()
+                                            markerline, stemlines, baseline = ax_fase.stem(freqs_rad[filtro], fase[filtro], basefmt=" ")
+                                            
+                                            plt.setp(markerline, color='orange', marker='o')
+                                            plt.setp(stemlines, color='orange')
+                                            
+                                            ax_fase.set_title("Espectro de Fase (centrado y discreto)")
+                                            ax_fase.set_xlabel("Frecuencia angular (rad/s)")
+                                            ax_fase.set_ylabel("Fase (rad)")
+                                            ax_fase.grid(True)
+                                            with sol2:
+                                                st.pyplot(fig_fase)
 
                                     # Crear único DataFrame con todo junto
                                     df = pd.DataFrame({
