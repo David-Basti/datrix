@@ -1904,7 +1904,7 @@ def RLE_exponential_fit(U, V, W=None, plot=True, titulo="", xlabel="", ylabel=""
     if plot:
         fig, ax = plt.subplots()
         ax.scatter(U, V, color="r", label="Datos")
-        U_plot = np.linspace(min(U), max(U), 300)
+        U_plot = np.linspace(min(U), max(U), 1000)
         V_plot = modelo_exp(U_plot, a, b, c)
         ax.plot(U_plot, V_plot, color="blue", label="Ajuste exponencial")
 
@@ -1922,7 +1922,7 @@ def RLE_exponential_fit(U, V, W=None, plot=True, titulo="", xlabel="", ylabel=""
     if plot:
         fig2, ax = plt.subplots()
         #ax.scatter(U, V, color="r", label="Datos")
-        U_plot = np.linspace(min(U), max(U), 300)
+        U_plot = np.linspace(min(U), max(U), 1000)
         V_plot = modelo_exp(U_plot, a, b, c)
         ax.plot(U_plot, V_plot, color="blue", label="Ajuste exponencial")
 
@@ -1936,7 +1936,7 @@ def RLE_exponential_fit(U, V, W=None, plot=True, titulo="", xlabel="", ylabel=""
         #ax.grid(True)
         plt.close(fig2)
     f_evaluable = lambda x: a * np.exp(b * x) + c
-    U_plot = np.linspace(min(U), max(U), 300)
+    U_plot = np.linspace(min(U), max(U), 1000)
     V_plot = modelo_exp(U_plot, a, b, c)
     df = lambda x: a * b * np.exp(b * x)
     # Resultado
