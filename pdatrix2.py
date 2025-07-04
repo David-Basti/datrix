@@ -84,7 +84,7 @@ st.sidebar.markdown("---")
 st.sidebar.markdown("### 💙 ¿Te gustó la app?")
 st.sidebar.markdown("Apoyá el proyecto con una donación:")
 st.sidebar.markdown("[📲 Donar vía MercadoPago](http://link.mercadopago.com.ar/datrix)")
-st.sidebar.markdown("📂 [Repositorio en GitHub](https://github.com/David-Basti/datrix")
+st.sidebar.markdown("📂 [Repositorio en GitHub](https://github.com/David-Basti/datrix)")
 
 match modulo:
     case "Álgebra":
@@ -4567,5 +4567,5 @@ match modulo:
         Apoyá el proyecto con una donación:
         [📲 Donar vía MercadoPago](http://link.mercadopago.com.ar/datrix)
         Más información en:
-        ⭐ [Dejame una estrella](https://github.com/David-Basti/datrix)
+        [⭐ Dejame una estrella](https://github.com/David-Basti/datrix)
         """)
