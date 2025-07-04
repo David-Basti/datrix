@@ -109,12 +109,6 @@ Este proyecto fue desarrollado en Python utilizando las siguientes bibliotecas:
 - [**XlsxWriter**](https://xlsxwriter.readthedocs.io/) – Exportación de datos a archivos Excel `.xlsx`
 - [**openpyxl**](https://openpyxl.readthedocs.io/) – Lectura y edición de archivos Excel
 - [**streamlit-drawable-canvas**](https://github.com/andfanilo/streamlit-drawable-canvas) `v0.5.2` – Herramienta para dibujar ROIs y anotaciones
-
-## Futuras mejoras
-
-- **Álgebra:** transformada de Fourier para curvas.
-- **Procesamiento de Imágenes:** transformada de Fourier para perfil de intensidad y curva ROI vs. tiempo.
-- **Reconstrucción tomográfica:** simulación de ruido, gráfico de error cuadrático medio normalizado.
  
 ---
 
