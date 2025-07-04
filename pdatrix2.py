@@ -4567,5 +4567,5 @@ match modulo:
         Apoyá el proyecto con una donación:
         [📲 Donar vía MercadoPago](http://link.mercadopago.com.ar/datrix)
         Más información en:
-        [⭐ Dejame una estrella](https://github.com/David-Basti/datrix)
+        [⭐ Dejame una estrella](https://github.com/David-Basti/datrix/stargazers)
         """)
