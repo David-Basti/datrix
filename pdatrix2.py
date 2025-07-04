@@ -4270,7 +4270,7 @@ match modulo:
                                         st.pyplot(fig_detalle)
 
                                     # --- Análisis avanzado ---
-                                    tab1, tab2 = st.tabs(["📐 Integración", "🔍 Resolver f(x) = p"])
+                                    tab1, tab2 = st.tabs(["📐 Integración", "🔍 Resolver f(x) = p", "🔉 Transformada de Fourier"])
 
                                     with tab1:
                                         st.subheader("Área bajo la curva (integración)")
@@ -4581,7 +4581,7 @@ match modulo:
                                         st.pyplot(fig_detalle)
 
                                     # --- Análisis avanzado ---
-                                    tab1, tab2 = st.tabs(["📐 Integración", "🔍 Resolver f(x) = p"])
+                                    tab1, tab2, tab3 = st.tabs(["📐 Integración", "🔍 Resolver f(x) = p", "🔉 Transformada de Fourier"])
 
                                     with tab1:
                                         st.subheader("Área bajo la curva (integración)")
