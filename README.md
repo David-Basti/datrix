@@ -54,6 +54,7 @@ Simulador de reconstrución tomográfica de fantomas matemáticos.
 
 <img src="capturas/sistemas.jpg" width="600"/>
 <img src="capturas/analisdecurva.jpg" width="600"/>
+<img src="capturas/fourier.jpg" width="600"/>
 
 ### Procesamiento de Imágenes
 
