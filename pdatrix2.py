@@ -1316,8 +1316,8 @@ match modulo:
                             if mostrar_comparacion:
                                 axf.plot(x_plot, y_plot, '--', label="Original", color='gray')
                             axf.plot(x_plot, np.real(y_filtrada[:M]), label="Filtrada", color='blue')
-                            axf.set_xlabel("Tiempo (s)")
-                            axf.set_ylabel("Intensidad")
+                            axf.set_xlabel(xlabel)
+                            axf.set_ylabel(ylabel)
                             axf.set_title("Reconstrucción filtrada")
                             axf.grid(True)
                             axf.legend()
