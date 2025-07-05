@@ -40,7 +40,7 @@ from io import BytesIO
 from scipy.interpolate import UnivariateSpline
 
 icono = Image.open("logodatrix.jpg")
-##---------
+###---------
 st.set_page_config(
     page_title="Datrix",
     page_icon=icono
