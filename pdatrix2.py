@@ -75,7 +75,7 @@ st.markdown(
 
 # Menú principal
 modulo = st.sidebar.selectbox("Seleccionar módulo", [
-    "Álgebra y Análisis Numérico",
+    "Álgebra y análisis numérico",
     "Procesamiento de imágenes",
     "Reconstrucción tomográfica",
     "Sobre mí"
@@ -87,10 +87,10 @@ st.sidebar.markdown("[📲 Donar vía MercadoPago](http://link.mercadopago.com.a
 st.sidebar.markdown("[📂 Repositorio en GitHub](https://github.com/David-Basti/datrix)")
 
 match modulo:
-    case "Álgebra y Análisis Numérico":
+    case "Álgebra y análisis numérico":
         #with st.expander("Módulo 1",expanded=True):
-        st.title("🔢 Módulo 1: Álgebra y Análisis Numérico")
-        tabs = st.tabs(["Operaciones con matrices", "Sistemas"])
+        st.title("🔢 Módulo 1: Álgebra y análisis numérico")
+        tabs = st.tabs(["Operaciones con matrices", "Sistemas y sistemas"])
         #titulo_personalizado("🔢 Módulo 1: Operaciones con matriz única", nivel=2, tamaño=56, color="black")
         with tabs[0]:
             cool, _ =st.columns([1,5])
