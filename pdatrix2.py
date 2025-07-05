@@ -40,7 +40,7 @@ from io import BytesIO
 from scipy.interpolate import UnivariateSpline
 
 icono = Image.open("logodatrix.jpg")
-###---------
+##---------
 st.set_page_config(
     page_title="Datrix",
     page_icon=icono
@@ -89,7 +89,7 @@ st.sidebar.markdown("[📂 Repositorio en GitHub](https://github.com/David-Basti
 match modulo:
     case "Álgebra y análisis numérico":
         #with st.expander("Módulo 1",expanded=True):
-        st.title("🔢 Módulo 1: Álgebra y análisis numérico")
+        st.title("🔢 Módulo 1: Álgebra y análisis aumérico")
         tabs = st.tabs(["Operaciones con matrices", "Señales y sistemas"])
         #titulo_personalizado("🔢 Módulo 1: Operaciones con matriz única", nivel=2, tamaño=56, color="black")
         with tabs[0]:
@@ -3904,7 +3904,9 @@ match modulo:
                                     with col1:
                                         a_int = st.number_input("Límite inferior (a)", value=float(distances[0]), format="%.2f")
                                         b_int = st.number_input("Límite superior (b)", value=float(distances[-1]), format="%.2f")
-                                        h_int = st.number_input("Paso h", value=(distances[-1] - distances[0]) / len(distances), format="%.4f", min_value=1e-4)
+                                        paso_defecto = max((distances[-1] - distances[0]) / len(distances), 1e-4)
+                                        h_int = st.number_input("Paso h", value=paso_defecto, format="%.4f", min_value=1e-4)
+                                        #h_int = st.number_input("Paso h", value=(distances[-1] - distances[0]) / len(distances), format="%.4f", min_value=1e-4)
                                         metodo = st.selectbox("Método de integración", ["simpson", "trapecio", "riemann"])
                                     with col2:
                                         if h_int <= abs(b_int - a_int):
@@ -3956,133 +3958,132 @@ match modulo:
 
                                 with tab3:
                                     # === 1. Interpolación con spline ===
-                                
-                                    spline = UnivariateSpline(distances, df[columna], s=0)
-                                    M = 2048  # sobremuestreo para buena resolución
-                                    x_interp = np.linspace(distances[0], distances[-1], M)
-                                    y_interp = spline(x_interp)
+                                        spline = UnivariateSpline(distances, df[columna], s=0)
+                                        M = 2048  # sobremuestreo para buena resolución
+                                        x_interp = np.linspace(distances[0], distances[-1], M)
+                                        y_interp = spline(x_interp)
 
-                                    # === 2. Zero-padding antes de FFT ===
-                                    N_fft = 2**14  # gran potencia de 2 para buena resolución
-                                    y_padded = np.zeros(N_fft)
-                                    y_padded[:M] = y_interp  # función interpolada + ceros
+                                        # === 2. Zero-padding antes de FFT ===
+                                        N_fft = 2**14  # gran potencia de 2 para buena resolución
+                                        y_padded = np.zeros(N_fft)
+                                        y_padded[:M] = y_interp  # función interpolada + ceros
 
-                                    dt = (distances[-1] - distances[0]) / (M - 1)  # paso espacial
-                                    fm = 1 / dt
-                                    nyquist = fm / 2
+                                        dt = (distances[-1] - distances[0]) / (M - 1)  # paso espacial
+                                        fm = 1 / dt
+                                        nyquist = fm / 2
 
-                                    # === 3. FFT física (sin normalizar) ===
-                                    fft_vals = np.fft.fft(y_padded)
-                                    fft_vals_shifted = np.fft.fftshift(fft_vals)
-                                    EM = np.abs(fft_vals_shifted)
+                                        # === 3. FFT física (sin normalizar) ===
+                                        fft_vals = np.fft.fft(y_padded)
+                                        fft_vals_shifted = np.fft.fftshift(fft_vals)
+                                        EM = np.abs(fft_vals_shifted)
 
-                                    # Frecuencia angular en rad/unidad física (ej: rad/mm)
-                                    freqs = np.fft.fftshift(np.fft.fftfreq(N_fft, d=dt))
-                                    freqs_rad = 2 * np.pi * freqs
+                                        # Frecuencia angular en rad/unidad física (ej: rad/mm)
+                                        freqs = np.fft.fftshift(np.fft.fftfreq(N_fft, d=dt))
+                                        freqs_rad = 2 * np.pi * freqs
 
-                                    # === 4. Rango interactivo ===
-                                    st.markdown("### Análisis de Fourier")
-                                    col1, col2 = st.columns(2)
-                                    with col1:
-                                        f_ini = st.number_input("Frecuencia inicial", value=float(freqs_rad[0]), format="%.4f")
-                                    with col2:
-                                        f_fin = st.number_input("Frecuencia final", value=float(freqs_rad[-1]), format="%.4f")
+                                        # === 4. Rango interactivo ===
+                                        st.markdown("### Análisis de Fourier")
+                                        col1, col2 = st.columns(2)
+                                        with col1:
+                                            f_ini = st.number_input("Frecuencia inicial", value=float(freqs_rad[0]), format="%.4f")
+                                        with col2:
+                                            f_fin = st.number_input("Frecuencia final", value=float(freqs_rad[-1]), format="%.4f")
 
-                                    filtro = (freqs_rad >= f_ini) & (freqs_rad <= f_fin)
+                                        filtro = (freqs_rad >= f_ini) & (freqs_rad <= f_fin)
 
-                                    # Gráfico magnitud
-                                    fig_mag, ax_mag = plt.subplots()
-                                    ax_mag.plot(freqs_rad[filtro], EM[filtro], color='blue')
-                                    ax_mag.set_title("Espectro de Magnitud (centrado)")
-                                    ax_mag.set_xlabel("Frecuencia angular (rad/unidad)")
-                                    ax_mag.set_ylabel("Magnitud")
-                                    ax_mag.grid(True)
-                                    with col1:
-                                        st.pyplot(fig_mag)
+                                        # Gráfico magnitud
+                                        fig_mag, ax_mag = plt.subplots()
+                                        ax_mag.plot(freqs_rad[filtro], EM[filtro], color='blue')
+                                        ax_mag.set_title("Espectro de Magnitud (centrado)")
+                                        ax_mag.set_xlabel("Frecuencia angular (rad/unidad)")
+                                        ax_mag.set_ylabel("Magnitud")
+                                        ax_mag.grid(True)
+                                        with col1:
+                                            st.pyplot(fig_mag)
 
-                                    # Gráfico de fase
-                                    
-                                    fase = np.angle(fft_vals_shifted)
-                                    fig_fase, ax_fase = plt.subplots()
-                                    markerline, stemlines, baseline = ax_fase.stem(freqs_rad[filtro], fase[filtro], basefmt=" ")
-                                    plt.setp(markerline, color='orange', marker='o')
-                                    plt.setp(stemlines, color='orange')
-                                    ax_fase.set_title("Espectro de Fase (centrado y discreto)")
-                                    ax_fase.set_xlabel("Frecuencia angular (rad/unidad)")
-                                    ax_fase.set_ylabel("Fase (rad)")
-                                    ax_fase.grid(True)
-                                    with col2:
-                                        st.pyplot(fig_fase)
-                                    st.markdown("### 🔎 Comparación del espectro de magnitud (FFT centrada)")
-                                    dol1, dol2 = st.columns(2)
-                                    sol1, sol2 = st.columns(2)
-                                    # --- Selección tipo de filtro ---
-                                    with dol1:
-                                        tipo_filtro = st.radio("Tipo de filtro:", ["Pasa bajos", "Pasa altos", "Pasa banda"])
+                                        # Gráfico de fase
+                                        
+                                        fase = np.angle(fft_vals_shifted)
+                                        fig_fase, ax_fase = plt.subplots()
+                                        markerline, stemlines, baseline = ax_fase.stem(freqs_rad[filtro], fase[filtro], basefmt=" ")
+                                        plt.setp(markerline, color='orange', marker='o')
+                                        plt.setp(stemlines, color='orange')
+                                        ax_fase.set_title("Espectro de Fase (centrado y discreto)")
+                                        ax_fase.set_xlabel("Frecuencia angular (rad/unidad)")
+                                        ax_fase.set_ylabel("Fase (rad)")
+                                        ax_fase.grid(True)
+                                        with col2:
+                                            st.pyplot(fig_fase)
+                                        st.markdown("### 🔎 Comparación del espectro de magnitud (FFT centrada)")
+                                        dol1, dol2 = st.columns(2)
+                                        sol1, sol2 = st.columns(2)
+                                        # --- Selección tipo de filtro ---
+                                        with dol1:
+                                            tipo_filtro = st.radio("Tipo de filtro:", ["Pasa bajos", "Pasa altos", "Pasa banda"])
 
-                                    
-                                        # --- Selección de frecuencias de corte ---
-                                        if tipo_filtro == "Pasa bajos":
-                                            f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=5.0, step=0.1)
-                                            mascara = np.abs(freqs_rad) <= f_corte
+                                        
+                                            # --- Selección de frecuencias de corte ---
+                                            if tipo_filtro == "Pasa bajos":
+                                                f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=5.0, step=0.1)
+                                                mascara = np.abs(freqs_rad) <= f_corte
 
-                                        elif tipo_filtro == "Pasa altos":
-                                            f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=5.0, step=0.1)
-                                            mascara = np.abs(freqs_rad) >= f_corte
+                                            elif tipo_filtro == "Pasa altos":
+                                                f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=5.0, step=0.1)
+                                                mascara = np.abs(freqs_rad) >= f_corte
 
-                                        elif tipo_filtro == "Pasa banda":
-                                            f1 = st.number_input("Frecuencia mínima (rad/s)", min_value=0.0, max_value=nyquist*2*np.pi, value=2.0, step=0.1)
-                                            f2 = st.number_input("Frecuencia máxima (rad/s)", min_value=f1, max_value=nyquist*2*np.pi, value=10.0, step=0.1)
-                                            mascara = (np.abs(freqs_rad) >= f1) & (np.abs(freqs_rad) <= f2)
+                                            elif tipo_filtro == "Pasa banda":
+                                                f1 = st.number_input("Frecuencia mínima (rad/s)", min_value=0.0, max_value=nyquist*2*np.pi, value=2.0, step=0.1)
+                                                f2 = st.number_input("Frecuencia máxima (rad/s)", min_value=f1, max_value=nyquist*2*np.pi, value=10.0, step=0.1)
+                                                mascara = (np.abs(freqs_rad) >= f1) & (np.abs(freqs_rad) <= f2)
 
-                                    # --- Aplicar filtro al espectro ---
-                                    fft_filtrada_shifted = fft_vals_shifted * mascara
-                                    fft_filtrada = np.fft.ifftshift(fft_filtrada_shifted)  # volver al orden original
-                                    y_filtrada = np.fft.ifft(fft_filtrada)  # antitransformada
+                                        # --- Aplicar filtro al espectro ---
+                                        fft_filtrada_shifted = fft_vals_shifted * mascara
+                                        fft_filtrada = np.fft.ifftshift(fft_filtrada_shifted)  # volver al orden original
+                                        y_filtrada = np.fft.ifft(fft_filtrada)  # antitransformada
 
-                                    # --- Magnitud del espectro filtrado vs original ---
-                                    
-                                    with dol2:
-                                        fig_mag_comp, ax_mag_comp = plt.subplots()
-                                        ax_mag_comp.plot(freqs_rad[filtro], np.abs(fft_vals_shifted[filtro]), '--', label="Original", color='gray', alpha=0.5)
-                                        ax_mag_comp.plot(freqs_rad[filtro], np.abs(fft_filtrada_shifted[filtro]), label="Filtrada", color='blue')
-                                        ax_mag_comp.set_title("Magnitud del espectro: original vs filtrado")
-                                        ax_mag_comp.set_xlabel("Frecuencia angular (rad/s)")
-                                        ax_mag_comp.set_ylabel("Magnitud")
-                                        ax_mag_comp.grid(True)
-                                        ax_mag_comp.legend()
-                                        st.pyplot(fig_mag_comp)
+                                        # --- Magnitud del espectro filtrado vs original ---
+                                        
+                                        with dol2:
+                                            fig_mag_comp, ax_mag_comp = plt.subplots()
+                                            ax_mag_comp.plot(freqs_rad[filtro], np.abs(fft_vals_shifted[filtro]), '--', label="Original", color='gray', alpha=0.5)
+                                            ax_mag_comp.plot(freqs_rad[filtro], np.abs(fft_filtrada_shifted[filtro]), label="Filtrada", color='blue')
+                                            ax_mag_comp.set_title("Magnitud del espectro: original vs filtrado")
+                                            ax_mag_comp.set_xlabel("Frecuencia angular (rad/s)")
+                                            ax_mag_comp.set_ylabel("Magnitud")
+                                            ax_mag_comp.grid(True)
+                                            ax_mag_comp.legend()
+                                            st.pyplot(fig_mag_comp)
 
-                                    # --- Visualizar reconstrucción ---
-                                    st.markdown("### 🔁 Señal filtrada (dominio del tiempo)")
-                                    rol1,rol2=st.columns(2)
+                                        # --- Visualizar reconstrucción ---
+                                        st.markdown("### 🔁 Señal filtrada (dominio del espacio)")
+                                        rol1,rol2=st.columns(2)
 
-                                    mostrar_comparacion = st.checkbox("Comparar con señal original", value=True)
+                                        mostrar_comparacion = st.checkbox("Comparar con señal original", value=True)
 
-                                    fig_filtrada, axf = plt.subplots()
-                                    if mostrar_comparacion:
-                                        axf.plot(x_interp, y_interp, '--', label="Original", color='gray')
-                                    axf.plot(x_interp, np.real(y_filtrada[:M]), label="Filtrada", color='blue')
-                                    axf.set_xlabel("Tiempo (s)")
-                                    axf.set_ylabel("Intensidad")
-                                    axf.set_title("Reconstrucción filtrada")
-                                    axf.grid(True)
-                                    axf.legend()
-                                    with rol1:
-                                        st.pyplot(fig_filtrada)
+                                        fig_filtrada, axf = plt.subplots()
+                                        if mostrar_comparacion:
+                                            axf.plot(x_interp, y_interp, '--', label="Original", color='gray')
+                                        axf.plot(x_interp, np.real(y_filtrada[:M]), label="Filtrada", color='blue')
+                                        axf.set_xlabel(f"Posición ({unidad})")
+                                        axf.set_ylabel("Intensidad")
+                                        axf.set_title("Reconstrucción filtrada")
+                                        axf.grid(True)
+                                        axf.legend()
+                                        with rol1:
+                                            st.pyplot(fig_filtrada)
 
-                                    # --- Mostrar fase filtrada opcionalmente ---
-                                    fase_filtrada = np.angle(fft_filtrada_shifted)
-                                    fig_fase_filt, ax_fase_filt = plt.subplots()
-                                    markerline_filt, stemlines_filt, baseline_filt = ax_fase_filt.stem(freqs_rad[filtro], fase_filtrada[filtro], basefmt=" ")
-                                    plt.setp(markerline_filt, color='purple', marker='o')
-                                    plt.setp(stemlines_filt, color='purple')
-                                    ax_fase_filt.set_title("Espectro de Fase Filtrado (centrado y discreto)")
-                                    ax_fase_filt.set_xlabel("Frecuencia angular (rad/s)")
-                                    ax_fase_filt.set_ylabel("Fase (rad)")
-                                    ax_fase_filt.grid(True)
-                                    with rol2:
-                                        st.pyplot(fig_fase_filt)
+                                        # --- Mostrar fase filtrada opcionalmente ---
+                                        fase_filtrada = np.angle(fft_filtrada_shifted)
+                                        fig_fase_filt, ax_fase_filt = plt.subplots()
+                                        markerline_filt, stemlines_filt, baseline_filt = ax_fase_filt.stem(freqs_rad[filtro], fase_filtrada[filtro], basefmt=" ")
+                                        plt.setp(markerline_filt, color='purple', marker='o')
+                                        plt.setp(stemlines_filt, color='purple')
+                                        ax_fase_filt.set_title("Espectro de Fase Filtrado (centrado y discreto)")
+                                        ax_fase_filt.set_xlabel("Frecuencia angular (rad/s)")
+                                        ax_fase_filt.set_ylabel("Fase (rad)")
+                                        ax_fase_filt.grid(True)
+                                        with rol2:
+                                            st.pyplot(fig_fase_filt)
 
                     case "ROIs":
                         st.subheader("ROI 1 y ROI 2")
@@ -4645,7 +4646,14 @@ match modulo:
 
                                     # Tiempo por frame
                                     tiempo_por_frame = st.number_input("⏱️ Tiempo por frame (segundos)", min_value=0.01, value=1.0, step=0.1, format="%.2f")
-                                    tiempos = [i * tiempo_por_frame for i in range(N_frames)]
+                                    usartiempo = st.checkbox("Usar tiempo")
+                                    if usartiempo:
+                                        tiempos = [i * tiempo_por_frame for i in range(N_frames)]
+                                        unidad = "Tiempo [s]"
+                                    else:
+                                        tiempos = [i * 1 for i in range(N_frames)]
+                                        unidad = "Frames"
+                                    
 
                                     # Selección de frame actual
                                     idx_frame = st.slider("Frame para visualizar", 0, N_frames - 1, 0)
@@ -4724,7 +4732,7 @@ match modulo:
                                     fig2, ax2 = plt.subplots()
                                     ax2.plot(tiempos, intensidad_roi1, label="ROI 1", color="lime")
                                     ax2.plot(tiempos, intensidad_roi2, label="ROI 2", color="yellow")
-                                    ax2.set_xlabel("Tiempo (s)")
+                                    ax2.set_xlabel(f"{unidad}")
                                     ax2.set_ylabel("Intensidad media")
                                     ax2.set_title("Curva ROI vs. Tiempo")
                                     ax2.legend()
@@ -4789,7 +4797,7 @@ match modulo:
                                         ax.axhline(y=y_lines[0], color='y', linestyle='--', label=f'y₁ = {y_lines[0]:.2f}')
                                         ax.axhline(y=y_lines[1], color='y', linestyle='--', label=f'y₂ = {y_lines[1]:.2f}')
                                         ax.legend()
-                                        ax.set_xlabel("Tiempo (s)")
+                                        ax.set_xlabel(f"{unidad}")
                                         ax.set_ylabel("Intensidad")
                                         st.pyplot(fig_detalle)
 
@@ -4814,7 +4822,7 @@ match modulo:
                                                 x_fill = np.linspace(a_int, b_int, 500)
                                                 y_fill = f(x_fill)
                                                 ax.fill_between(x_fill, y_fill, color='skyblue', alpha=0.4, label="Área bajo f(x)")
-                                                ax.set_xlabel("Tiempo (s)")
+                                                ax.set_xlabel(f"{unidad}")
                                                 ax.set_ylabel("Intensidad")
                                                 ax.set_title("Área bajo la curva")
                                                 ax.legend()
@@ -4877,7 +4885,7 @@ match modulo:
                                             freqs_rad = 2 * np.pi * freqs  # rad/s
 
                                             # === 6. Selección de rango interactivo ===
-                                            st.markdown("### Análisis de Fourier)")
+                                            st.markdown("### Análisis de Fourier")
                                             colf1, colf2 = st.columns(2)
                                             with colf1:
                                                 f_ini = st.number_input("Frecuencia inicial", value=float(freqs_rad[0]), format="%.2f")
@@ -4962,7 +4970,7 @@ match modulo:
                                             if mostrar_comparacion:
                                                 axf.plot(x_interp, y_interp, '--', label="Original", color='gray')
                                             axf.plot(x_interp, np.real(y_filtrada[:M]), label="Filtrada", color='blue')
-                                            axf.set_xlabel("Tiempo (s)")
+                                            axf.set_xlabel(f"{unidad}")
                                             axf.set_ylabel("Intensidad")
                                             axf.set_title("Reconstrucción filtrada")
                                             axf.grid(True)
