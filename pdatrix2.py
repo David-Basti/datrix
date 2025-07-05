@@ -89,7 +89,7 @@ st.sidebar.markdown("[📂 Repositorio en GitHub](https://github.com/David-Basti
 match modulo:
     case "Álgebra y Análisis Numérico":
         #with st.expander("Módulo 1",expanded=True):
-        st.title("🔢 Módulo 1: Álgebra")
+        st.title("🔢 Módulo 1: Álgebra y Análisis Numérico")
         tabs = st.tabs(["Operaciones con matrices", "Sistemas"])
         #titulo_personalizado("🔢 Módulo 1: Operaciones con matriz única", nivel=2, tamaño=56, color="black")
         with tabs[0]:
