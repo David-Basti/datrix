@@ -40,7 +40,7 @@ from io import BytesIO
 from scipy.interpolate import UnivariateSpline
 
 icono = Image.open("logodatrix.jpg")
-###---------
+##---------
 st.set_page_config(
     page_title="Datrix",
     page_icon=icono
@@ -1245,10 +1245,10 @@ match modulo:
                             st.error("La frecuencia inicial debe ser menor o igual a la frecuencia final.")
                         else:
                             filtro = (freqs_rad >= freq_start) & (freqs_rad <= freq_end)
-
-                            col1, col2 = st.columns(2)
-
                             
+                            col1, col2 = st.columns(2)
+                            st.markdown("### 🔎 Comparación del espectro de magnitud (FFT centrada)")
+
                             fig_mag, ax_mag = plt.subplots()
                             ax_mag.plot(freqs_rad[filtro], EM[filtro], color='blue')
                             ax_mag.set_title("Espectro de Magnitud (centrado)")
@@ -1257,8 +1257,6 @@ match modulo:
                             ax_mag.grid(True)
                             with col1:
                                 st.pyplot(fig_mag)
-
-                           
                             fase = np.angle(fft_vals_shifted)
                             fig_fase, ax_fase = plt.subplots()
                             markerline, stemlines, baseline = ax_fase.stem(freqs_rad[filtro], fase[filtro], basefmt=" ")
@@ -1270,7 +1268,8 @@ match modulo:
                             ax_fase.grid(True)
                             with col2:
                                 st.pyplot(fig_fase)
-                            with col1:
+                            qol1,qol2=st.columns(2)
+                            with qol1:
                                 # --- Selección tipo de filtro ---
                                 tipo_filtro = st.radio("Tipo de filtro:", ["Pasa bajos", "Pasa altos", "Pasa banda"])
 
@@ -1293,10 +1292,9 @@ match modulo:
                             fft_filtrada_shifted = fft_vals_shifted * mascara
                             fft_filtrada = np.fft.ifftshift(fft_filtrada_shifted)  # volver al orden original
                             y_filtrada = np.fft.ifft(fft_filtrada)  # antitransformada
-
+                            
                             # --- Magnitud del espectro filtrado vs original ---
-                            with col2:
-                                st.markdown("### 🔎 Comparación del espectro de magnitud (FFT centrada)")
+                            with qol2:
 
                                 fig_mag_comp, ax_mag_comp = plt.subplots()
                                 ax_mag_comp.plot(freqs_rad[filtro], np.abs(fft_vals_shifted[filtro]), '--', label="Original", color='gray', alpha=0.5)
@@ -3990,8 +3988,6 @@ match modulo:
                                             f_fin = st.number_input("Frecuencia final", value=float(freqs_rad[-1]), format="%.4f")
 
                                         filtro = (freqs_rad >= f_ini) & (freqs_rad <= f_fin)
-                                        dol1, dol2 = st.columns(2)
-                                        sol1, sol2 = st.columns(2)
 
                                         # Gráfico magnitud
                                         fig_mag, ax_mag = plt.subplots()
@@ -4000,24 +3996,92 @@ match modulo:
                                         ax_mag.set_xlabel("Frecuencia angular (rad/unidad)")
                                         ax_mag.set_ylabel("Magnitud")
                                         ax_mag.grid(True)
-                                        with sol1:
+                                        with col1:
                                             st.pyplot(fig_mag)
 
                                         # Gráfico de fase
+                                        
+                                        fase = np.angle(fft_vals_shifted)
+                                        fig_fase, ax_fase = plt.subplots()
+                                        markerline, stemlines, baseline = ax_fase.stem(freqs_rad[filtro], fase[filtro], basefmt=" ")
+                                        plt.setp(markerline, color='orange', marker='o')
+                                        plt.setp(stemlines, color='orange')
+                                        ax_fase.set_title("Espectro de Fase (centrado y discreto)")
+                                        ax_fase.set_xlabel("Frecuencia angular (rad/unidad)")
+                                        ax_fase.set_ylabel("Fase (rad)")
+                                        ax_fase.grid(True)
+                                        with col2:
+                                            st.pyplot(fig_fase)
+                                        st.markdown("### 🔎 Comparación del espectro de magnitud (FFT centrada)")
+                                        dol1, dol2 = st.columns(2)
+                                        sol1, sol2 = st.columns(2)
+                                        # --- Selección tipo de filtro ---
+                                        with dol1:
+                                            tipo_filtro = st.radio("Tipo de filtro:", ["Pasa bajos", "Pasa altos", "Pasa banda"])
+
+                                        
+                                            # --- Selección de frecuencias de corte ---
+                                            if tipo_filtro == "Pasa bajos":
+                                                f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=5.0, step=0.1)
+                                                mascara = np.abs(freqs_rad) <= f_corte
+
+                                            elif tipo_filtro == "Pasa altos":
+                                                f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=5.0, step=0.1)
+                                                mascara = np.abs(freqs_rad) >= f_corte
+
+                                            elif tipo_filtro == "Pasa banda":
+                                                f1 = st.number_input("Frecuencia mínima (rad/s)", min_value=0.0, max_value=nyquist*2*np.pi, value=2.0, step=0.1)
+                                                f2 = st.number_input("Frecuencia máxima (rad/s)", min_value=f1, max_value=nyquist*2*np.pi, value=10.0, step=0.1)
+                                                mascara = (np.abs(freqs_rad) >= f1) & (np.abs(freqs_rad) <= f2)
+
+                                        # --- Aplicar filtro al espectro ---
+                                        fft_filtrada_shifted = fft_vals_shifted * mascara
+                                        fft_filtrada = np.fft.ifftshift(fft_filtrada_shifted)  # volver al orden original
+                                        y_filtrada = np.fft.ifft(fft_filtrada)  # antitransformada
+
+                                        # --- Magnitud del espectro filtrado vs original ---
+                                        
                                         with dol2:
-                                            mostrar_fase = st.checkbox("Mostrar fase", value=False)
-                                        if mostrar_fase:
-                                            fase = np.angle(fft_vals_shifted)
-                                            fig_fase, ax_fase = plt.subplots()
-                                            markerline, stemlines, baseline = ax_fase.stem(freqs_rad[filtro], fase[filtro], basefmt=" ")
-                                            plt.setp(markerline, color='orange', marker='o')
-                                            plt.setp(stemlines, color='orange')
-                                            ax_fase.set_title("Espectro de Fase (centrado y discreto)")
-                                            ax_fase.set_xlabel("Frecuencia angular (rad/unidad)")
-                                            ax_fase.set_ylabel("Fase (rad)")
-                                            ax_fase.grid(True)
-                                            with sol2:
-                                                st.pyplot(fig_fase)
+                                            fig_mag_comp, ax_mag_comp = plt.subplots()
+                                            ax_mag_comp.plot(freqs_rad[filtro], np.abs(fft_vals_shifted[filtro]), '--', label="Original", color='gray', alpha=0.5)
+                                            ax_mag_comp.plot(freqs_rad[filtro], np.abs(fft_filtrada_shifted[filtro]), label="Filtrada", color='blue')
+                                            ax_mag_comp.set_title("Magnitud del espectro: original vs filtrado")
+                                            ax_mag_comp.set_xlabel("Frecuencia angular (rad/s)")
+                                            ax_mag_comp.set_ylabel("Magnitud")
+                                            ax_mag_comp.grid(True)
+                                            ax_mag_comp.legend()
+                                            st.pyplot(fig_mag_comp)
+
+                                        # --- Visualizar reconstrucción ---
+                                        st.markdown("### 🔁 Señal filtrada (dominio del tiempo)")
+                                        rol1,rol2=st.columns(2)
+
+                                        mostrar_comparacion = st.checkbox("Comparar con señal original", value=True)
+
+                                        fig_filtrada, axf = plt.subplots()
+                                        if mostrar_comparacion:
+                                            axf.plot(x_interp, y_interp, '--', label="Original", color='gray')
+                                        axf.plot(x_interp, np.real(y_filtrada[:M]), label="Filtrada", color='blue')
+                                        axf.set_xlabel("Tiempo (s)")
+                                        axf.set_ylabel("Intensidad")
+                                        axf.set_title("Reconstrucción filtrada")
+                                        axf.grid(True)
+                                        axf.legend()
+                                        with rol1:
+                                            st.pyplot(fig_filtrada)
+
+                                        # --- Mostrar fase filtrada opcionalmente ---
+                                        fase_filtrada = np.angle(fft_filtrada_shifted)
+                                        fig_fase_filt, ax_fase_filt = plt.subplots()
+                                        markerline_filt, stemlines_filt, baseline_filt = ax_fase_filt.stem(freqs_rad[filtro], fase_filtrada[filtro], basefmt=" ")
+                                        plt.setp(markerline_filt, color='purple', marker='o')
+                                        plt.setp(stemlines_filt, color='purple')
+                                        ax_fase_filt.set_title("Espectro de Fase Filtrado (centrado y discreto)")
+                                        ax_fase_filt.set_xlabel("Frecuencia angular (rad/s)")
+                                        ax_fase_filt.set_ylabel("Fase (rad)")
+                                        ax_fase_filt.grid(True)
+                                        with rol2:
+                                            st.pyplot(fig_fase_filt)
 
                     case "ROIs":
                         st.subheader("ROI 1 y ROI 2")
@@ -4456,20 +4520,91 @@ match modulo:
                                             st.pyplot(fig_mag)
 
                                         # === 8. Fase (opcional) ===
+                                        
+                                    
+                                        fase = np.angle(fft_vals_shifted)
+                                        fig_fase, ax_fase = plt.subplots()
+                                        markerline, stemlines, baseline = ax_fase.stem(freqs_rad[filtro], fase[filtro], basefmt=" ")
+                                        plt.setp(markerline, color='orange', marker='o')
+                                        plt.setp(stemlines, color='orange')
+                                        ax_fase.set_title("Espectro de Fase (centrado y discreto)")
+                                        ax_fase.set_xlabel("Frecuencia angular (rad/s)")
+                                        ax_fase.set_ylabel("Fase (rad)")
+                                        ax_fase.grid(True)
+                                        with sol2:
+                                            st.pyplot(fig_fase)
+                                        
+                                        st.markdown("### 🔎 Comparación del espectro de magnitud (FFT centrada)")
+                                        dol1, dol2 = st.columns(2)
+                                        # --- Selección tipo de filtro ---
+                                        with dol1:
+                                            tipo_filtro = st.radio("Tipo de filtro:", ["Pasa bajos", "Pasa altos", "Pasa banda"])
+
+                                        
+                                            # --- Selección de frecuencias de corte ---
+                                            if tipo_filtro == "Pasa bajos":
+                                                f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=5.0, step=0.1)
+                                                mascara = np.abs(freqs_rad) <= f_corte
+
+                                            elif tipo_filtro == "Pasa altos":
+                                                f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=5.0, step=0.1)
+                                                mascara = np.abs(freqs_rad) >= f_corte
+
+                                            elif tipo_filtro == "Pasa banda":
+                                                f1 = st.number_input("Frecuencia mínima (rad/s)", min_value=0.0, max_value=nyquist*2*np.pi, value=2.0, step=0.1)
+                                                f2 = st.number_input("Frecuencia máxima (rad/s)", min_value=f1, max_value=nyquist*2*np.pi, value=10.0, step=0.1)
+                                                mascara = (np.abs(freqs_rad) >= f1) & (np.abs(freqs_rad) <= f2)
+
+                                        # --- Aplicar filtro al espectro ---
+                                        fft_filtrada_shifted = fft_vals_shifted * mascara
+                                        fft_filtrada = np.fft.ifftshift(fft_filtrada_shifted)  # volver al orden original
+                                        y_filtrada = np.fft.ifft(fft_filtrada)  # antitransformada
+
+                                        # --- Magnitud del espectro filtrado vs original ---
+                                        
                                         with dol2:
-                                            mostrar_fase = st.checkbox("Mostrar fase", value=False)
-                                        if mostrar_fase:
-                                            fase = np.angle(fft_vals_shifted)
-                                            fig_fase, ax_fase = plt.subplots()
-                                            markerline, stemlines, baseline = ax_fase.stem(freqs_rad[filtro], fase[filtro], basefmt=" ")
-                                            plt.setp(markerline, color='orange', marker='o')
-                                            plt.setp(stemlines, color='orange')
-                                            ax_fase.set_title("Espectro de Fase (centrado y discreto)")
-                                            ax_fase.set_xlabel("Frecuencia angular (rad/s)")
-                                            ax_fase.set_ylabel("Fase (rad)")
-                                            ax_fase.grid(True)
-                                            with sol2:
-                                                st.pyplot(fig_fase)
+                                            fig_mag_comp, ax_mag_comp = plt.subplots()
+                                            ax_mag_comp.plot(freqs_rad[filtro], np.abs(fft_vals_shifted[filtro]), '--', label="Original", color='gray', alpha=0.5)
+                                            ax_mag_comp.plot(freqs_rad[filtro], np.abs(fft_filtrada_shifted[filtro]), label="Filtrada", color='blue')
+                                            ax_mag_comp.set_title("Magnitud del espectro: original vs filtrado")
+                                            ax_mag_comp.set_xlabel("Frecuencia angular (rad/s)")
+                                            ax_mag_comp.set_ylabel("Magnitud")
+                                            ax_mag_comp.grid(True)
+                                            ax_mag_comp.legend()
+                                            st.pyplot(fig_mag_comp)
+
+                                        # --- Visualizar reconstrucción ---
+                                        st.markdown("### 🔁 Señal filtrada (dominio del tiempo)")
+                                        rol1,rol2=st.columns(2)
+
+                                        mostrar_comparacion = st.checkbox("Comparar con señal original", value=True)
+
+                                        fig_filtrada, axf = plt.subplots()
+                                        if mostrar_comparacion:
+                                            axf.plot(x_interp, y_interp, '--', label="Original", color='gray')
+                                        axf.plot(x_interp, np.real(y_filtrada[:M]), label="Filtrada", color='blue')
+                                        axf.set_xlabel("Tiempo (s)")
+                                        axf.set_ylabel("Intensidad")
+                                        axf.set_title("Reconstrucción filtrada")
+                                        axf.grid(True)
+                                        axf.legend()
+                                        with rol1:
+                                            st.pyplot(fig_filtrada)
+
+                                        # --- Mostrar fase filtrada opcionalmente ---
+                                        fase_filtrada = np.angle(fft_filtrada_shifted)
+                                        fig_fase_filt, ax_fase_filt = plt.subplots()
+                                        markerline_filt, stemlines_filt, baseline_filt = ax_fase_filt.stem(freqs_rad[filtro], fase_filtrada[filtro], basefmt=" ")
+                                        plt.setp(markerline_filt, color='purple', marker='o')
+                                        plt.setp(stemlines_filt, color='purple')
+                                        ax_fase_filt.set_title("Espectro de Fase Filtrado (centrado y discreto)")
+                                        ax_fase_filt.set_xlabel("Frecuencia angular (rad/s)")
+                                        ax_fase_filt.set_ylabel("Fase (rad)")
+                                        ax_fase_filt.grid(True)
+                                        with rol2:
+                                            st.pyplot(fig_fase_filt)
+
+
 
                                     # Crear único DataFrame con todo junto
                                     df = pd.DataFrame({
@@ -4714,58 +4849,57 @@ match modulo:
                                         except Exception as e:
                                             st.error(f"❌ Error: {e}")
                                     
-                                    with tab3:
-                                        # === 1. Interpolación spline + sobremuestreo ===
-                                        spline = UnivariateSpline(tiempos, datos, s=0)
-                                        M = 2048  # cantidad de puntos para interpolar
-                                        x_interp = np.linspace(tiempos[0], tiempos[-1], M)
-                                        y_interp = spline(x_interp)
+                                        with tab3:
+                                            # === 1. Interpolación spline + sobremuestreo ===
+                                            spline = UnivariateSpline(tiempos, datos, s=0)
+                                            M = 2048  # cantidad de puntos para interpolar
+                                            x_interp = np.linspace(tiempos[0], tiempos[-1], M)
+                                            y_interp = spline(x_interp)
 
-                                        # === 2. Zero-padding antes de la FFT ===
-                                        N_fft = 2**14  # potencia de 2 para buena resolución espectral
-                                        y_padded = np.zeros(N_fft)
-                                        y_padded[:M] = y_interp
+                                            # === 2. Zero-padding antes de la FFT ===
+                                            N_fft = 2**14  # potencia de 2 para buena resolución espectral
+                                            y_padded = np.zeros(N_fft)
+                                            y_padded[:M] = y_interp
 
-                                        # === 3. Parámetros temporales ===
-                                        dt = (tiempos[-1] - tiempos[0]) / (M - 1)
-                                        fm = 1 / dt
-                                        nyquist = fm / 2
+                                            # === 3. Parámetros temporales ===
+                                            dt = (tiempos[-1] - tiempos[0]) / (M - 1)
+                                            fm = 1 / dt
+                                            nyquist = fm / 2
 
-                                        # === 4. FFT física centrada ===
-                                        fft_vals = np.fft.fft(y_padded)
-                                        fft_vals_shifted = np.fft.fftshift(fft_vals)
-                                        EM = np.abs(fft_vals_shifted)
+                                            # === 4. FFT física centrada ===
+                                            fft_vals = np.fft.fft(y_padded)
+                                            fft_vals_shifted = np.fft.fftshift(fft_vals)
+                                            EM = np.abs(fft_vals_shifted)
 
-                                        # === 5. Frecuencia angular real ===
-                                        freqs = np.fft.fftshift(np.fft.fftfreq(N_fft, d=dt))  # Hz
-                                        freqs_rad = 2 * np.pi * freqs  # rad/s
+                                            # === 5. Frecuencia angular real ===
+                                            freqs = np.fft.fftshift(np.fft.fftfreq(N_fft, d=dt))  # Hz
+                                            freqs_rad = 2 * np.pi * freqs  # rad/s
 
-                                        # === 6. Selección de rango interactivo ===
-                                        st.markdown("### Rango de frecuencias (rad/s)")
-                                        colf1, colf2 = st.columns(2)
-                                        with colf1:
-                                            f_ini = st.number_input("Frecuencia inicial", value=float(freqs_rad[0]), format="%.2f")
-                                        with colf2:
-                                            f_fin = st.number_input("Frecuencia final", value=float(freqs_rad[-1]), format="%.2f")
+                                            # === 6. Selección de rango interactivo ===
+                                            st.markdown("### Rango de frecuencias (rad/s)")
+                                            colf1, colf2 = st.columns(2)
+                                            with colf1:
+                                                f_ini = st.number_input("Frecuencia inicial", value=float(freqs_rad[0]), format="%.2f")
+                                            with colf2:
+                                                f_fin = st.number_input("Frecuencia final", value=float(freqs_rad[-1]), format="%.2f")
 
-                                        filtro = (freqs_rad >= f_ini) & (freqs_rad <= f_fin)
-                                        dol1,dol2=st.columns(2)
-                                        sol1,sol2=st.columns(2)
+                                            filtro = (freqs_rad >= f_ini) & (freqs_rad <= f_fin)
+                                            dol1,dol2=st.columns(2)
+                                            sol1,sol2=st.columns(2)
 
-                                        # === 7. Espectro de magnitud ===
-                                        fig_mag, ax_mag = plt.subplots()
-                                        ax_mag.plot(freqs_rad[filtro], EM[filtro], color='blue')
-                                        ax_mag.set_title("Espectro de Magnitud (alta resolución)")
-                                        ax_mag.set_xlabel("Frecuencia angular (rad/s)")
-                                        ax_mag.set_ylabel("Magnitud")
-                                        ax_mag.grid(True)
-                                        with sol1:
-                                            st.pyplot(fig_mag)
+                                            # === 7. Espectro de magnitud ===
+                                            fig_mag, ax_mag = plt.subplots()
+                                            ax_mag.plot(freqs_rad[filtro], EM[filtro], color='blue')
+                                            ax_mag.set_title("Espectro de Magnitud (alta resolución)")
+                                            ax_mag.set_xlabel("Frecuencia angular (rad/s)")
+                                            ax_mag.set_ylabel("Magnitud")
+                                            ax_mag.grid(True)
+                                            with sol1:
+                                                st.pyplot(fig_mag)
 
-                                        # === 8. Fase (opcional) ===
-                                        with dol2:
-                                            mostrar_fase = st.checkbox("Mostrar fase", value=False)
-                                        if mostrar_fase:
+                                            # === 8. Fase (opcional) ===
+                                            
+                                        
                                             fase = np.angle(fft_vals_shifted)
                                             fig_fase, ax_fase = plt.subplots()
                                             markerline, stemlines, baseline = ax_fase.stem(freqs_rad[filtro], fase[filtro], basefmt=" ")
@@ -4777,6 +4911,77 @@ match modulo:
                                             ax_fase.grid(True)
                                             with sol2:
                                                 st.pyplot(fig_fase)
+                                            
+                                            st.markdown("### 🔎 Comparación del espectro de magnitud (FFT centrada)")
+                                            dol1, dol2 = st.columns(2)
+                                            # --- Selección tipo de filtro ---
+                                            with dol1:
+                                                tipo_filtro = st.radio("Tipo de filtro:", ["Pasa bajos", "Pasa altos", "Pasa banda"])
+
+                                            
+                                                # --- Selección de frecuencias de corte ---
+                                                if tipo_filtro == "Pasa bajos":
+                                                    f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=5.0, step=0.1)
+                                                    mascara = np.abs(freqs_rad) <= f_corte
+
+                                                elif tipo_filtro == "Pasa altos":
+                                                    f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=5.0, step=0.1)
+                                                    mascara = np.abs(freqs_rad) >= f_corte
+
+                                                elif tipo_filtro == "Pasa banda":
+                                                    f1 = st.number_input("Frecuencia mínima (rad/s)", min_value=0.0, max_value=nyquist*2*np.pi, value=2.0, step=0.1)
+                                                    f2 = st.number_input("Frecuencia máxima (rad/s)", min_value=f1, max_value=nyquist*2*np.pi, value=10.0, step=0.1)
+                                                    mascara = (np.abs(freqs_rad) >= f1) & (np.abs(freqs_rad) <= f2)
+
+                                            # --- Aplicar filtro al espectro ---
+                                            fft_filtrada_shifted = fft_vals_shifted * mascara
+                                            fft_filtrada = np.fft.ifftshift(fft_filtrada_shifted)  # volver al orden original
+                                            y_filtrada = np.fft.ifft(fft_filtrada)  # antitransformada
+
+                                            # --- Magnitud del espectro filtrado vs original ---
+                                            
+                                            with dol2:
+                                                fig_mag_comp, ax_mag_comp = plt.subplots()
+                                                ax_mag_comp.plot(freqs_rad[filtro], np.abs(fft_vals_shifted[filtro]), '--', label="Original", color='gray', alpha=0.5)
+                                                ax_mag_comp.plot(freqs_rad[filtro], np.abs(fft_filtrada_shifted[filtro]), label="Filtrada", color='blue')
+                                                ax_mag_comp.set_title("Magnitud del espectro: original vs filtrado")
+                                                ax_mag_comp.set_xlabel("Frecuencia angular (rad/s)")
+                                                ax_mag_comp.set_ylabel("Magnitud")
+                                                ax_mag_comp.grid(True)
+                                                ax_mag_comp.legend()
+                                                st.pyplot(fig_mag_comp)
+
+                                            # --- Visualizar reconstrucción ---
+                                            st.markdown("### 🔁 Señal filtrada (dominio del tiempo)")
+                                            rol1,rol2=st.columns(2)
+
+                                            mostrar_comparacion = st.checkbox("Comparar con señal original", value=True)
+
+                                            fig_filtrada, axf = plt.subplots()
+                                            if mostrar_comparacion:
+                                                axf.plot(x_interp, y_interp, '--', label="Original", color='gray')
+                                            axf.plot(x_interp, np.real(y_filtrada[:M]), label="Filtrada", color='blue')
+                                            axf.set_xlabel("Tiempo (s)")
+                                            axf.set_ylabel("Intensidad")
+                                            axf.set_title("Reconstrucción filtrada")
+                                            axf.grid(True)
+                                            axf.legend()
+                                            with rol1:
+                                                st.pyplot(fig_filtrada)
+
+                                            # --- Mostrar fase filtrada opcionalmente ---
+                                            fase_filtrada = np.angle(fft_filtrada_shifted)
+                                            fig_fase_filt, ax_fase_filt = plt.subplots()
+                                            markerline_filt, stemlines_filt, baseline_filt = ax_fase_filt.stem(freqs_rad[filtro], fase_filtrada[filtro], basefmt=" ")
+                                            plt.setp(markerline_filt, color='purple', marker='o')
+                                            plt.setp(stemlines_filt, color='purple')
+                                            ax_fase_filt.set_title("Espectro de Fase Filtrado (centrado y discreto)")
+                                            ax_fase_filt.set_xlabel("Frecuencia angular (rad/s)")
+                                            ax_fase_filt.set_ylabel("Fase (rad)")
+                                            ax_fase_filt.grid(True)
+                                            with rol2:
+                                                st.pyplot(fig_fase_filt)
+
                                         #st.info(f"""
                                         #    La frecuencia de muestreo es {fm:.2f} Hz → frecuencia de Nyquist: {nyquist:.2f} Hz ({2*np.pi*nyquist:.2f} rad/s).
                                         #    Se usa `fftshift` para centrar el espectro como en MATLAB.
