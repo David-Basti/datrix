@@ -11,7 +11,7 @@ Permite realizar:
 - Potencia, producto, suma por un escalar.
 - Rango, transpuesta, determinante, inversa, autovalores y autovectores.
 - Suma, resta, producto matricial. Producto, cociente bin a bin. Conmutador.
-- Resolución de sistemas lineales, ajuste polnómico, ajuste exponencial, interpolación spline. Análisis de curvas, máximo y mínimo absoluto, integración, resolución de ecuaciones no lineales.
+- Resolución de sistemas lineales, ajuste polnómico, ajuste exponencial, interpolación spline. Análisis de curvas, máximo y mínimo absoluto, integración, resolución de ecuaciones no lineales, análisis de Fourier.
 
 ## Procesamiento de Imágenes
 Incluye herramientas para:
