@@ -889,6 +889,10 @@ match modulo:
 
                 if U is not None:
                     st.subheader("Análisis de curva")
+                    if "CurvaFiltrada" not in st.session_state:
+                        st.session_state["CurvaFiltrada"] = None
+                    usar_curva_filtrada = st.checkbox("Usar curva filtrada", value=False)
+                            
                 # Para el ajuste polinómico:
                 if opcion == "Ajuste polinómico":
                     if U is not None and len(U) == len(V):
@@ -904,7 +908,10 @@ match modulo:
 
                             # 2. Evaluar f(x) en todo el rango posible de x (o en el dominio total de datos)
                             x_full = resultadospoli["U_plot"]#np.linspace(np.min(U), np.max(U), 1000)
-                            y_full = f(x_full)
+                            if usar_curva_filtrada and st.session_state["CurvaFiltrada"] is not None:
+                                y_full = st.session_state["CurvaFiltrada"]
+                            else:
+                                y_full = f(x_full)
 
                             # 3. Establecer rangos posibles para los sliders
                             x_min_full, x_max_full = np.min(x_full), np.max(x_full)
@@ -944,7 +951,11 @@ match modulo:
 
                             st.success(f"📈 Dentro del rectángulo:\n\n🔽 Mínimo f(x) = {y_min:.4f} en x = {x_min:.4f}\n🔼 Máximo f(x) = {y_max:.4f} en x = {x_max:.4f}")
                             with volu2:
-                                figpoli = resultadospoli["fig"]
+                                if usar_curva_filtrada and st.session_state["CurvaFiltrada"] is not None:
+                                    figpoli,ax =  plt.subplots()
+                                    ax.plot(x_full, st.session_state["CurvaFiltrada"], color="b", label="Curva Filtrada")
+                                else:
+                                    figpoli = resultadospoli["fig"]
                                 ax = figpoli.gca()
                                 ax.plot(x_min, y_min, 'gv', label='Mín.')
                                 ax.plot(x_max, y_max, 'r^', label='Máx.')
@@ -1102,7 +1113,7 @@ match modulo:
                                 ax.axhline(y=y_lines[1], color='y', linestyle='--', label=f'y₂ = {y_lines[1]:.2f}')
 
                                 st.pyplot(figexp)
-
+                
                 if f is not None:
                     curana = st.tabs(["Integración", "Resolución de ecuación", "Transformada de Fourier"])
                     with curana[0]:
@@ -1117,6 +1128,8 @@ match modulo:
                         if h <= abs(b-a):
                             with polum1:
                                 tipo_integracion = st.selectbox("Método de integración", ["simpson", "trapecio", "riemann"])
+                                if usar_curva_filtrada and st.session_state["CurvaFiltrada"] is not None:
+                                    f = UnivariateSpline(x_full,st.session_state["CurvaFiltrada"],s=0)
                                 area = fn.integral(f, a, b, h, tipo=tipo_integracion)
                             with polum2:
                                 st.markdown(f"### 📐 Área bajo la curva entre {a} y {b}:")
@@ -1132,7 +1145,10 @@ match modulo:
                                     y_plot = resultados["f"](x_plot)
                                 # --- Mostrar gráfico con área sombreada ---
                                 fig_area, ax = plt.subplots()
-                                ax.plot(x_plot, y_plot, label="Función", color="blue")
+                                if usar_curva_filtrada and st.session_state["CurvaFiltrada"] is not None:
+                                    ax.plot(x_plot, st.session_state["CurvaFiltrada"], color="b", label="Función")
+                                else:
+                                    ax.plot(x_plot, y_plot, label="Función", color="blue")
                                 x_fill = np.linspace(a, b, 500)
                                 y_fill = f(x_fill)
                                 ax.fill_between(x_fill, y_fill, color='skyblue', alpha=0.4, label="Área bajo f(x)")
@@ -1166,8 +1182,15 @@ match modulo:
                             #st.latex(dgsym)
                             g_u = sp.lambdify(u, gsym, "math")   # función evaluable
                             dg_u = sp.lambdify(u, dgsym, "math") # derivada evaluable
-                            g = lambda x: float(g_u(escalar(x)))
-                            dg = lambda x: float(dg_u(escalar(x)))
+                            if usar_curva_filtrada and st.session_state["CurvaFiltrada"] is not None:
+                                # Función g(x)
+                                def g(x):
+                                    return f(x) - p_val
+                                # Derivada de g(x)
+                                dg = f.derivative()  # esta es f'(x)
+                            else:
+                                g = lambda x: float(g_u(escalar(x)))
+                                dg = lambda x: float(dg_u(escalar(x)))
                         elif "Ajuste exponencial":
                             def g(x):
                                 return f(x) - p_val
@@ -1198,7 +1221,10 @@ match modulo:
                                 y_plot = resultados["f"](x_plot)
 
                             fig, ax = plt.subplots()
-                            ax.plot(x_plot, y_plot, label="Función", color='blue')
+                            if usar_curva_filtrada and st.session_state["CurvaFiltrada"] is not None:
+                                ax.plot(x_plot,st.session_state["CurvaFiltrada"],label="Función",color="b")
+                            else:
+                                ax.plot(x_plot, y_plot, label="Función", color='blue')
                             ax.axhline(p_val, color='gray', linestyle='--', label=f"p = {p_val}")
                             ax.plot(x_sol, f(x_sol), 'go', label=f"x ≈ {x_sol:.4f}")
                             ax.legend()
@@ -1215,7 +1241,10 @@ match modulo:
                         # === 2. FFT con zero-padding ===
                         N_fft = 2**14  # largo total con padding (16384 puntos), potencia de 2 para rendimiento
                         V_padded = np.zeros(N_fft)
-                        V_padded[:M] = y_plot  # colocamos la función interpolada al inicio
+                        if usar_curva_filtrada and st.session_state["CurvaFiltrada"] is not None:
+                            V_padded[:M] = st.session_state["CurvaFiltrada"]
+                        else:
+                            V_padded[:M] = y_plot  # colocamos la función interpolada al inicio
 
                         # Tiempo entre muestras
                         dt = (U[-1] - U[0]) / (M - 1)
@@ -1241,8 +1270,8 @@ match modulo:
                         with aol2:
                             freq_end = st.number_input("Frecuencia final (rad/s)", min_value=min_freq, max_value=max_freq, value=max_freq, format="%.4f")
 
-                        if freq_start > freq_end:
-                            st.error("La frecuencia inicial debe ser menor o igual a la frecuencia final.")
+                        if freq_start >= freq_end:
+                            st.error("La frecuencia inicial debe ser menor a la frecuencia final.")
                         else:
                             filtro = (freqs_rad >= freq_start) & (freqs_rad <= freq_end)
                             
@@ -1311,10 +1340,17 @@ match modulo:
                             rol1,rol2=st.columns(2)
 
                             mostrar_comparacion = st.checkbox("Comparar con señal original", value=True)
+                            guardar_curva_filtrada = st.button("Guardar Curva Filtrada", key="GC")
+
+                            if guardar_curva_filtrada:
+                                st.session_state["CurvaFiltrada"] = np.real(y_filtrada[:M])
 
                             fig_filtrada, axf = plt.subplots()
                             if mostrar_comparacion:
-                                axf.plot(x_plot, y_plot, '--', label="Original", color='gray')
+                                if usar_curva_filtrada and st.session_state["CurvaFiltrada"] is not None:
+                                    axf.plot(x_plot, st.session_state["CurvaFiltrada"], '--', label="Original", color='gray')
+                                else:
+                                    axf.plot(x_plot, y_plot, '--', label="Original", color='gray')
                             axf.plot(x_plot, np.real(y_filtrada[:M]), label="Filtrada", color='blue')
                             axf.set_xlabel(xlabel)
                             axf.set_ylabel(ylabel)
@@ -3645,6 +3681,7 @@ match modulo:
 
                             mm_per_pixel = st.session_state.get("escala_mm_por_pixel", 1.0)
                             mostrar_mm = st.checkbox("Mostrar posición en milímetros", value=False)
+                            usar_curva_filtrada_perfil = st.checkbox("Usar curva filtrada",key="UCFP")
                             if mostrar_mm:
                                 distances *= mm_per_pixel
                                 unidad = "mm"
@@ -3687,9 +3724,15 @@ match modulo:
                                     })
                                     df["Promedio"] = df[["Intensidad R", "Intensidad G", "Intensidad B"]].mean(axis=1)
 
+                                if "CurvaFiltradaPerfil" not in st.session_state:
+                                    st.session_state["CurvaFiltradaPerfil"] = None
+
                                 # Defino la columna a usar para calcular min, max y media según la opción
                                 if profile.ndim == 1:
-                                    columna = "Intensidad"
+                                    if usar_curva_filtrada_perfil and st.session_state["CurvaFiltradaPerfil"] is not None:
+                                        columna = st.session_state["CurvaFiltradaPerfil"]
+                                    else:
+                                        columna = "Intensidad"
                                 else:
                                     if opcion_canal == "Rojo":
                                         columna = "Intensidad R"
@@ -3702,11 +3745,19 @@ match modulo:
                                     elif opcion_canal == "Todos":
                                         # Para "Todos", podés usar el rango global para el slider o decidir qué hacer
                                         columna = None
+                                    if opcion_canal != "Todos":
+                                        if usar_curva_filtrada_perfil and st.session_state["CurvaFiltradaPerfil"] is not None:
+                                            columna = st.session_state["CurvaFiltradaPerfil"]
 
                                 if columna is not None:
-                                    min_val = float(df[columna].min())
-                                    max_val = float(df[columna].max())
-                                    media_val = float(df[columna].mean())
+                                    if usar_curva_filtrada_perfil and st.session_state["CurvaFiltradaPerfil"] is not None:
+                                        min_val = float(columna.min())
+                                        max_val = float(columna.max())
+                                        media_val = float(columna.mean())
+                                    else:
+                                        min_val = float(df[columna].min())
+                                        max_val = float(df[columna].max())
+                                        media_val = float(df[columna].mean())
                                 else:
                                     # Rango global entre todos los canales
                                     min_val = float(df[["Intensidad R", "Intensidad G", "Intensidad B"]].min().min())
@@ -3731,7 +3782,10 @@ match modulo:
 
                                 x = distances  # Distancia a lo largo del perfil
                                 if profile.ndim == 1:
-                                    y = profile
+                                    if usar_curva_filtrada_perfil and st.session_state["CurvaFiltradaPerfil"] is not None:
+                                        y = columna
+                                    else:
+                                        y = profile
                                 else:
                                     if opcion_canal == "Rojo":
                                         y = df["Intensidad R"].values
@@ -3741,8 +3795,11 @@ match modulo:
                                         y = df["Intensidad B"].values
                                     elif opcion_canal == "Promedio":
                                         y = df["Promedio"].values
-                                    else:
+                                    elif opcion_canal == "Todos":
                                         y = None  # si querés manejar el caso de 'Todos' distinto
+                                    if opcion_canal != "Todos":
+                                        if usar_curva_filtrada_perfil and st.session_state["CurvaFiltradaPerfil"] is not None:
+                                            y = columna
                                 # 1. Filtrar los índices dentro del rectángulo
                                 if y is not None and x is not None and None not in (x_ini, x_fin, y1_int, y2_int):
                                     indices_en_rectangulo = np.where(
@@ -3782,28 +3839,34 @@ match modulo:
                                     fig2, ax2 = plt.subplots()
 
                                     if profile.ndim == 2 and profile.shape[1] == 3:
-                                        if opcion_canal == "Todos":
-                                            ax2.plot(distances, df["Intensidad R"], label="Rojo", color="red")
-                                            ax2.plot(distances, df["Intensidad G"], label="Verde", color="green")
-                                            ax2.plot(distances, df["Intensidad B"], label="Azul", color="blue")
+                                        if usar_curva_filtrada_perfil and st.session_state["CurvaFiltradaPerfil"] is not None:
+                                            ax2.plot(distances,columna,label="Perfil de intensidad", color="black")
                                         else:
-                                            # Plot del canal o promedio seleccionado
-                                            if columna == "Intensidad R":
-                                                color = "red"
-                                            elif columna == "Intensidad G":
-                                                color = "green"
-                                            elif columna == "Intensidad B":
-                                                color = "blue"
-                                            elif columna == "Promedio":
-                                                color = "black"
+                                            if opcion_canal == "Todos":
+                                                ax2.plot(distances, df["Intensidad R"], label="Rojo", color="red")
+                                                ax2.plot(distances, df["Intensidad G"], label="Verde", color="green")
+                                                ax2.plot(distances, df["Intensidad B"], label="Azul", color="blue")
                                             else:
-                                                color = "gray"  # o algún color por defecto
+                                                # Plot del canal o promedio seleccionado
+                                                if columna == "Intensidad R":
+                                                    color = "red"
+                                                elif columna == "Intensidad G":
+                                                    color = "green"
+                                                elif columna == "Intensidad B":
+                                                    color = "blue"
+                                                elif columna == "Promedio":
+                                                    color = "black"
+                                                else:
+                                                    color = "gray"  # o algún color por defecto
 
-                                            ax2.plot(distances, df[columna], label=columna, color=color)
+                                                ax2.plot(distances, df[columna], label=columna, color=color)
 
                                     else:
                                         # Escala de grises o promedio 1D
-                                        ax2.plot(distances, df["Intensidad"], label="Perfil de intensidad", color="black")
+                                        if usar_curva_filtrada_perfil and st.session_state["CurvaFiltradaPerfil"] is not None:
+                                            ax2.plot(distances,columna,label="Perfil de intensidad", color="black")
+                                        else:
+                                            ax2.plot(distances, df["Intensidad"], label="Perfil de intensidad", color="black")
 
                                     ax2.set_title("Perfil de intensidad")
                                     ax2.set_xlabel(f"Posición ({unidad})")
@@ -3816,9 +3879,11 @@ match modulo:
                                     y_centro = (y1_int + y2_int) / 2
                                     ax2.axhline(y_centro, color="orange", linestyle=":", linewidth=1)
                                     ax2.text(distances[-1], y_centro, "Media", va="center", ha="right", color="orange", fontsize=8)
-                                    #if x_max_abs is not None:
-                                    #    ax2.plot(x_max_abs, y_max_abs, 'ro', label='Máximo abs.')
-                                    #    ax2.plot(x_min_abs, y_min_abs, 'bo', label='Mínimo abs.')
+                                    if x_max_abs is not None:
+                                        #ax.plot(x_min, y_min, 'gv', label='Mín.')
+                                        #ax.plot(x_max, y_max, 'r^', label='Máx.')
+                                        ax2.plot(x_max_abs, y_max_abs, 'r^', label='Máximo abs.')
+                                        ax2.plot(x_min_abs, y_min_abs, 'gv', label='Mínimo abs.')
                                         #ax2.legend()
                                     # 📘 Mostrar leyenda si corresponde
                                     #if opcion_canal != "Promedio" or (profile.ndim == 2 and profile.shape[1] == 3):
@@ -3896,7 +3961,10 @@ match modulo:
                                     fn.mostrar_figura_como_imagen(fig)
 
                             if columna is not None:
-                                f = UnivariateSpline(distances, df[columna], s=0)
+                                if usar_curva_filtrada_perfil and st.session_state["CurvaFiltradaPerfil"] is not None:
+                                    f = UnivariateSpline(distances,st.session_state["CurvaFiltradaPerfil"],s=0)
+                                else:
+                                    f = UnivariateSpline(distances, df[columna], s=0)
                                 tab1, tab2, tab3 = st.tabs(["📐 Integración", "🔍 Resolver f(x) = p", "🔉 Transformada de Fourier"])
                                 with tab1:
                                     st.subheader("Área bajo la curva (integración)")
@@ -3913,7 +3981,10 @@ match modulo:
                                             area = fn.integral(f, a_int, b_int, h=h_int, tipo=metodo)
                                             st.latex(rf"\int_{{{a_int}}}^{{{b_int}}} f(x)\,dx \approx {area:.4f}")
                                             fig, ax = plt.subplots()
-                                            ax.plot(distances, df[columna], label="Perfil de intensidad", color="blue")
+                                            if usar_curva_filtrada_perfil and st.session_state["CurvaFiltradaPerfil"] is not None:
+                                                ax.plot(distances,columna,label="Perfil de intensidad",color="blue")
+                                            else:
+                                                ax.plot(distances, df[columna], label="Perfil de intensidad", color="blue")
                                             x_fill = np.linspace(a_int, b_int, 500)
                                             y_fill = f(x_fill)
                                             ax.fill_between(x_fill, y_fill, color='skyblue', alpha=0.4)
@@ -3929,7 +4000,10 @@ match modulo:
                                     st.subheader("Resolver ecuación f(x) = p")
                                     col1, col2 = st.columns([0.3, 0.7])
                                     with col1:
-                                        p_val = st.number_input("Valor p", value=float(df[columna].mean()), step=0.1)
+                                        if usar_curva_filtrada_perfil and st.session_state["CurvaFiltradaPerfil"] is not None:
+                                            p_val = st.number_input("Valor p", value=float(columna.mean()), step=0.1)
+                                        else:
+                                            p_val = st.number_input("Valor p", value=float(df[columna].mean()), step=0.1)
                                         a_bis = st.number_input("Límite inferior", value=float(distances[0]), format="%.2f")
                                         b_bis = st.number_input("Límite superior", value=float(distances[-1]), format="%.2f")
                                         tol = st.number_input("Tolerancia", value=1e-6, format="%.1e")
@@ -3947,7 +4021,10 @@ match modulo:
                                         st.success(f"✅ f(x) ≈ {p_val} → x ≈ {x_sol:.4f}")
 
                                         fig, ax = plt.subplots()
-                                        ax.plot(distances, df[columna], label="Perfil de intensidad", color="blue")
+                                        if usar_curva_filtrada_perfil and st.session_state["CurvaFiltradaPerfil"] is not None:
+                                            ax.plot(distances,columna,label="Perfil de intensidad",color="blue")
+                                        else:
+                                            ax.plot(distances, df[columna], label="Perfil de intensidad", color="blue")
                                         ax.axhline(p_val, color='gray', linestyle='--', label=f"p = {p_val}")
                                         ax.plot(x_sol, f(x_sol), 'go', label=f"x ≈ {x_sol:.2f}")
                                         ax.legend()
@@ -3958,83 +4035,86 @@ match modulo:
 
                                 with tab3:
                                     # === 1. Interpolación con spline ===
+                                    if usar_curva_filtrada_perfil and st.session_state["CurvaFiltradaPerfil"] is not None:
+                                        spline = UnivariateSpline(distances,columna,s=0)
+                                    else:
                                         spline = UnivariateSpline(distances, df[columna], s=0)
-                                        M = 2048  # sobremuestreo para buena resolución
-                                        x_interp = np.linspace(distances[0], distances[-1], M)
-                                        y_interp = spline(x_interp)
+                                    M = len(distances)  # sobremuestreo para buena resolución
+                                    x_interp = np.linspace(distances[0], distances[-1], M)
+                                    y_interp = spline(x_interp)
 
-                                        # === 2. Zero-padding antes de FFT ===
-                                        N_fft = 2**14  # gran potencia de 2 para buena resolución
-                                        y_padded = np.zeros(N_fft)
-                                        y_padded[:M] = y_interp  # función interpolada + ceros
+                                    # === 2. Zero-padding antes de FFT ===
+                                    N_fft = 2**14  # gran potencia de 2 para buena resolución
+                                    y_padded = np.zeros(N_fft)
+                                    y_padded[:M] = y_interp  # función interpolada + ceros
 
-                                        dt = (distances[-1] - distances[0]) / (M - 1)  # paso espacial
-                                        fm = 1 / dt
-                                        nyquist = fm / 2
+                                    dt = (distances[-1] - distances[0]) / (M - 1)  # paso espacial
+                                    fm = 1 / dt
+                                    nyquist = fm / 2
 
-                                        # === 3. FFT física (sin normalizar) ===
-                                        fft_vals = np.fft.fft(y_padded)
-                                        fft_vals_shifted = np.fft.fftshift(fft_vals)
-                                        EM = np.abs(fft_vals_shifted)
+                                    # === 3. FFT física (sin normalizar) ===
+                                    fft_vals = np.fft.fft(y_padded)
+                                    fft_vals_shifted = np.fft.fftshift(fft_vals)
+                                    EM = np.abs(fft_vals_shifted)
 
-                                        # Frecuencia angular en rad/unidad física (ej: rad/mm)
-                                        freqs = np.fft.fftshift(np.fft.fftfreq(N_fft, d=dt))
-                                        freqs_rad = 2 * np.pi * freqs
+                                    # Frecuencia angular en rad/unidad física (ej: rad/mm)
+                                    freqs = np.fft.fftshift(np.fft.fftfreq(N_fft, d=dt))
+                                    freqs_rad = 2 * np.pi * freqs
 
-                                        # === 4. Rango interactivo ===
-                                        st.markdown("### Análisis de Fourier")
-                                        col1, col2 = st.columns(2)
-                                        with col1:
-                                            f_ini = st.number_input("Frecuencia inicial", value=float(freqs_rad[0]), format="%.4f")
-                                        with col2:
-                                            f_fin = st.number_input("Frecuencia final", value=float(freqs_rad[-1]), format="%.4f")
+                                    # === 4. Rango interactivo ===
+                                    st.markdown("### Análisis de Fourier")
+                                    col1, col2 = st.columns(2)
+                                    with col1:
+                                        f_ini = st.number_input("Frecuencia inicial", value=float(freqs_rad[0]), format="%.4f")
+                                    with col2:
+                                        f_fin = st.number_input("Frecuencia final", value=float(freqs_rad[-1]), format="%.4f")
 
-                                        filtro = (freqs_rad >= f_ini) & (freqs_rad <= f_fin)
+                                    filtro = (freqs_rad >= f_ini) & (freqs_rad <= f_fin)
 
-                                        # Gráfico magnitud
-                                        fig_mag, ax_mag = plt.subplots()
-                                        ax_mag.plot(freqs_rad[filtro], EM[filtro], color='blue')
-                                        ax_mag.set_title("Espectro de Magnitud (centrado)")
-                                        ax_mag.set_xlabel("Frecuencia angular (rad/unidad)")
-                                        ax_mag.set_ylabel("Magnitud")
-                                        ax_mag.grid(True)
-                                        with col1:
-                                            st.pyplot(fig_mag)
+                                    # Gráfico magnitud
+                                    fig_mag, ax_mag = plt.subplots()
+                                    ax_mag.plot(freqs_rad[filtro], EM[filtro], color='blue')
+                                    ax_mag.set_title("Espectro de Magnitud (centrado)")
+                                    ax_mag.set_xlabel("Frecuencia angular (rad/unidad)")
+                                    ax_mag.set_ylabel("Magnitud")
+                                    ax_mag.grid(True)
+                                    with col1:
+                                        st.pyplot(fig_mag)
 
-                                        # Gráfico de fase
-                                        
-                                        fase = np.angle(fft_vals_shifted)
-                                        fig_fase, ax_fase = plt.subplots()
-                                        markerline, stemlines, baseline = ax_fase.stem(freqs_rad[filtro], fase[filtro], basefmt=" ")
-                                        plt.setp(markerline, color='orange', marker='o')
-                                        plt.setp(stemlines, color='orange')
-                                        ax_fase.set_title("Espectro de Fase (centrado y discreto)")
-                                        ax_fase.set_xlabel("Frecuencia angular (rad/unidad)")
-                                        ax_fase.set_ylabel("Fase (rad)")
-                                        ax_fase.grid(True)
-                                        with col2:
-                                            st.pyplot(fig_fase)
-                                        st.markdown("### 🔎 Comparación del espectro de magnitud (FFT centrada)")
-                                        dol1, dol2 = st.columns(2)
-                                        sol1, sol2 = st.columns(2)
-                                        # --- Selección tipo de filtro ---
-                                        with dol1:
-                                            tipo_filtro = st.radio("Tipo de filtro:", ["Pasa bajos", "Pasa altos", "Pasa banda"])
+                                    # Gráfico de fase
+                                    
+                                    fase = np.angle(fft_vals_shifted)
+                                    fig_fase, ax_fase = plt.subplots()
+                                    markerline, stemlines, baseline = ax_fase.stem(freqs_rad[filtro], fase[filtro], basefmt=" ")
+                                    plt.setp(markerline, color='orange', marker='o')
+                                    plt.setp(stemlines, color='orange')
+                                    ax_fase.set_title("Espectro de Fase (centrado y discreto)")
+                                    ax_fase.set_xlabel("Frecuencia angular (rad/unidad)")
+                                    ax_fase.set_ylabel("Fase (rad)")
+                                    ax_fase.grid(True)
+                                    with col2:
+                                        st.pyplot(fig_fase)
+                                    st.markdown("### 🔎 Comparación del espectro de magnitud (FFT centrada)")
+                                    dol1, dol2 = st.columns(2)
+                                    sol1, sol2 = st.columns(2)
+                                    # --- Selección tipo de filtro ---
+                                    with dol1:
+                                        tipo_filtro = st.radio("Tipo de filtro:", ["Pasa bajos", "Pasa altos", "Pasa banda"])
 
-                                        
-                                            # --- Selección de frecuencias de corte ---
-                                            if tipo_filtro == "Pasa bajos":
-                                                f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=5.0, step=0.1)
-                                                mascara = np.abs(freqs_rad) <= f_corte
+                                    
+                                        # --- Selección de frecuencias de corte ---
+                                        if tipo_filtro == "Pasa bajos":
+                                            f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=nyquist*np.pi, step=0.1)
+                                            mascara = np.abs(freqs_rad) <= f_corte
 
-                                            elif tipo_filtro == "Pasa altos":
-                                                f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=5.0, step=0.1)
-                                                mascara = np.abs(freqs_rad) >= f_corte
+                                        elif tipo_filtro == "Pasa altos":
+                                            f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=nyquist*np.pi, step=0.1)
+                                            mascara = np.abs(freqs_rad) >= f_corte
 
-                                            elif tipo_filtro == "Pasa banda":
-                                                f1 = st.number_input("Frecuencia mínima (rad/s)", min_value=0.0, max_value=nyquist*2*np.pi, value=2.0, step=0.1)
-                                                f2 = st.number_input("Frecuencia máxima (rad/s)", min_value=f1, max_value=nyquist*2*np.pi, value=10.0, step=0.1)
-                                                mascara = (np.abs(freqs_rad) >= f1) & (np.abs(freqs_rad) <= f2)
+                                        elif tipo_filtro == "Pasa banda":
+                                            f1 = st.number_input("Frecuencia mínima (rad/s)", min_value=0.0, max_value=nyquist*2*np.pi, value=nyquist*np.pi, step=0.1)
+                                            f2 = st.number_input("Frecuencia máxima (rad/s)", min_value=f1, max_value=nyquist*2*np.pi, value=nyquist*2*np.pi, step=0.1)
+                                            mascara = (np.abs(freqs_rad) >= f1) & (np.abs(freqs_rad) <= f2)
 
                                         # --- Aplicar filtro al espectro ---
                                         fft_filtrada_shifted = fft_vals_shifted * mascara
@@ -4043,47 +4123,50 @@ match modulo:
 
                                         # --- Magnitud del espectro filtrado vs original ---
                                         
-                                        with dol2:
-                                            fig_mag_comp, ax_mag_comp = plt.subplots()
-                                            ax_mag_comp.plot(freqs_rad[filtro], np.abs(fft_vals_shifted[filtro]), '--', label="Original", color='gray', alpha=0.5)
-                                            ax_mag_comp.plot(freqs_rad[filtro], np.abs(fft_filtrada_shifted[filtro]), label="Filtrada", color='blue')
-                                            ax_mag_comp.set_title("Magnitud del espectro: original vs filtrado")
-                                            ax_mag_comp.set_xlabel("Frecuencia angular (rad/s)")
-                                            ax_mag_comp.set_ylabel("Magnitud")
-                                            ax_mag_comp.grid(True)
-                                            ax_mag_comp.legend()
-                                            st.pyplot(fig_mag_comp)
+                                    with dol2:
+                                        fig_mag_comp, ax_mag_comp = plt.subplots()
+                                        ax_mag_comp.plot(freqs_rad[filtro], np.abs(fft_vals_shifted[filtro]), '--', label="Original", color='gray', alpha=0.5)
+                                        ax_mag_comp.plot(freqs_rad[filtro], np.abs(fft_filtrada_shifted[filtro]), label="Filtrada", color='blue')
+                                        ax_mag_comp.set_title("Magnitud del espectro: original vs filtrado")
+                                        ax_mag_comp.set_xlabel("Frecuencia angular (rad/s)")
+                                        ax_mag_comp.set_ylabel("Magnitud")
+                                        ax_mag_comp.grid(True)
+                                        ax_mag_comp.legend()
+                                        st.pyplot(fig_mag_comp)
 
-                                        # --- Visualizar reconstrucción ---
-                                        st.markdown("### 🔁 Señal filtrada (dominio del espacio)")
-                                        rol1,rol2=st.columns(2)
+                                    # --- Visualizar reconstrucción ---
+                                    st.markdown("### 🔁 Señal filtrada (dominio del espacio)")
+                                    rol1,rol2=st.columns(2)
 
-                                        mostrar_comparacion = st.checkbox("Comparar con señal original", value=True)
+                                    mostrar_comparacion = st.checkbox("Comparar con señal original", value=True)
+                                    guardar_curva_filtrada_perfil = st.button("Guardar Curva Filtrada", key="GCP")
+                                    if guardar_curva_filtrada_perfil:
+                                        st.session_state["CurvaFiltradaPerfil"] = np.real(y_filtrada[:M])
 
-                                        fig_filtrada, axf = plt.subplots()
-                                        if mostrar_comparacion:
-                                            axf.plot(x_interp, y_interp, '--', label="Original", color='gray')
-                                        axf.plot(x_interp, np.real(y_filtrada[:M]), label="Filtrada", color='blue')
-                                        axf.set_xlabel(f"Posición ({unidad})")
-                                        axf.set_ylabel("Intensidad")
-                                        axf.set_title("Reconstrucción filtrada")
-                                        axf.grid(True)
-                                        axf.legend()
-                                        with rol1:
-                                            st.pyplot(fig_filtrada)
+                                    fig_filtrada, axf = plt.subplots()
+                                    if mostrar_comparacion:
+                                        axf.plot(x_interp, y_interp, '--', label="Original", color='gray')
+                                    axf.plot(x_interp, np.real(y_filtrada[:M]), label="Filtrada", color='blue')
+                                    axf.set_xlabel(f"Posición ({unidad})")
+                                    axf.set_ylabel("Intensidad")
+                                    axf.set_title("Reconstrucción filtrada")
+                                    axf.grid(True)
+                                    axf.legend()
+                                    with rol1:
+                                        st.pyplot(fig_filtrada)
 
-                                        # --- Mostrar fase filtrada opcionalmente ---
-                                        fase_filtrada = np.angle(fft_filtrada_shifted)
-                                        fig_fase_filt, ax_fase_filt = plt.subplots()
-                                        markerline_filt, stemlines_filt, baseline_filt = ax_fase_filt.stem(freqs_rad[filtro], fase_filtrada[filtro], basefmt=" ")
-                                        plt.setp(markerline_filt, color='purple', marker='o')
-                                        plt.setp(stemlines_filt, color='purple')
-                                        ax_fase_filt.set_title("Espectro de Fase Filtrado (centrado y discreto)")
-                                        ax_fase_filt.set_xlabel("Frecuencia angular (rad/s)")
-                                        ax_fase_filt.set_ylabel("Fase (rad)")
-                                        ax_fase_filt.grid(True)
-                                        with rol2:
-                                            st.pyplot(fig_fase_filt)
+                                    # --- Mostrar fase filtrada opcionalmente ---
+                                    fase_filtrada = np.angle(fft_filtrada_shifted)
+                                    fig_fase_filt, ax_fase_filt = plt.subplots()
+                                    markerline_filt, stemlines_filt, baseline_filt = ax_fase_filt.stem(freqs_rad[filtro], fase_filtrada[filtro], basefmt=" ")
+                                    plt.setp(markerline_filt, color='purple', marker='o')
+                                    plt.setp(stemlines_filt, color='purple')
+                                    ax_fase_filt.set_title("Espectro de Fase Filtrado (centrado y discreto)")
+                                    ax_fase_filt.set_xlabel("Frecuencia angular (rad/s)")
+                                    ax_fase_filt.set_ylabel("Fase (rad)")
+                                    ax_fase_filt.grid(True)
+                                    with rol2:
+                                        st.pyplot(fig_fase_filt)
 
                     case "ROIs":
                         st.subheader("ROI 1 y ROI 2")
@@ -4362,8 +4445,18 @@ match modulo:
                                     st.markdown("## 📊 Análisis de curvas")
 
                                     spline_opciones = st.radio("Elegí el ROI para analizar:", ["ROI 1 (verde)", "ROI 2 (amarilla)"])
+
+                                    if "CurvaFiltradaROI" not in st.session_state:
+                                        st.session_state["CurvaFiltradaROI"] = None
+                                    if st.session_state["CurvaFiltradaROI"] is not None:
+                                        f3 = UnivariateSpline(st.session_state["CurvaFiltradaROI"][0], st.session_state["CurvaFiltradaROI"][1],s=0)
+                                    usar_curva_filtrada_roi = st.checkbox("Usar curva filtrada",key="UCFR2")
+
                                     f = f1 if "1" in spline_opciones else f2
                                     datos = intensidad_roi1 if "1" in spline_opciones else intensidad_roi2
+
+                                    if usar_curva_filtrada_roi and st.session_state["CurvaFiltradaROI"] is not None:
+                                        f = f3
 
                                     # Evaluar f en todo el dominio
                                     y_full = f(x_full)
@@ -4475,7 +4568,10 @@ match modulo:
                                             st.error(f"❌ Error: {e}")
                                     with tab3:
                                         # === 1. Interpolación spline + sobremuestreo ===
-                                        spline = UnivariateSpline(tiempos, datos, s=0)
+                                        if usar_curva_filtrada_roi and st.session_state["CurvaFiltradaROI"] is not None:
+                                            spline = f3
+                                        else:
+                                            spline = UnivariateSpline(tiempos, datos, s=0)
                                         M = 2048  # cantidad de puntos para interpolar
                                         x_interp = np.linspace(tiempos[0], tiempos[-1], M)
                                         y_interp = spline(x_interp)
@@ -4580,10 +4676,17 @@ match modulo:
                                         rol1,rol2=st.columns(2)
 
                                         mostrar_comparacion = st.checkbox("Comparar con señal original", value=True)
+                                        guardar_curva_filtrada_roi = st.button("Guardar Curva Filtrada", key="GCR2")
+
+                                        if guardar_curva_filtrada_roi:
+                                            st.session_state["CurvaFiltradaROI"] = x_interp,np.real(y_filtrada[:M])
 
                                         fig_filtrada, axf = plt.subplots()
                                         if mostrar_comparacion:
-                                            axf.plot(x_interp, y_interp, '--', label="Original", color='gray')
+                                            if usar_curva_filtrada_roi and st.session_state["CurvaFiltradaROI"] is not None:
+                                                axf.plot(x_interp,st.session_state["CurvaFiltradaROI"][1], "--", label="Original", color="gray")
+                                            else:
+                                                axf.plot(x_interp, y_interp, '--', label="Original", color='gray')
                                         axf.plot(x_interp, np.real(y_filtrada[:M]), label="Filtrada", color='blue')
                                         axf.set_xlabel("Tiempo (s)")
                                         axf.set_ylabel("Intensidad")
@@ -4739,14 +4842,24 @@ match modulo:
                                     with woli2:
                                         st.pyplot(fig2)
                                 
-                                    f1 = UnivariateSpline(tiempos, intensidad_roi1, s=0)
-                                    f2 = UnivariateSpline(tiempos, intensidad_roi2, s=0)
+
                                     # --- Análisis detallado spline ROI vs tiempo ---
                                     st.markdown("## 📊 Análisis de curvas")
 
                                     spline_opciones = st.radio("Elegí el ROI para analizar:", ["ROI 1 (verde)", "ROI 2 (amarilla)"])
+                                    f1 = UnivariateSpline(tiempos, intensidad_roi1, s=0)
+                                    f2 = UnivariateSpline(tiempos, intensidad_roi2, s=0)
+                                    if "CurvaFiltradaROI" not in st.session_state:
+                                        st.session_state["CurvaFiltradaROI"] = None
+                                    if st.session_state["CurvaFiltradaROI"] is not None:
+                                        f3 = UnivariateSpline(st.session_state["CurvaFiltradaROI"][0], st.session_state["CurvaFiltradaROI"][1],s=0)
+                                    usar_curva_filtrada_roi = st.checkbox("Usar curva filtrada",key="UCFR")
+
                                     f = f1 if "1" in spline_opciones else f2
                                     datos = intensidad_roi1 if "1" in spline_opciones else intensidad_roi2
+                                    
+                                    if usar_curva_filtrada_roi and st.session_state["CurvaFiltradaROI"] is not None:
+                                        f = f3
 
                                     # Evaluar f en todo el dominio
                                     x_full = np.linspace(tiempos[0], tiempos[-1], 1000)
@@ -4860,7 +4973,10 @@ match modulo:
                                     
                                         with tab3:
                                             # === 1. Interpolación spline + sobremuestreo ===
-                                            spline = UnivariateSpline(tiempos, datos, s=0)
+                                            if usar_curva_filtrada_roi and st.session_state["CurvaFiltradaROI"] is not None:
+                                                spline = f3
+                                            else:
+                                                spline = UnivariateSpline(tiempos, datos, s=0)
                                             M = 2048  # cantidad de puntos para interpolar
                                             x_interp = np.linspace(tiempos[0], tiempos[-1], M)
                                             y_interp = spline(x_interp)
@@ -4965,10 +5081,16 @@ match modulo:
                                             rol1,rol2=st.columns(2)
 
                                             mostrar_comparacion = st.checkbox("Comparar con señal original", value=True)
+                                            guardar_curva_filtrada_roi = st.button("Guardar Curva Filtrada", key="GCR")
+                                            if guardar_curva_filtrada_roi:
+                                                st.session_state["CurvaFiltradaROI"] = x_interp,np.real(y_filtrada[:M])
 
                                             fig_filtrada, axf = plt.subplots()
                                             if mostrar_comparacion:
-                                                axf.plot(x_interp, y_interp, '--', label="Original", color='gray')
+                                                if usar_curva_filtrada_roi and st.session_state["CurvaFiltradaROI"] is not None:
+                                                    axf.plot(x_interp,st.session_state["CurvaFiltradaROI"][1], "--", label="Original", color="gray")
+                                                else:
+                                                    axf.plot(x_interp, y_interp, '--', label="Original", color='gray')
                                             axf.plot(x_interp, np.real(y_filtrada[:M]), label="Filtrada", color='blue')
                                             axf.set_xlabel(f"{unidad}")
                                             axf.set_ylabel("Intensidad")
