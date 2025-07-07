@@ -4078,7 +4078,7 @@ match modulo:
                                     if f_ini<f_fin:
                                         filtro = (freqs_rad >= f_ini) & (freqs_rad <= f_fin)
                                     else:
-                                        st.warwing("La frecuencia inicial debe ser menor a la final")
+                                        st.warning("La frecuencia inicial debe ser menor a la final")
                                         st.stop()
 
                                     # Gráfico magnitud
