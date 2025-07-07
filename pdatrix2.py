@@ -816,8 +816,9 @@ match modulo:
                     
 
                 elif opcion == "Resolución general de C·x = b":
+                    
                     st.title("🧮 Resolución de sistemas de ecuaciones lineales")
-                    st.markdown("Resolvé sistemas lineales de la forma **C·x = b**.")
+                    st.markdown("Resolvé sistemas lineales de la forma **C·x = b** con coeficientes numéricos o simbólicos.")
 
                     archivo = st.file_uploader("Subí un archivo con la matriz C y el vector b", type=["csv", "xlsx"])
 
@@ -834,59 +835,62 @@ match modulo:
                             if df.shape[1] < 2:
                                 st.error("El archivo debe tener al menos dos columnas (C y b).")
                             else:
-                                if not df.applymap(lambda x: isinstance(x, (int, float, np.number))).all().all():
-                                    st.error("El archivo contiene valores no numéricos. Verificá que todas las celdas tengan números.")
-                                else:
-                                    C = df.iloc[:, :-1].astype(float).values
-                                    b = df.iloc[:, -1].astype(float).values
-
+                                try:
+                                    df_sym = df.applymap(lambda x: sp.sympify(str(x)))
+                                    C = sp.Matrix(df_sym.iloc[:, :-1].values.tolist())
+                                    b = sp.Matrix(df_sym.iloc[:, -1].values.tolist())
+                                except Exception as e:
+                                    st.error(f"Error al interpretar simbólicamente los datos: {e}")
                         except Exception as e:
                             st.error(f"Error al leer el archivo: {e}")
+
                     else:
                         st.subheader("Carga manual")
                         C_txt = st.text_area("Matriz C (fila por fila, separado por coma)", "2, 1\n1, 3")
                         b_txt = st.text_area("Vector b (una entrada por fila)", "8\n13")
 
                         try:
-                            C = np.array([list(map(float, fila.split(','))) for fila in C_txt.strip().split('\n')])
-                            b = np.array(list(map(float, b_txt.strip().split('\n'))))
-                        except:
-                            st.error("Error al procesar los datos.")
+                            C_list = [list(map(sp.sympify, fila.split(','))) for fila in C_txt.strip().split('\n')]
+                            b_list = list(map(sp.sympify, b_txt.strip().split('\n')))
+                            C = sp.Matrix(C_list)
+                            b = sp.Matrix(b_list)
+                        except Exception as e:
+                            st.error(f"Error al procesar los datos simbólicamente: {e}")
 
-                    # Procesamiento si A y b están bien definidos
-                    if C is not None and b is not None and len(C) == len(b):
+                    if C is not None and b is not None and C.rows == b.rows:
                         try:
-                            if C.shape[0] == C.shape[1]:
-                                # Sistema cuadrado
-                                x = np.linalg.solve(C, b)
-                                st.success("✅ Solución única encontrada:")
+                            if C.rows == C.cols:
+                                x = C.LUsolve(b)
+                                x = sp.Matrix([sp.simplify(xi) for xi in x])
+                                st.success("✅ Sistema cuadrado: solución simbólica exacta encontrada.")
                             else:
-                                # Sistema no cuadrado → método de mínimos cuadrados
-                                x, _, _, _ = np.linalg.lstsq(C, b, rcond=None)
-                                st.warning("⚠️ Sistema no cuadrado. Se usó el método de mínimos cuadrados:")
-                            
-                            #st.code(x)
+                                st.warning("⚠️ Sistema no cuadrado. Se usará método de mínimos cuadrados simbólico.")
+                                Ct = C.T
+                                normal_matrix = Ct * C
+                                normal_rhs = Ct * b
+                                try:
+                                    x = normal_matrix.inv() * normal_rhs
+                                    #x = (C.T * C).inv() * (C.T * b)
+                                    x = sp.Matrix([sp.simplify(xi) for xi in x])
+                                    st.success("✅ Solución simbólica por mínimos cuadrados:")
+                                except:
+                                    x = None
+                                    st.error("❌ No se pudo invertir la matriz normal. El sistema no tiene solución por mínimos cuadrados.")
 
-                            # Mostrar error residual
-                            #residuo = C @ x - b
-                            #error = np.linalg.norm(residuo)
-                            #st.markdown(f"**Error del residuo:** {error:.5e}")
-                            # Mostrar la solución en LaTeX
-                            solucion_latex = r"x = \begin{bmatrix}"
-                            solucion_latex += r"\\".join([f"{xi:.5f}" for xi in x])
-                            solucion_latex += r"\end{bmatrix}"
-                            st.latex(solucion_latex)
+                            if x is not None:
+                                # Mostrar la solución en LaTeX
+                                solucion_latex = r"x = \begin{bmatrix}" + r"\\".join([sp.latex(xi) for xi in x]) + r"\end{bmatrix}"
+                                st.latex(solucion_latex)
 
-                            # Mostrar el error del residuo en LaTeX
-                            residuo = C @ x - b
-                            error = np.linalg.norm(residuo)
-                            st.latex(rf"\text{{Error del residuo: }} \|C \cdot x - b\| = {error:.5e}")
-
-                        except np.linalg.LinAlgError as e:
-                            st.error(f"No se pudo resolver el sistema: {e}")
+                                # Mostrar el residuo simbólico y su norma
+                                residuo = C * x - b
+                                residuo = sp.Matrix([sp.simplify(ri) for ri in residuo])
+                                error = sp.sqrt(sum([ri**2 for ri in residuo]))
+                                st.latex(rf"\text{{Error del residuo: }} \|C \cdot x - b\| = {sp.latex(error)}")
+                        except Exception as e:
+                            st.error(f"No se pudo resolver el sistema simbólicamente: {e}")
                     else:
                         st.warning("Verificá que C y b estén bien definidos y tengan la misma cantidad de filas.")
-
                 if U is not None:
                     st.subheader("Análisis de curva")
                     if "CurvaFiltrada" not in st.session_state:
