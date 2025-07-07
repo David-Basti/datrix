@@ -987,7 +987,10 @@ match modulo:
                             if len(np.unique(U_ord)) != len(U_ord):
                                 pass#st.warnig("Hay valores repetidos en U. Pruebe usar suavizado")
                             else:
-                                f = spline  # ya es un callable
+                                if usar_curva_filtrada and st.session_state["CurvaFiltrada"] is not None:
+                                    f = UnivariateSpline(U_interp,st.session_state["CurvaFiltrada"],s=0)
+                                else:
+                                    f = spline  # ya es un callable
                                 # --- Líneas de referencia ---
                                 #st.subheader("📍 Líneas de referencia")
 
@@ -1037,7 +1040,10 @@ match modulo:
                                     figspline, ax = plt.subplots()
                                     ax.plot(x_min, y_min, 'gv', label='Mín.')
                                     ax.plot(x_max, y_max, 'r^', label='Máx.')
-                                    ax.plot(U_interp, V_interp, label='Spline', color='blue')
+                                    if usar_curva_filtrada and st.session_state["CurvaFiltrada"] is not None:
+                                        ax.plot(U_interp,st.session_state["CurvaFiltrada"],label="Spline",color="blue")
+                                    else:
+                                        ax.plot(U_interp, V_interp, label='Spline', color='blue')
                                     #ax.plot(U, V, 'ro', label='Datos')
                                     ax = figspline.gca()
 
