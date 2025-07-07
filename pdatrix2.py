@@ -4075,7 +4075,11 @@ match modulo:
                                     with col2:
                                         f_fin = st.number_input("Frecuencia final", value=float(freqs_rad[-1]), format="%.4f")
 
-                                    filtro = (freqs_rad >= f_ini) & (freqs_rad <= f_fin)
+                                    if f_ini<f_fin:
+                                        filtro = (freqs_rad >= f_ini) & (freqs_rad <= f_fin)
+                                    else:
+                                        st.warwing("La frecuencia inicial debe ser menor a la final")
+                                        st.stop()
 
                                     # Gráfico magnitud
                                     fig_mag, ax_mag = plt.subplots()
