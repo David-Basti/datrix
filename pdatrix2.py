@@ -4613,7 +4613,11 @@ match modulo:
                                         with colf2:
                                             f_fin = st.number_input("Frecuencia final", value=float(freqs_rad[-1]), format="%.2f")
 
-                                        filtro = (freqs_rad >= f_ini) & (freqs_rad <= f_fin)
+                                        if f_ini<f_fin:
+                                            filtro = (freqs_rad >= f_ini) & (freqs_rad <= f_fin)
+                                        else:
+                                            st.warning("La frecuencia inicial debe ser menor a la final")
+                                            st.stop()
                                         dol1,dol2=st.columns(2)
                                         sol1,sol2=st.columns(2)
 
@@ -5018,7 +5022,11 @@ match modulo:
                                             with colf2:
                                                 f_fin = st.number_input("Frecuencia final", value=float(freqs_rad[-1]), format="%.2f")
 
-                                            filtro = (freqs_rad >= f_ini) & (freqs_rad <= f_fin)
+                                            if f_ini<f_fin:
+                                                filtro = (freqs_rad >= f_ini) & (freqs_rad <= f_fin)
+                                            else:
+                                                st.warning("La frecuencia inicial debe ser menor a la final")
+                                                st.stop()
                                             dol1,dol2=st.columns(2)
                                             sol1,sol2=st.columns(2)
 
