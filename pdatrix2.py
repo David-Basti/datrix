@@ -3820,8 +3820,8 @@ match modulo:
                                         x_rect = x[indices_en_rectangulo]
                                         y_rect = y[indices_en_rectangulo]
 
-                                        idx_max = np.argmax(np.abs(y_rect))
-                                        idx_min = np.argmin(np.abs(y_rect))
+                                        idx_max = np.argmax((y_rect))
+                                        idx_min = np.argmin((y_rect))
 
                                         x_max_abs = x_rect[idx_max]
                                         y_max_abs = y_rect[idx_max]
