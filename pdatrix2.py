@@ -45,7 +45,7 @@ st.set_page_config(
     page_title="Datrix",
     page_icon=icono
 )
-###---------
+##---------
 #st.title("🧮 DaTrix")
 #titulo_personalizado("🧮 DaTrix", nivel=2, tamaño=56, color="black")
 # Función para convertir imagen local a base64
@@ -1257,7 +1257,7 @@ match modulo:
                             V_padded[:M] = y_plot  # colocamos la función interpolada al inicio
 
                         # Tiempo entre muestras
-                        dt = (U[-1] - U[0]) / (M - 1)
+                        dt = (U.max() - U.min()) / (M - 1)
                         fm = 1 / dt  # frecuencia de muestreo
                         nyquist = fm / 2
 
@@ -1272,8 +1272,8 @@ match modulo:
                         aol1,aol2=st.columns(2)
 
                         # Inputs para rango de frecuencia en rad/s
-                        min_freq = float(freqs_rad[0])
-                        max_freq = float(freqs_rad[-1])
+                        min_freq = float(freqs_rad.min())
+                        max_freq = float(freqs_rad.max())
 
                         with aol1:
                             freq_start = st.number_input("Frecuencia inicial (rad/s)", min_value=min_freq, max_value=max_freq, value=min_freq, format="%.4f")
@@ -4058,7 +4058,7 @@ match modulo:
                                     y_padded = np.zeros(N_fft)
                                     y_padded[:M] = y_interp  # función interpolada + ceros
 
-                                    dt = (distances[-1] - distances[0]) / (M - 1)  # paso espacial
+                                    dt = (distances.max() - distances.min()) / (M - 1)  # paso espacial
                                     fm = 1 / dt
                                     nyquist = fm / 2
 
@@ -4075,9 +4075,9 @@ match modulo:
                                     st.markdown("### Análisis de Fourier")
                                     col1, col2 = st.columns(2)
                                     with col1:
-                                        f_ini = st.number_input("Frecuencia inicial", value=float(freqs_rad[0]), format="%.4f")
+                                        f_ini = st.number_input("Frecuencia inicial", value=float(freqs_rad.min()), format="%.4f")
                                     with col2:
-                                        f_fin = st.number_input("Frecuencia final", value=float(freqs_rad[-1]), format="%.4f")
+                                        f_fin = st.number_input("Frecuencia final", value=float(freqs_rad.max), format="%.4f")
 
                                     if f_ini<f_fin:
                                         filtro = (freqs_rad >= f_ini) & (freqs_rad <= f_fin)
@@ -4596,7 +4596,7 @@ match modulo:
                                         y_padded[:M] = y_interp
 
                                         # === 3. Parámetros temporales ===
-                                        dt = (tiempos[-1] - tiempos[0]) / (M - 1)
+                                        dt = (tiempos.max() - tiempos.min()) / (M - 1)
                                         fm = 1 / dt
                                         nyquist = fm / 2
 
@@ -4613,9 +4613,9 @@ match modulo:
                                         st.markdown("### Análisis de Fourier")
                                         colf1, colf2 = st.columns(2)
                                         with colf1:
-                                            f_ini = st.number_input("Frecuencia inicial", value=float(freqs_rad[0]), format="%.2f")
+                                            f_ini = st.number_input("Frecuencia inicial", value=float(freqs_rad.min()), format="%.2f")
                                         with colf2:
-                                            f_fin = st.number_input("Frecuencia final", value=float(freqs_rad[-1]), format="%.2f")
+                                            f_fin = st.number_input("Frecuencia final", value=float(freqs_rad.max()), format="%.2f")
 
                                         if f_ini<f_fin:
                                             filtro = (freqs_rad >= f_ini) & (freqs_rad <= f_fin)
@@ -5005,7 +5005,7 @@ match modulo:
                                             y_padded[:M] = y_interp
 
                                             # === 3. Parámetros temporales ===
-                                            dt = (tiempos[-1] - tiempos[0]) / (M - 1)
+                                            dt = (tiempos.max() - tiempos.min()) / (M - 1)
                                             fm = 1 / dt
                                             nyquist = fm / 2
 
@@ -5022,9 +5022,9 @@ match modulo:
                                             st.markdown("### Análisis de Fourier")
                                             colf1, colf2 = st.columns(2)
                                             with colf1:
-                                                f_ini = st.number_input("Frecuencia inicial", value=float(freqs_rad[0]), format="%.2f")
+                                                f_ini = st.number_input("Frecuencia inicial", value=float(freqs_rad.min()), format="%.2f")
                                             with colf2:
-                                                f_fin = st.number_input("Frecuencia final", value=float(freqs_rad[-1]), format="%.2f")
+                                                f_fin = st.number_input("Frecuencia final", value=float(freqs_rad.max()), format="%.2f")
 
                                             if f_ini<f_fin:
                                                 filtro = (freqs_rad >= f_ini) & (freqs_rad <= f_fin)
