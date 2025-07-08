@@ -45,7 +45,7 @@ st.set_page_config(
     page_title="Datrix",
     page_icon=icono
 )
-###---------
+##---------
 #st.title("🧮 DaTrix")
 #titulo_personalizado("🧮 DaTrix", nivel=2, tamaño=56, color="black")
 # Función para convertir imagen local a base64
@@ -1606,8 +1606,10 @@ match modulo:
                             pass
                         case "Expandir imagen":
                             I_temp = fn.expandir_a_fov(I_temp)
+                            I_limpia = fn.expandir_a_fov(I_limpia)
                         case "Eliminar fuera del FOV":
                             I_temp = fn.aplicar_mascara_circular(I_temp,factor_radio=1)
+                            I_limpia = fn.aplicar_mascara_circular(I_limpia,factor_radio=1)
             else:
                 st.error("⚠️Debe cargar una imagen")
                 st.stop()
@@ -1617,8 +1619,10 @@ match modulo:
                             pass
                         case "Expandir imagen":
                             I_temp = fn.expandir_a_fov(I_temp)
+                            I_limpia = fn.expandir_a_fov(I_limpia)
                         case "Eliminar fuera del FOV":
                             I_temp = fn.aplicar_mascara_circular(I_temp,factor_radio=1)
+                            I_limpia = fn.aplicar_mascara_circular(I_limpia,factor_radio=1)
         if modo_sim == "SPECT":
                 if act_sel == "Subir mi imagen":
                     if archivo_I2 is not None:
@@ -1627,8 +1631,10 @@ match modulo:
                                 pass
                             case "Expandir imagen":
                                 I_temp2 = fn.expandir_a_fov(I_temp2)
+                                I_limpia2 = fn.expandir_a_fov(I_limpia2)
                             case "Eliminar fuera del FOV":
                                 I_temp2 = fn.aplicar_mascara_circular(I_temp2,factor_radio=1)
+                                I_limpia2 = fn.aplicar_mascara_circular(I_limpia2,factor_radio=1)
                     else:
                         st.error("⚠️Debe cargar una imagen")
                         st.stop()
@@ -1638,8 +1644,10 @@ match modulo:
                                 pass
                             case "Expandir imagen":
                                 I_temp2 = fn.expandir_a_fov(I_temp2)
+                                I_limpia2 = fn.expandir_a_fov(I_limpia2)
                             case "Eliminar fuera del FOV":
                                 I_temp2 = fn.aplicar_mascara_circular(I_temp2,factor_radio=1)
+                                I_limpia2 = fn.aplicar_mascara_circular(I_limpia2,factor_radio=1)
 
         if modo_sim == "SPECT":
             angulos = np.arange(a, b, p)
