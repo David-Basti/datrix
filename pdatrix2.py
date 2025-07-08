@@ -1712,7 +1712,7 @@ match modulo:
                 ###---------------
                 if st.session_state["arregloimg"] is not None:
                     if operacion != "FBP":
-                        errores = fn.calcular_nrmse_series(st.session_state["arregloimg"], st.session_state["I_limpia2"])
+                        errores = fn.calcular_nrmse_series(st.session_state["arregloimg"], I_limpia2)
                         # Encontrar el índice y valor mínimo
                         indice_min = np.argmin(errores)
                         valor_min = errores[indice_min]
@@ -1727,7 +1727,7 @@ match modulo:
                         st.markdown(f"📉 **Error final (última iteración):** {errores[-1]:.4f}")
                         st.markdown(f"🔻 **Mínimo N-RMSE** en la iteración {indice_min + 1}: {valor_min:.4f}")
                     else:
-                        error_final = fn.calcular_nrmse(st.session_state["O"],st.session_state["I_limpia2"])
+                        error_final = fn.calcular_nrmse(st.session_state["O"],I_limpia2)
                         st.markdown(f"📉 **N-RMSE reconstrucción final vs. original:** {error_final:.4f}")
             with yoli2:
                 if st.session_state["loglikelihoods"] is not None and operacion != "FBP" and operacion != "SART":
@@ -1847,7 +1847,7 @@ match modulo:
                 ###---------------
                 if st.session_state["arregloimg"] is not None:
                     if operacion != "FBP":
-                        errores = fn.calcular_nrmse_series(st.session_state["arregloimg"], st.session_state["I_limpia"])
+                        errores = fn.calcular_nrmse_series(st.session_state["arregloimg"], I_limpia)
                         # Encontrar el índice y valor mínimo
                         indice_min = np.argmin(errores)
                         valor_min = errores[indice_min]
@@ -1862,7 +1862,7 @@ match modulo:
                         st.markdown(f"📉 **Error final (última iteración):** {errores[-1]:.4f}")
                         st.markdown(f"🔻 **Mínimo N-RMSE** en la iteración {indice_min + 1}: {valor_min:.4f}")
                     else:
-                        error_final = fn.calcular_nrmse(st.session_state["O"],st.session_state["I_limpia"])
+                        error_final = fn.calcular_nrmse(st.session_state["O"],I_limpia)
                         st.markdown(f"📉 **N-RMSE reconstrucción final vs. original:** {error_final:.4f}")
             with yoli2:
                 if st.session_state["loglikelihoods"] is not None and operacion != "FBP" and operacion != "SART":
