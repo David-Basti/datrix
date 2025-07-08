@@ -45,7 +45,7 @@ st.set_page_config(
     page_title="Datrix",
     page_icon=icono
 )
-###---------
+##---------
 #st.title("🧮 DaTrix")
 #titulo_personalizado("🧮 DaTrix", nivel=2, tamaño=56, color="black")
 # Función para convertir imagen local a base64
@@ -1441,7 +1441,6 @@ match modulo:
 
                     I_temp = I.copy()
                     I_limpia = I.copy()
-                    st.session_state["I_limpia"]=I_limpia
                     st.image(I, caption="Vista previa", width=150, clamp=True)
 
                     st.subheader("🧪 Ruido en la imagen original")
@@ -1469,7 +1468,6 @@ match modulo:
                 st.image(I, caption=atten_sel, width=150)
                 I_temp = I.copy()
                 I_limpia = I.copy()
-                st.session_state["I_limpia"]=I_limpia
                 ###---------
                 st.subheader("🧪 Ruido en la imagen original")
                 add_noise = st.checkbox("Agregar ruido gaussiano")
@@ -1499,7 +1497,6 @@ match modulo:
                         #st.image(I2, caption="Tu mapa de actividad", width=150)
                         I_temp2 = I2.copy()
                         I_limpia2 = I2.copy()
-                        st.session_state["I_limpia2"]=I_limpia2
                         #col_preview2, _ = st.columns([1, 5])
                         #with col_preview2:
                         st.image(I2, caption="Vista previa", width=150)
@@ -1516,7 +1513,6 @@ match modulo:
                     I_temp2 = I2.copy()
                 # I_temp2 = I2.copy()
                 I_limpia2 = I2.copy()
-                st.session_state["I_limpia2"]=I_limpia2
 
         if "I2" not in st.session_state:
             st.session_state["I2"]=None
@@ -1665,18 +1661,22 @@ match modulo:
                     if st.button("Reconstruir"):
                         I,O,getp,geto,reconstrucciones = fn.FBP(I_temp,a,b,p,sinograma=sinograma)
                         st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"]=I_temp2,O,sino,geto
+                        st.session_state["I_limpia2"] = I_limpia2
                 case "MLEM":
                     if st.button("Reconstruir"):
                         I,O,getp,geto,arregloimg,loglikelihoods =fn.MLEM(I_temp, N, a, b, p,modo_O,I_limpia2,sinograma=sinograma)
                         st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"],st.session_state["loglikelihoods"]=I_temp2,O,sino,geto,arregloimg,loglikelihoods
+                        st.session_state["I_limpia2"] = I_limpia2
                 case "OSEM":
                     if st.button("Reconstruir"):
                         I,O,getp,geto,arregloimg,loglikelihoods =fn.OSEM(I_temp, N, a, b, p,s,modo_O,I_limpia2,sinograma=sinograma)
                         st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"],st.session_state["loglikelihoods"]=I_temp2,O,sino,geto,arregloimg,loglikelihoods
+                        st.session_state["I_limpia2"] = I_limpia2
                 case "SART":
                     if st.button("Reconstruir"):
                         I,O,getp,geto,arregloimg = fn.SART(I_temp, N, a, b, p,sinograma=sinograma)
                         st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"]=I_temp2,O,sino,geto,arregloimg
+                        st.session_state["I_limpia2"] = I_limpia2
             match operacion:
                 case "FBP":
                     if st.button("Generar Gif",key="AF"):
@@ -1710,9 +1710,9 @@ match modulo:
             yoli1,yoli2 = st.columns(2)
             with yoli1:
                 ###---------------
-                if st.session_state["arregloimg"] is not None:
+                if st.session_state["arregloimg"] is not None and st.session_state["I_limpia2"] is not None  and st.session_state["I_limpia2"].shape == st.session_state["arregloimg"][0].shape:
                     if operacion != "FBP":
-                        errores = fn.calcular_nrmse_series(st.session_state["arregloimg"], I_limpia2)
+                        errores = fn.calcular_nrmse_series(st.session_state["arregloimg"], st.session_state["I_limpia2"])
                         # Encontrar el índice y valor mínimo
                         indice_min = np.argmin(errores)
                         valor_min = errores[indice_min]
@@ -1727,10 +1727,10 @@ match modulo:
                         st.markdown(f"📉 **Error final (última iteración):** {errores[-1]:.4f}")
                         st.markdown(f"🔻 **Mínimo N-RMSE** en la iteración {indice_min + 1}: {valor_min:.4f}")
                     else:
-                        error_final = fn.calcular_nrmse(st.session_state["O"],I_limpia2)
+                        error_final = fn.calcular_nrmse(st.session_state["O"],st.session_state["I_limpia2"])
                         st.markdown(f"📉 **N-RMSE reconstrucción final vs. original:** {error_final:.4f}")
             with yoli2:
-                if st.session_state["loglikelihoods"] is not None and operacion != "FBP" and operacion != "SART":
+                if st.session_state["loglikelihoods"] is not None and operacion != "FBP" and operacion != "SART" and st.session_state["I_limpia2"] is not None  and st.session_state["I_limpia2"].shape == st.session_state["arregloimg"][0].shape:
                     fig_ll, ax_ll = plt.subplots()
                     ax_ll.scatter(range(1,len(st.session_state["loglikelihoods"])+1),np.array(st.session_state["loglikelihoods"]), color="b")
                     ax_ll.set_title("Log-Likelihood vs Iteraciones")
@@ -1800,18 +1800,22 @@ match modulo:
                                 #if modo_vid_bool:
                                 #    st.session_state["reconstrucciones"] = reconstrucciones
                                 st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"]=I,O,getp,geto
+                                st.session_state["I_limpia"] = I_limpia
                 case "MLEM":
                             if st.button("Reconstruir"):
                                 I,O,getp,geto,arregloimg,loglikelihoods =fn.MLEM(I_temp, N, a, b, p,modo_O,I_limpia)
                                 st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"],st.session_state["loglikelihoods"]=I,O,getp,geto,arregloimg,loglikelihoods
+                                st.session_state["I_limpia"] = I_limpia
                 case "OSEM":
                         if st.button("Reconstruir"):
                             I,O,getp,geto,arregloimg,loglikelihoods =fn.OSEM(I_temp, N, a, b, p,s,modo_O,I_limpia)
                             st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"],st.session_state["loglikelihoods"]=I,O,getp,geto,arregloimg,loglikelihoods
+                            st.session_state["I_limpia"] = I_limpia
                 case "SART":
                         if st.button("Reconstruir"):
                             I,O,getp,geto,arregloimg = fn.SART(I_temp, N, a, b, p)
                             st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"]=I,O,getp,geto,arregloimg
+                            st.session_state["I_limpia"] = I_limpia
             match operacion:
                 case "FBP":
                     if st.button("Generar Gif",key="AF"):
@@ -1845,9 +1849,9 @@ match modulo:
             yoli1,yoli2 = st.columns(2)
             with yoli1:
                 ###---------------
-                if st.session_state["arregloimg"] is not None:
+                if st.session_state["arregloimg"] is not None and st.session_state["I_limpia"] is not None  and st.session_state["I_limpia"].shape == st.session_state["arregloimg"][0].shape:
                     if operacion != "FBP":
-                        errores = fn.calcular_nrmse_series(st.session_state["arregloimg"], I_limpia)
+                        errores = fn.calcular_nrmse_series(st.session_state["arregloimg"], st.session_state["I_limpia"])
                         # Encontrar el índice y valor mínimo
                         indice_min = np.argmin(errores)
                         valor_min = errores[indice_min]
@@ -1862,10 +1866,10 @@ match modulo:
                         st.markdown(f"📉 **Error final (última iteración):** {errores[-1]:.4f}")
                         st.markdown(f"🔻 **Mínimo N-RMSE** en la iteración {indice_min + 1}: {valor_min:.4f}")
                     else:
-                        error_final = fn.calcular_nrmse(st.session_state["O"],I_limpia)
+                        error_final = fn.calcular_nrmse(st.session_state["O"],st.session_state["I_limpia"])
                         st.markdown(f"📉 **N-RMSE reconstrucción final vs. original:** {error_final:.4f}")
             with yoli2:
-                if st.session_state["loglikelihoods"] is not None and operacion != "FBP" and operacion != "SART":
+                if st.session_state["loglikelihoods"] is not None and st.session_state["I_limpia"] is not None and operacion != "FBP" and operacion != "SART" and st.session_state["I_limpia"].shape == st.session_state["arregloimg"][0].shape:
                     fig_ll, ax_ll = plt.subplots()
                     ax_ll.scatter(range(1,len(st.session_state["loglikelihoods"])+1),np.array(st.session_state["loglikelihoods"]), color="b")
                     ax_ll.set_title("Log-Likelihood vs Iteraciones")
