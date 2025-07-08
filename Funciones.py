@@ -161,6 +161,11 @@ def aplicar_mascara_circular(imagen,factor_radio=1):
         # Si es float u otro tipo, podés usar multiplicación directa
     #    return imagen * mascara
 
+def calcular_log_likelihood(proy_estimada, proy_real):
+    epsilon = 1e-10
+    proy_estimada = np.clip(proy_estimada, epsilon, None)
+    return np.sum(proy_real * np.log(proy_estimada) - proy_estimada)
+
 # FBP
 def FBP(I, a, b, p, sinograma=None):
     I = img_as_float(I)
@@ -202,6 +207,8 @@ def FBP_vid(I, a, b, p,sinograma=None):
 
 # MLEM
 def MLEM(I, N, a, b, p,modo_O,sinograma=None):
+    arregloimg = []
+    loglikelihoods = []
     I = img_as_float(I)
     angulos = np.arange(a, b, p)
     if sinograma is not None:
@@ -222,9 +229,13 @@ def MLEM(I, N, a, b, p,modo_O,sinograma=None):
         fA = np.divide(getp, est, out=np.zeros_like(getp), where=est != 0)
         fAA = iradon(fA, theta=angulos, filter_name=None, interpolation='linear', circle=True, output_size=O.shape[0])
         O = np.divide(O * fAA, norfO, out=np.zeros_like(O), where=norfO != 0)
+        arregloimg.append(O.copy())
+        # ✅ Guardar log-likelihood
+        loglikelihood = calcular_log_likelihood(est, getp)
+        loglikelihoods.append(loglikelihood)
     geto = radon(O, theta=angulos, circle=True)
     # Mostrar con Streamlit
-    return I, O, getp ,geto
+    return I, O, getp ,geto, arregloimg,loglikelihoods
 
 # MLEM_video
 def MLEM_vid(I, N, a, b, p,modo_O,sinograma=None):
@@ -255,6 +266,8 @@ def MLEM_vid(I, N, a, b, p,modo_O,sinograma=None):
     return reconstrucciones
 
 def OSEM(I, N, a, b, p, subsets, modo_O,sinograma=None):
+    arregloimg = []
+    loglikelihoods = []
     I = img_as_float(I)
     angulos = np.arange(a, b, p)
     num_ang = len(angulos)
@@ -281,6 +294,7 @@ def OSEM(I, N, a, b, p, subsets, modo_O,sinograma=None):
         for s in range(subsets):
             subset_ang = angulos[s::subsets]
             subset_getp = getp[:, s::subsets]
+            proy_real_subset = getp[:, s::subsets]
             est = radon(O, theta=subset_ang, circle=True)
 
             fA = np.divide(subset_getp, est, out=np.zeros_like(est), where=est != 0)
@@ -288,9 +302,13 @@ def OSEM(I, N, a, b, p, subsets, modo_O,sinograma=None):
             norm = iradon(np.ones_like(est), theta=subset_ang, filter_name=None, circle=True, output_size=I.shape[0])
             norm[norm<0] = 0
             O *= fAA / np.maximum(norm, 1e-10)
+        loglikelihood = calcular_log_likelihood(proy_real_subset, est)
+        loglikelihoods.append(loglikelihood)
+        arregloimg.append(O.copy())
+        
     geto = radon(O, theta=angulos, circle=True)
     # Mostrar con Streamlit
-    return I, O, getp ,geto
+    return I, O, getp ,geto, arregloimg, loglikelihoods
 
 def OSEM_vid(I,N,a,b,p,subsets,modo_O,sinograma=None):
     I = img_as_float(I)
@@ -329,10 +347,11 @@ def OSEM_vid(I,N,a,b,p,subsets,modo_O,sinograma=None):
             norm = iradon(np.ones_like(est), theta=subset_ang, filter_name=None, circle=True, output_size=I.shape[0])
             norm[norm<0] = 0
             O *= fAA / np.maximum(norm, 1e-10)
-            reconstrucciones.append(O.copy())
+        reconstrucciones.append(O.copy())
     return reconstrucciones
 
 def SART(I, N, a, b, p,sinograma=None):
+    arregloimg = []
     I = img_as_float(I)
     angulos = np.arange(a, b, p)
     if sinograma is not None:
@@ -346,11 +365,12 @@ def SART(I, N, a, b, p,sinograma=None):
     # Refinamiento iterativo
     for _ in range(N - 1):
         O = iradon_sart(getp, theta=angulos, image=O)
+        arregloimg.append(O.copy())
     
     # Mostrar resultados
     geto = radon(O, theta=angulos, circle=True)
 
-    return I, O, getp ,geto
+    return I, O, getp ,geto, arregloimg
 
 def SART_vid(I,N,a,b,p,sinograma=None):
     I = img_as_float(I)
@@ -714,6 +734,21 @@ def forward_projection_simple(activity, mu, angulos, circle=True):
 
     return sinogram
 
+def calcular_nrmse_series(reconstrucciones, imagen_original):
+    errores = []
+    imagen_original = imagen_original.astype(float)
+    denom = np.linalg.norm(imagen_original)
+    for rec in reconstrucciones:
+        num = np.linalg.norm(rec - imagen_original)
+        errores.append(num / denom)
+    return errores
+
+def calcular_nrmse(imagen_reconstruida, imagen_original):
+    imagen_original = imagen_original.astype(float)
+    imagen_reconstruida = imagen_reconstruida.astype(float)
+    num = np.linalg.norm(imagen_reconstruida - imagen_original)
+    denom = np.linalg.norm(imagen_original)
+    return num / denom
 
 def fantoma_aire():
     Z = np.zeros([128,128])
