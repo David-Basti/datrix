@@ -45,7 +45,7 @@ st.set_page_config(
     page_title="Datrix",
     page_icon=icono
 )
-###---------
+##---------
 #st.title("🧮 DaTrix")
 #titulo_personalizado("🧮 DaTrix", nivel=2, tamaño=56, color="black")
 # Función para convertir imagen local a base64
@@ -816,7 +816,7 @@ match modulo:
                     
 
                 elif opcion == "Resolución general de C·x = b":
-                    
+                                    
                     st.title("🧮 Resolución de sistemas de ecuaciones lineales")
                     st.markdown("Resolvé sistemas lineales de la forma **C·x = b** con coeficientes numéricos o simbólicos.")
 
@@ -1315,16 +1315,16 @@ match modulo:
                             
                                 # --- Selección de frecuencias de corte ---
                                 if tipo_filtro == "Pasa bajos":
-                                    f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=5.0, step=0.1)
+                                    f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.0, max_value=nyquist*2*np.pi, value=nyquist*np.pi, step=0.1)
                                     mascara = np.abs(freqs_rad) <= f_corte
 
                                 elif tipo_filtro == "Pasa altos":
-                                    f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=5.0, step=0.1)
+                                    f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.0, max_value=nyquist*2*np.pi, value=nyquist*np.pi, step=0.1)
                                     mascara = np.abs(freqs_rad) >= f_corte
 
                                 elif tipo_filtro == "Pasa banda":
-                                    f1 = st.number_input("Frecuencia mínima (rad/s)", min_value=0.0, max_value=nyquist*2*np.pi, value=2.0, step=0.1)
-                                    f2 = st.number_input("Frecuencia máxima (rad/s)", min_value=f1, max_value=nyquist*2*np.pi, value=10.0, step=0.1)
+                                    f1 = st.number_input("Frecuencia mínima (rad/s)", min_value=0.0, max_value=nyquist*2*np.pi, value=nyquist*np.pi/2, step=0.1)
+                                    f2 = st.number_input("Frecuencia máxima (rad/s)", min_value=f1, max_value=nyquist*2*np.pi, value=nyquist*np.pi, step=0.1)
                                     mascara = (np.abs(freqs_rad) >= f1) & (np.abs(freqs_rad) <= f2)
 
                             # --- Aplicar filtro al espectro ---
@@ -4659,16 +4659,16 @@ match modulo:
                                         
                                             # --- Selección de frecuencias de corte ---
                                             if tipo_filtro == "Pasa bajos":
-                                                f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=5.0, step=0.1)
+                                                f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=nyquist*np.pi, step=0.1)
                                                 mascara = np.abs(freqs_rad) <= f_corte
 
                                             elif tipo_filtro == "Pasa altos":
-                                                f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=5.0, step=0.1)
+                                                f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=nyquist*np.pi, step=0.1)
                                                 mascara = np.abs(freqs_rad) >= f_corte
 
                                             elif tipo_filtro == "Pasa banda":
-                                                f1 = st.number_input("Frecuencia mínima (rad/s)", min_value=0.0, max_value=nyquist*2*np.pi, value=2.0, step=0.1)
-                                                f2 = st.number_input("Frecuencia máxima (rad/s)", min_value=f1, max_value=nyquist*2*np.pi, value=10.0, step=0.1)
+                                                f1 = st.number_input("Frecuencia mínima (rad/s)", min_value=0.0, max_value=nyquist*2*np.pi, value=nyquist*np.pi/2, step=0.1)
+                                                f2 = st.number_input("Frecuencia máxima (rad/s)", min_value=f1, max_value=nyquist*2*np.pi, value=nyquist*np.pi, step=0.1)
                                                 mascara = (np.abs(freqs_rad) >= f1) & (np.abs(freqs_rad) <= f2)
 
                                         # --- Aplicar filtro al espectro ---
@@ -5068,16 +5068,16 @@ match modulo:
                                             
                                                 # --- Selección de frecuencias de corte ---
                                                 if tipo_filtro == "Pasa bajos":
-                                                    f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=5.0, step=0.1)
+                                                    f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=nyquist*np.pi, step=0.1)
                                                     mascara = np.abs(freqs_rad) <= f_corte
 
                                                 elif tipo_filtro == "Pasa altos":
-                                                    f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=5.0, step=0.1)
+                                                    f_corte = st.number_input("Frecuencia de corte (rad/s)", min_value=0.01, max_value=nyquist*2*np.pi, value=nyquist*np.pi, step=0.1)
                                                     mascara = np.abs(freqs_rad) >= f_corte
 
                                                 elif tipo_filtro == "Pasa banda":
-                                                    f1 = st.number_input("Frecuencia mínima (rad/s)", min_value=0.0, max_value=nyquist*2*np.pi, value=2.0, step=0.1)
-                                                    f2 = st.number_input("Frecuencia máxima (rad/s)", min_value=f1, max_value=nyquist*2*np.pi, value=10.0, step=0.1)
+                                                    f1 = st.number_input("Frecuencia mínima (rad/s)", min_value=0.0, max_value=nyquist*2*np.pi, value=nyquist*np.pi/2, step=0.1)
+                                                    f2 = st.number_input("Frecuencia máxima (rad/s)", min_value=f1, max_value=nyquist*2*np.pi, value=nyquist*np.pi, step=0.1)
                                                     mascara = (np.abs(freqs_rad) >= f1) & (np.abs(freqs_rad) <= f2)
 
                                             # --- Aplicar filtro al espectro ---
