@@ -862,9 +862,9 @@ match modulo:
                             if C.rows == C.cols:
                                 x = C.LUsolve(b)
                                 x = sp.Matrix([sp.simplify(xi) for xi in x])
-                                st.success("✅ Sistema cuadrado: solución simbólica exacta encontrada.")
+                                st.success("✅ Sistema cuadrado: solución exacta encontrada.")
                             else:
-                                st.warning("⚠️ Sistema no cuadrado. Se usará método de mínimos cuadrados simbólico.")
+                                st.warning("⚠️ Sistema no cuadrado. Se usará método de mínimos cuadrados.")
                                 Ct = C.T
                                 normal_matrix = Ct * C
                                 normal_rhs = Ct * b
@@ -872,7 +872,7 @@ match modulo:
                                     x = normal_matrix.inv() * normal_rhs
                                     #x = (C.T * C).inv() * (C.T * b)
                                     x = sp.Matrix([sp.simplify(xi) for xi in x])
-                                    st.success("✅ Solución simbólica por mínimos cuadrados:")
+                                    st.success("✅ Solución por mínimos cuadrados:")
                                 except:
                                     x = None
                                     st.error("❌ No se pudo invertir la matriz normal. El sistema no tiene solución por mínimos cuadrados.")
