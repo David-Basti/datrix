@@ -45,7 +45,7 @@ st.set_page_config(
     page_title="Datrix",
     page_icon=icono
 )
-###---------
+##---------
 #st.title("🧮 DaTrix")
 #titulo_personalizado("🧮 DaTrix", nivel=2, tamaño=56, color="black")
 # Función para convertir imagen local a base64
@@ -1741,9 +1741,12 @@ match modulo:
                 ###----------------------------------
             if st.session_state["I"] is not None and st.session_state["O"] is not None and st.session_state["getp"] is not None and st.session_state["geto"] is not None:
                 
+                verimagensinr = st.checkbox("Ver imagen orinal sin ruido",key="viosr")
                 fig1, axs1 = plt.subplots(1, 2, figsize=(10, 5))
-                
-                im0 = axs1[0].imshow(st.session_state["I"], cmap='gray')#,vmin=0, vmax=1)
+                if verimagensinr:
+                    im0 = axs1[0].imshow(st.session_state["I_limpia2"], cmap='gray')#,vmin=0, vmax=1)
+                else:
+                    im0 = axs1[0].imshow(st.session_state["I"], cmap='gray')#,vmin=0, vmax=1)
                 axs1[0].set_title("Imagen original")
                 axs1[0].axis("off")
                 fig1.colorbar(im0, ax=axs1[0], fraction=0.046, pad=0.04)
@@ -1881,8 +1884,11 @@ match modulo:
             if st.session_state["I"] is not None and st.session_state["O"] is not None and st.session_state["getp"] is not None and st.session_state["geto"] is not None:
                 
                 fig1, axs1 = plt.subplots(1, 2, figsize=(10, 5))
-                
-                im0 = axs1[0].imshow(st.session_state["I"], cmap='gray')#,vmin=0, vmax=1)
+                verimagensinrtc = st.checkbox("Ver imagen orinal sin ruido",key="viosrtc")
+                if verimagensinrtc:
+                    im0 = axs1[0].imshow(st.session_state["I_limpia"], cmap='gray')#,vmin=0, vmax=1)
+                else:    
+                    im0 = axs1[0].imshow(st.session_state["I"], cmap='gray')#,vmin=0, vmax=1)
                 axs1[0].set_title("Imagen original")
                 axs1[0].axis("off")
                 fig1.colorbar(im0, ax=axs1[0], fraction=0.046, pad=0.04)
@@ -1906,6 +1912,12 @@ match modulo:
                 #fig2.tight_layout()
                 st.session_state["fig2"] = fig2
                 st.session_state["fig2"].tight_layout()
+                #st.pyplot(fig2)
+                if st.session_state["fig1"] is not None and st.session_state["fig2"] is not None:
+                    st.subheader("🖼️ Imágenes")
+                    st.pyplot(st.session_state["fig1"])
+                    st.subheader("📈 Sinogramas")
+                    st.pyplot(st.session_state["fig2"])
 
                 colif1,colif2 = st.columns(2)
                 with colif1:
@@ -1929,16 +1941,9 @@ match modulo:
                 im3 = fig3.colorbar(im3,ax= axs3,fraction=0.046, pad=0.04)
                 st.session_state["fig3"] = fig3#plt.show()
 
-
-                #st.pyplot(fig2)
             if st.session_state["fig3"] is not None:
                 with colif2:
                     st.pyplot(st.session_state["fig3"])
-            if st.session_state["fig1"] is not None and st.session_state["fig2"] is not None:
-                st.subheader("🖼️ Imágenes")
-                st.pyplot(st.session_state["fig1"])
-                st.subheader("📈 Sinogramas")
-                st.pyplot(st.session_state["fig2"])
             if st.session_state["reconstrucciones"] is not None and st.session_state["Ani"] is not None and st.session_state["vid"] is None:
                     #st.subheader("🎞️ Animación de la reconstrucción")
                     #paso = st.slider("Paso", 1, len(st.session_state["reconstrucciones"]), 1)
