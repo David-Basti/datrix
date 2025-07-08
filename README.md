@@ -5,7 +5,7 @@ Consta de 3 módulos principales:
 
 ---
 
-## Álgebra
+## Álgebra y Análisis Númerico
 Permite realizar:
 - Operaciones con matrices
 - Potencia, producto, suma por un escalar.
