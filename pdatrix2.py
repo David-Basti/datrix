@@ -45,7 +45,7 @@ st.set_page_config(
     page_title="Datrix",
     page_icon=icono
 )
-###---------
+##---------
 #st.title("🧮 DaTrix")
 #titulo_personalizado("🧮 DaTrix", nivel=2, tamaño=56, color="black")
 # Función para convertir imagen local a base64
@@ -4596,7 +4596,7 @@ match modulo:
                                         y_padded[:M] = y_interp
 
                                         # === 3. Parámetros temporales ===
-                                        dt = (tiempos.max() - tiempos.min()) / (M - 1)
+                                        dt = (max(tiempos) - min(tiempos)) / (M - 1)
                                         fm = 1 / dt
                                         nyquist = fm / 2
 
@@ -5005,7 +5005,7 @@ match modulo:
                                             y_padded[:M] = y_interp
 
                                             # === 3. Parámetros temporales ===
-                                            dt = (tiempos.max() - tiempos.min()) / (M - 1)
+                                            dt = (max(tiempos) - min(tiempos)) / (M - 1)
                                             fm = 1 / dt
                                             nyquist = fm / 2
 
