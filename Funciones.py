@@ -206,7 +206,7 @@ def FBP_vid(I, a, b, p,sinograma=None):
     return reconstrucciones 
 
 # MLEM
-def MLEM(I, N, a, b, p,modo_O,Ilimpia,sinograma=None):
+def MLEM(I, N, a, b, p,modo_O,sinograma=None):
     arregloimg = []
     loglikelihoods = []
     I = img_as_float(I)
@@ -226,13 +226,13 @@ def MLEM(I, N, a, b, p,modo_O,Ilimpia,sinograma=None):
     norfO = iradon(np.ones_like(radon(O, theta=angulos)),theta=angulos, filter_name=None, interpolation='linear', circle=True, output_size=O.shape[0])
     for _ in range(N):
         est = radon(O, theta=angulos, circle=True)
-        estl = radon(Ilimpia,theta=angulos,circle=True)
+        #estl = radon(Ilimpia,theta=angulos,circle=True)
         fA = np.divide(getp, est, out=np.zeros_like(getp), where=est != 0)
         fAA = iradon(fA, theta=angulos, filter_name=None, interpolation='linear', circle=True, output_size=O.shape[0])
         O = np.divide(O * fAA, norfO, out=np.zeros_like(O), where=norfO != 0)
         arregloimg.append(O.copy())
         # ✅ Guardar log-likelihood
-        loglikelihood = calcular_log_likelihood(est, estl)
+        loglikelihood = calcular_log_likelihood(est, getp)
         loglikelihoods.append(loglikelihood)
     geto = radon(O, theta=angulos, circle=True)
     # Mostrar con Streamlit
@@ -266,7 +266,7 @@ def MLEM_vid(I, N, a, b, p,modo_O,sinograma=None):
         reconstrucciones.append(O.copy())
     return reconstrucciones
 
-def OSEM(I, N, a, b, p, subsets, modo_O,Ilimpia,sinograma=None):
+def OSEM(I, N, a, b, p, subsets, modo_O,sinograma=None):
     arregloimg = []
     loglikelihoods = []
     I = img_as_float(I)
@@ -303,8 +303,8 @@ def OSEM(I, N, a, b, p, subsets, modo_O,Ilimpia,sinograma=None):
             norm[norm<0] = 0
             O *= fAA / np.maximum(norm, 1e-10)
         est_c = radon(O, theta=angulos, circle=True)
-        estl = radon(Ilimpia, theta=angulos, circle=True)
-        loglikelihood = calcular_log_likelihood(est_c, estl)
+        #estl = radon(Ilimpia, theta=angulos, circle=True)
+        loglikelihood = calcular_log_likelihood(est_c, getp)
         loglikelihoods.append(loglikelihood)
         arregloimg.append(O.copy())
         
