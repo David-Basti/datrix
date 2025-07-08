@@ -45,7 +45,7 @@ st.set_page_config(
     page_title="Datrix",
     page_icon=icono
 )
-###---------
+##---------
 #st.title("🧮 DaTrix")
 #titulo_personalizado("🧮 DaTrix", nivel=2, tamaño=56, color="black")
 # Función para convertir imagen local a base64
@@ -1443,12 +1443,13 @@ match modulo:
                     I_limpia = I.copy()
                     st.image(I, caption="Vista previa", width=150, clamp=True)
 
-                    st.subheader("🧪 Ruido en la imagen original")
-                    add_noise = st.checkbox("Agregar ruido gaussiano",key="addnoise1")
-                    if add_noise:
-                        sigma = st.slider("Desvío estándar del ruido", min_value=0.0, max_value=0.5, value=0.05, step=0.01)
-                        I_temp += np.random.normal(0, sigma * I_temp, I_temp.shape)
-                        st.image(np.clip(I_temp, 0, 1), caption="Imagen con ruido", width=150, clamp=True)
+                    if modo_sim == "TC":
+                        st.subheader("🧪 Ruido en la imagen original")
+                        add_noise = st.checkbox("Agregar ruido gaussiano",key="addnoise1")
+                        if add_noise:
+                            sigma = st.slider("Desvío estándar del ruido", min_value=0.0, max_value=0.5, value=0.05, step=0.01)
+                            I_temp += np.random.normal(0, sigma * I_temp, I_temp.shape)
+                            st.image(np.clip(I_temp, 0, 1), caption="Imagen con ruido", width=150, clamp=True)
                     #col_preview, _ = st.columns([1, 5])
                     #with col_preview:
                     
@@ -1468,12 +1469,13 @@ match modulo:
                 I_temp = I.copy()
                 I_limpia = I.copy()
                 ###---------
-                st.subheader("🧪 Ruido en la imagen original")
-                add_noise = st.checkbox("Agregar ruido gaussiano",key="addnoise2")
-                if add_noise:
-                    sigma = st.slider("Desvío estándar del ruido", min_value=0.0, max_value=0.5, value=0.05, step=0.01)
-                    I_temp += np.random.normal(0, sigma * I_temp, I_temp.shape)
-                    st.image(np.clip(I_temp, 0, 1), caption="Imagen con ruido", width=150, clamp=True)
+                if modo_sim == "TC":
+                    st.subheader("🧪 Ruido en la imagen original")
+                    add_noise = st.checkbox("Agregar ruido gaussiano",key="addnoise2")
+                    if add_noise:
+                        sigma = st.slider("Desvío estándar del ruido", min_value=0.0, max_value=0.5, value=0.05, step=0.01)
+                        I_temp += np.random.normal(0, sigma * I_temp, I_temp.shape)
+                        st.image(np.clip(I_temp, 0, 1), caption="Imagen con ruido", width=150, clamp=True)
                     #col_preview, _ = st.columns([1, 5])
 
             # Ahora I está listo: usa I_temp = I.copy() si es necesario
@@ -1498,6 +1500,7 @@ match modulo:
                         #col_preview2, _ = st.columns([1, 5])
                         #with col_preview2:
                         st.image(I2, caption="Vista previa", width=150)
+                        
                 elif act_sel == "Fantoma de círculos":
                     I2 = fn.crear_mapa_actividad(N=128, radio=4, A1=100, desplazamiento=40)
                     st.image(I2/100, caption="Fantoma de círculos", width=150, clamp=True)
@@ -1511,6 +1514,14 @@ match modulo:
                     I_temp2 = I2.copy()
                 # I_temp2 = I2.copy()
                 I_limpia2 = I2.copy()
+                st.subheader("🧪 Ruido en la imagen original")
+                add_noise = st.checkbox("Agregar ruido gaussiano",key="addnoise3")
+                if add_noise:
+                    sigma_rel = st.slider("Desvío relativo del ruido", 0.0, 0.5, 0.05, 0.01)
+                    ruido = np.random.normal(0, sigma_rel * I_temp2, I_temp2.shape)
+                    I_temp2 += ruido
+                    I_temp2 = np.clip(I_temp2, 0, None)  # Evita negativos
+                    st.image(I_temp2 / np.max(I_temp2), caption="Con ruido", width=150, clamp=True)
 
         if "I2" not in st.session_state:
             st.session_state["I2"]=None
