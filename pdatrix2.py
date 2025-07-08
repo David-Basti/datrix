@@ -45,7 +45,7 @@ st.set_page_config(
     page_title="Datrix",
     page_icon=icono
 )
-###---------
+##---------
 #st.title("🧮 DaTrix")
 #titulo_personalizado("🧮 DaTrix", nivel=2, tamaño=56, color="black")
 # Función para convertir imagen local a base64
@@ -1444,12 +1444,11 @@ match modulo:
                     st.image(I, caption="Vista previa", width=150, clamp=True)
 
                     st.subheader("🧪 Ruido en la imagen original")
-                    add_noise = st.checkbox("Agregar ruido gaussiano")
+                    add_noise = st.checkbox("Agregar ruido gaussiano",key="addnoise1")
                     if add_noise:
                         sigma = st.slider("Desvío estándar del ruido", min_value=0.0, max_value=0.5, value=0.05, step=0.01)
-                        I_temp = I_temp + np.random.normal(0, sigma, I_temp.shape)
-                        I_temp = np.clip(I_temp, 0, 1)
-                        st.image(I_temp, caption="Imagen con ruido", width=150, clamp=True)
+                        I_temp += np.random.normal(0, sigma * I_temp, I_temp.shape)
+                        st.image(np.clip(I_temp, 0, 1), caption="Imagen con ruido", width=150, clamp=True)
                     #col_preview, _ = st.columns([1, 5])
                     #with col_preview:
                     
@@ -1470,13 +1469,12 @@ match modulo:
                 I_limpia = I.copy()
                 ###---------
                 st.subheader("🧪 Ruido en la imagen original")
-                add_noise = st.checkbox("Agregar ruido gaussiano")
+                add_noise = st.checkbox("Agregar ruido gaussiano",key="addnoise2")
                 if add_noise:
                     sigma = st.slider("Desvío estándar del ruido", min_value=0.0, max_value=0.5, value=0.05, step=0.01)
-                    I_temp = I_temp + np.random.normal(0, sigma, I_temp.shape)
-                    I_temp = np.clip(I_temp, 0, 1)  # Asegura que los valores estén entre 0 y 1
-                    st.image(I_temp, caption="Imagen con ruido", width=150,clamp=True)
-                    ###--------
+                    I_temp += np.random.normal(0, sigma * I_temp, I_temp.shape)
+                    st.image(np.clip(I_temp, 0, 1), caption="Imagen con ruido", width=150, clamp=True)
+                    #col_preview, _ = st.columns([1, 5])
 
             # Ahora I está listo: usa I_temp = I.copy() si es necesario
             #I_temp = I.copy()
@@ -1923,13 +1921,16 @@ match modulo:
                 with colif1:
                     window_center = st.slider('Centro de ventana (nivel, L)', min_value=-1000, max_value=1000, value=0, step=10)
                     window_width = st.slider('Ancho de ventana (W)', min_value=1, max_value=2000, value=400, step=10)
-                    verimg = st.radio("Elegí que imagen ver en HU", ["Imagen original", "Imagen recosntruida"])
-                    if verimg == "Imagen original":
+                    verimg = st.radio("Elegí que imagen ver en HU", ["Imagen original sin ruido", "Imagen original con ruido", "Imagen recosntruida"])
+                    if verimg == "Imagen original sin ruido":
+                        IUH = fn.convertir_a_hounsfield(st.session_state["I_limpia"])
+                        cadena = "Imagen original s/r con ventaneo"
+                    elif verimg =="Imagen original con ruido":
                         IUH = fn.convertir_a_hounsfield(st.session_state["I"])
-                        cadena = "Imagen original con ventaneo"
+                        cadena = "Imagen original c/r con ventaneo"
                     else:
                         IUH = fn.convertir_a_hounsfield(st.session_state["O"])
-                        cadena = "Imagen reconstruda con ventaneo"
+                        cadena = "Imagen reconstruida con ventaneo"
     # Aplicar ventaneo a la imagen
                 L = window_center
                 W = window_width
