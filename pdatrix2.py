@@ -1070,7 +1070,10 @@ match modulo:
 
                             f = resultados["f"]
                             x_full = resultados["x_plot"]
-                            y_full = resultados["y_plot"]
+                            if usar_curva_filtrada and st.session_state["CurvaFiltrada"] is not None:
+                                y_full = st.session_state["CurvaFiltrada"]
+                            else:
+                                y_full = resultados["y_plot"]
 
                             # Establecer rangos posibles para los sliders
                             x_min_full, x_max_full = float(min(x_full)), float(max(x_full))
@@ -1109,7 +1112,12 @@ match modulo:
                             st.success(f"📈 Dentro del rectángulo:\n\n🔽 Mínimo f(x) = {y_min:.4f} en x = {x_min:.4f}\n🔼 Máximo f(x) = {y_max:.4f} en x = {x_max:.4f}")
 
                             with volu2:
-                                figexp = resultados["fig2"]
+                                if usar_curva_filtrada and st.session_state["CurvaFiltrada"] is not None:
+                                    figexp,ax =  plt.subplots()
+                                    ax.plot(x_full, st.session_state["CurvaFiltrada"], color="b", label="Curva Filtrada")
+                                else:
+                                    figexp = resultados["fig2"]
+                                
                                 ax = figexp.gca()
                                 ax.plot(x_min, y_min, 'gv', label='Mín.')
                                 ax.plot(x_max, y_max, 'r^', label='Máx.')
