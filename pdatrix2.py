@@ -4077,7 +4077,7 @@ match modulo:
                                     with col1:
                                         f_ini = st.number_input("Frecuencia inicial", value=float(freqs_rad.min()), format="%.4f")
                                     with col2:
-                                        f_fin = st.number_input("Frecuencia final", value=float(freqs_rad.max), format="%.4f")
+                                        f_fin = st.number_input("Frecuencia final", value=float(freqs_rad.max()), format="%.4f")
 
                                     if f_ini<f_fin:
                                         filtro = (freqs_rad >= f_ini) & (freqs_rad <= f_fin)
