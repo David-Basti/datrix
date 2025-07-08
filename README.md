@@ -14,12 +14,56 @@ Permite realizar:
 - Resolución de sistemas lineales, ajuste polnómico, ajuste exponencial, interpolación spline. Análisis de curvas, máximo y mínimo absoluto, integración, resolución de ecuaciones no lineales, análisis de Fourier.
 
 ## Procesamiento de Imágenes
-Incluye herramientas para:
-- Visualización y ventaneo (como en imágenes de tomografía).
-- Edición: rotación, brillo, contraste, filtrado espacial y frecuencial, operaciones morfológicas, ecualización.
-- Análsis de perfil de intensidad.
-- Análisis de regiones de interés (ROI).
-- Curvas ROI vs. tiempo para archivos multiframe (por ejemplo, en estudios dinámicos).
+Herramientas:
+
+### Visualizador
+- Imagen con ventaneo (como en imágenes de tomografía).
+- Imágenes freme por frame.
+
+### Editor
+- Rotación.
+- Brillo y contraste.
+- Filtrado espacial: suavizado, realce de bordes, matriz personalizada.
+- Filtrado frecuencial: pasa bajos, pasa altos, gaussiano, pasa altos gaussiano, rampa, Parzen, Shepp-Logan, Hann, Hamming, Butterworth.
+- Operaciones morfológicas:  erosión, dilatación, apertura, cierre.
+- Ecualización: global, adaptativa.
+
+### Calibrador
+- Permite ingresar manualmente el valor de milímetros por píxel.
+- Permite trazar una línea sobre la imagen e ingresar a cuantos milímetros equivale la línea.
+
+### Analizador
+#### Histograma
+- Permite visualizar histograma por canales, todos juntos, promedio o escala de grises.
+
+#### Análsis de perfil de intensidad
+- Permite anaizar por canales.
+- Largo del perfil
+- Distancias
+- FWHM
+- Máximo absoluto en una región rectangular.
+- Mínimo absoluto en una región rectangular.
+- Máxima intensidad.
+- Mínima intensidad.
+- Media del perfil.
+- Integral (área bajo la curva).
+- Resolución de ecuación f(x)=p.
+- Análisis de Fourier.
+
+#### Análisis de regiones de interés (ROI).
+- Intensidad media en el ROI.
+- Intensidad total en el ROI.
+- Área del ROI.
+- Diferencia de intensidad media entre ROIs.
+- Diferencia de intensidad total entre ROIs.
+- Operaciones entre imágenes, regiones: (fusión, intersección, sustracción).
+
+#### Curvas ROI vs. tiempo para archivos multiframe (por ejemplo, en estudios dinámicos)
+- Permite establecer tiempo por frame.
+- Máximo y mínimo absoluto en una región rectangular de la curva.
+- Integral (área bajo la curva).
+- Resolución de ecuación f(x)=p.
+- Análisis de Fourier.
 
 ## Reconstrucción Tomográfica
 Simulador de reconstrución tomográfica de fantomas matemáticos.
@@ -51,7 +95,7 @@ Simulador de reconstrución tomográfica de fantomas matemáticos.
 ### Figuras
 - Imagen original sin ruido
 - Imagen original con ruido
-- Reconstrucción
+- Imagen reconstruida
 - Imágenes con ventaneo (en modo TC)
 
 ### Animaciones
