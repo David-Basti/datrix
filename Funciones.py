@@ -206,7 +206,7 @@ def FBP_vid(I, a, b, p,sinograma=None):
     return reconstrucciones 
 
 # MLEM
-def MLEM(I, N, a, b, p,modo_O,sinograma=None):
+def MLEM(I, N, a, b, p,modo_O,Ilimpia,sinograma=None):
     arregloimg = []
     loglikelihoods = []
     I = img_as_float(I)
@@ -226,12 +226,13 @@ def MLEM(I, N, a, b, p,modo_O,sinograma=None):
     norfO = iradon(np.ones_like(radon(O, theta=angulos)),theta=angulos, filter_name=None, interpolation='linear', circle=True, output_size=O.shape[0])
     for _ in range(N):
         est = radon(O, theta=angulos, circle=True)
+        estl = radon(Ilimpia,theta=angulos,circle=True)
         fA = np.divide(getp, est, out=np.zeros_like(getp), where=est != 0)
         fAA = iradon(fA, theta=angulos, filter_name=None, interpolation='linear', circle=True, output_size=O.shape[0])
         O = np.divide(O * fAA, norfO, out=np.zeros_like(O), where=norfO != 0)
         arregloimg.append(O.copy())
         # ✅ Guardar log-likelihood
-        loglikelihood = calcular_log_likelihood(est, getp)
+        loglikelihood = calcular_log_likelihood(est, estl)
         loglikelihoods.append(loglikelihood)
     geto = radon(O, theta=angulos, circle=True)
     # Mostrar con Streamlit
@@ -265,7 +266,7 @@ def MLEM_vid(I, N, a, b, p,modo_O,sinograma=None):
         reconstrucciones.append(O.copy())
     return reconstrucciones
 
-def OSEM(I, N, a, b, p, subsets, modo_O,sinograma=None):
+def OSEM(I, N, a, b, p, subsets, modo_O,Ilimpia,sinograma=None):
     arregloimg = []
     loglikelihoods = []
     I = img_as_float(I)
@@ -275,7 +276,8 @@ def OSEM(I, N, a, b, p, subsets, modo_O,sinograma=None):
          st.error("El número de subsets debe ser mayor que 0 y menor o igual a la cantidad de ángulos.")
          st.stop()
     elif len(angulos) % subsets != 0:
-         st.warning("⚠️ El número de subsets no divide exactamente a la cantidad de ángulos. La reconstrucción aún se hará, pero puede ser subóptima.")
+         st.warning("⚠️ El número de subsets no divide exactamente a la cantidad de ángulos.")
+         st.stop()
     subset_size = num_ang // subsets
     I = img_as_float(I)
     if sinograma is not None:
@@ -294,15 +296,15 @@ def OSEM(I, N, a, b, p, subsets, modo_O,sinograma=None):
         for s in range(subsets):
             subset_ang = angulos[s::subsets]
             subset_getp = getp[:, s::subsets]
-            proy_real_subset = getp[:, s::subsets]
             est = radon(O, theta=subset_ang, circle=True)
-
             fA = np.divide(subset_getp, est, out=np.zeros_like(est), where=est != 0)
             fAA = iradon(fA, theta=subset_ang, filter_name=None, circle=True, output_size=I.shape[0])
             norm = iradon(np.ones_like(est), theta=subset_ang, filter_name=None, circle=True, output_size=I.shape[0])
             norm[norm<0] = 0
             O *= fAA / np.maximum(norm, 1e-10)
-        loglikelihood = calcular_log_likelihood(proy_real_subset, est)
+        est_c = radon(O, theta=angulos, circle=True)
+        estl = radon(Ilimpia, theta=angulos, circle=True)
+        loglikelihood = calcular_log_likelihood(est_c, estl)
         loglikelihoods.append(loglikelihood)
         arregloimg.append(O.copy())
         
@@ -318,7 +320,8 @@ def OSEM_vid(I,N,a,b,p,subsets,modo_O,sinograma=None):
          st.error("El número de subsets debe ser mayor que 0 y menor o igual a la cantidad de ángulos.")
          st.stop()
     elif len(angulos) % subsets != 0:
-         st.warning("⚠️ El número de subsets no divide exactamente a la cantidad de ángulos. La reconstrucción aún se hará, pero puede ser subóptima.")
+         st.warning("⚠️ El número de subsets no divide exactamente a la cantidad de ángulos.")
+         st.stop()
     subset_size = num_ang // subsets
     I = img_as_float(I)
     if sinograma is not None:
