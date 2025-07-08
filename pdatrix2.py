@@ -45,7 +45,7 @@ st.set_page_config(
     page_title="Datrix",
     page_icon=icono
 )
-###---------
+##---------
 #st.title("🧮 DaTrix")
 #titulo_personalizado("🧮 DaTrix", nivel=2, tamaño=56, color="black")
 # Función para convertir imagen local a base64
@@ -89,7 +89,7 @@ st.sidebar.markdown("[📂 Repositorio en GitHub](https://github.com/David-Basti
 match modulo:
     case "Álgebra y análisis numérico":
         #with st.expander("Módulo 1",expanded=True):
-        st.title("🔢 Módulo 1: Álgebra y análisis numérico")
+        st.title("🔢 Módulo 1: Álgebra y análisis aumérico")
         tabs = st.tabs(["Operaciones con matrices", "Señales y sistemas"])
         #titulo_personalizado("🔢 Módulo 1: Operaciones con matriz única", nivel=2, tamaño=56, color="black")
         with tabs[0]:
@@ -1673,12 +1673,12 @@ match modulo:
                         st.session_state["I_limpia2"] = I_limpia2
                 case "MLEM":
                     if st.button("Reconstruir"):
-                        I,O,getp,geto,arregloimg,loglikelihoods =fn.MLEM(I_temp, N, a, b, p,modo_O,I_limpia2,sinograma=sinograma)
+                        I,O,getp,geto,arregloimg,loglikelihoods =fn.MLEM(I_temp, N, a, b, p,modo_O,sinograma=sinograma)
                         st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"],st.session_state["loglikelihoods"]=I_temp2,O,sino,geto,arregloimg,loglikelihoods
                         st.session_state["I_limpia2"] = I_limpia2
                 case "OSEM":
                     if st.button("Reconstruir"):
-                        I,O,getp,geto,arregloimg,loglikelihoods =fn.OSEM(I_temp, N, a, b, p,s,modo_O,I_limpia2,sinograma=sinograma)
+                        I,O,getp,geto,arregloimg,loglikelihoods =fn.OSEM(I_temp, N, a, b, p,s,modo_O,sinograma=sinograma)
                         st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"],st.session_state["loglikelihoods"]=I_temp2,O,sino,geto,arregloimg,loglikelihoods
                         st.session_state["I_limpia2"] = I_limpia2
                 case "SART":
@@ -1815,12 +1815,12 @@ match modulo:
                                 st.session_state["I_limpia"] = I_limpia
                 case "MLEM":
                             if st.button("Reconstruir"):
-                                I,O,getp,geto,arregloimg,loglikelihoods =fn.MLEM(I_temp, N, a, b, p,modo_O,I_limpia)
+                                I,O,getp,geto,arregloimg,loglikelihoods =fn.MLEM(I_temp, N, a, b, p,modo_O)
                                 st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"],st.session_state["loglikelihoods"]=I,O,getp,geto,arregloimg,loglikelihoods
                                 st.session_state["I_limpia"] = I_limpia
                 case "OSEM":
                         if st.button("Reconstruir"):
-                            I,O,getp,geto,arregloimg,loglikelihoods =fn.OSEM(I_temp, N, a, b, p,s,modo_O,I_limpia)
+                            I,O,getp,geto,arregloimg,loglikelihoods =fn.OSEM(I_temp, N, a, b, p,s,modo_O)
                             st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"],st.session_state["loglikelihoods"]=I,O,getp,geto,arregloimg,loglikelihoods
                             st.session_state["I_limpia"] = I_limpia
                 case "SART":
