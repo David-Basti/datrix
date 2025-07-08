@@ -1414,6 +1414,8 @@ match modulo:
                     st.session_state["fig2"] = None
                     st.session_state["fig3"] = None
                     st.session_state["Ani"] = None
+                    st.session_state["arregloimg"] = None
+                    st.session_state["loglikelihoods"] = None
                     archivo_I = None
                     archivo_I2 = None
                     vale3 = 1
@@ -1438,6 +1440,15 @@ match modulo:
                     I = I.astype(np.uint8)
                     #st.image(I, caption="Tu mapa de atenuación", width=150)
                     I_temp = I.copy()
+                    ###----------
+                    st.subheader("🧪 Ruido en la imagen original")
+                    add_noise = st.checkbox("Agregar ruido gaussiano")
+                    if add_noise:
+                        sigma = st.slider("Desvío estándar del ruido", min_value=0.0, max_value=0.5, value=0.05, step=0.01)
+                        I_temp = I_temp + np.random.normal(0, sigma, I_temp.shape)
+                        I_temp = np.clip(I_temp, 0, 1)  # Asegura que los valores estén entre 0 y 1
+                        st.image(I_temp, caption="Imagen con ruido", width=150, clamp=True)
+                    ###----------
                     #col_preview, _ = st.columns([1, 5])
                     #with col_preview:
                     st.image(I, caption="Vista previa", width=150)
@@ -1455,6 +1466,15 @@ match modulo:
                 I = resize(I, (128,128), anti_aliasing=True, preserve_range=True)
                 st.image(I, caption=atten_sel, width=150)
                 I_temp = I.copy()
+                ###---------
+                st.subheader("🧪 Ruido en la imagen original")
+                add_noise = st.checkbox("Agregar ruido gaussiano")
+                if add_noise:
+                    sigma = st.slider("Desvío estándar del ruido", min_value=0.0, max_value=0.5, value=0.05, step=0.01)
+                    I_temp = I_temp + np.random.normal(0, sigma, I_temp.shape)
+                    I_temp = np.clip(I_temp, 0, 1)  # Asegura que los valores estén entre 0 y 1
+                    st.image(I_temp, caption="Imagen con ruido", width=150, clamp=True)
+                ###--------
 
             # Ahora I está listo: usa I_temp = I.copy() si es necesario
             #I_temp = I.copy()
@@ -1509,6 +1529,10 @@ match modulo:
             st.session_state["fig3"] = None
         if "vid" not in st.session_state:
             st.session_state["vid"] = None
+        if "arregloimg" not in st.session_state:
+            st.session_state["arregloimg"] = None
+        if "loglikelihoods" not in st.session_state:
+            st.session_state["loglikelihoods"] = None
         col1, col2 = st.columns(2)
         with col1:
             st.header("⚙️ Método de recostrucción")
@@ -1622,16 +1646,16 @@ match modulo:
                         st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"]=I_temp2,O,sino,geto
                 case "MLEM":
                     if st.button("Reconstruir"):
-                        I,O,getp,geto =fn.MLEM(I_temp, N, a, b, p,modo_O,sinograma=sinograma)
-                        st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"]=I_temp2,O,sino,geto
+                        I,O,getp,geto,arregloimg,loglikelihoods =fn.MLEM(I_temp, N, a, b, p,modo_O,sinograma=sinograma)
+                        st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"],st.session_state["loglikelihoods"]=I_temp2,O,sino,geto,arregloimg,loglikelihoods
                 case "OSEM":
                     if st.button("Reconstruir"):
-                        I,O,getp,geto =fn.OSEM(I_temp, N, a, b, p,s,modo_O,sinograma=sinograma)
-                        st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"]=I_temp2,O,sino,geto
+                        I,O,getp,geto,arregloimg,loglikelihoods =fn.OSEM(I_temp, N, a, b, p,s,modo_O,sinograma=sinograma)
+                        st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"],st.session_state["loglikelihoods"]=I_temp2,O,sino,geto,arregloimg,loglikelihoods
                 case "SART":
                     if st.button("Reconstruir"):
-                        I,O,getp,geto = fn.SART(I_temp, N, a, b, p,sinograma=sinograma)
-                        st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"]=I_temp2,O,sino,geto
+                        I,O,getp,geto,arregloimg = fn.SART(I_temp, N, a, b, p,sinograma=sinograma)
+                        st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"]=I_temp2,O,sino,geto,arregloimg
             match operacion:
                 case "FBP":
                     if st.button("Generar Gif",key="AF"):
@@ -1662,6 +1686,38 @@ match modulo:
                         st.session_state["reconstrucciones"] = reconstrucciones
                         st.session_state["Ani"] = "OS"
             
+            yoli1,yoli2 = st.columns(2)
+            with yoli1:
+                ###---------------
+                if st.session_state["arregloimg"] is not None:
+                    if operacion != "FBP":
+                        errores = fn.calcular_nrmse_series(st.session_state["arregloimg"], st.session_state["I"])
+                        # Encontrar el índice y valor mínimo
+                        indice_min = np.argmin(errores)
+                        valor_min = errores[indice_min]
+                        fig_err, ax_err = plt.subplots()
+                        ax_err.scatter(range(1,len(errores)+1), errores, color="blue")
+                        ax_err.plot(indice_min + 1, valor_min, "ro", label="Mínimo")
+                        ax_err.set_title("N-RMSE vs Iteraciones")
+                        ax_err.set_xlabel("Iteración")
+                        ax_err.set_ylabel("N-RMSE")
+                        ax_err.grid(True)
+                        st.pyplot(fig_err)
+                        st.markdown(f"📉 **Error final (última iteración):** {errores[-1]:.4f}")
+                        st.markdown(f"🔻 **Mínimo N-RMSE** en la iteración {indice_min + 1}: {valor_min:.4f}")
+                    else:
+                        error_final = fn.calcular_nrmse(st.session_state["O"],st.session_state["I"])
+                        st.markdown(f"📉 **N-RMSE reconstrucción final vs. original:** {error_final:.4f}")
+            with yoli2:
+                if st.session_state["loglikelihoods"] is not None and operacion != "FBP" and operacion != "SART":
+                    fig_ll, ax_ll = plt.subplots()
+                    ax_ll.scatter(range(1,len(st.session_state["loglikelihoods"])+1),np.array(st.session_state["loglikelihoods"])*1e7, color="b")
+                    ax_ll.set_title("Log-Likelihood vs Iteraciones")
+                    ax_ll.set_xlabel("Iteración")
+                    ax_ll.set_ylabel("Log-Likelihood")
+                    ax_ll.grid(True)
+                    st.pyplot(fig_ll)
+                ###----------------------------------
             if st.session_state["I"] is not None and st.session_state["O"] is not None and st.session_state["getp"] is not None and st.session_state["geto"] is not None:
                 
                 fig1, axs1 = plt.subplots(1, 2, figsize=(10, 5))
@@ -1715,7 +1771,6 @@ match modulo:
                 #with st.spinner("🎥 Generando animación..."):
                 st.image(st.session_state["vid"])
 
-
         else:
             match operacion:
                 case "FBP":
@@ -1726,16 +1781,16 @@ match modulo:
                                 st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"]=I,O,getp,geto
                 case "MLEM":
                             if st.button("Reconstruir"):
-                                I,O,getp,geto =fn.MLEM(I_temp, N, a, b, p,modo_O)
-                                st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"]=I,O,getp,geto
+                                I,O,getp,geto,arregloimg,loglikelihoods =fn.MLEM(I_temp, N, a, b, p,modo_O)
+                                st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"],st.session_state["loglikelihoods"]=I,O,getp,geto,arregloimg,loglikelihoods
                 case "OSEM":
                         if st.button("Reconstruir"):
-                            I,O,getp,geto =fn.OSEM(I_temp, N, a, b, p,s,modo_O)
-                            st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"]=I,O,getp,geto
+                            I,O,getp,geto,arregloimg,loglikelihoods =fn.OSEM(I_temp, N, a, b, p,s,modo_O)
+                            st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"],st.session_state["loglikelihoods"]=I,O,getp,geto,arregloimg,loglikelihoods
                 case "SART":
                         if st.button("Reconstruir"):
-                            I,O,getp,geto = fn.SART(I_temp, N, a, b, p)
-                            st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"]=I,O,getp,geto
+                            I,O,getp,geto,arregloimg = fn.SART(I_temp, N, a, b, p)
+                            st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"]=I,O,getp,geto,arregloimg
             match operacion:
                 case "FBP":
                     if st.button("Generar Gif",key="AF"):
@@ -1765,7 +1820,39 @@ match modulo:
                         reconstrucciones = fn.OSEM_vid(I_temp,N,a,b,p,s,modo_O)
                         st.session_state["reconstrucciones"] = reconstrucciones
                         st.session_state["Ani"] = "OS"
-     
+                
+            yoli1,yoli2 = st.columns(2)
+            with yoli1:
+                ###---------------
+                if st.session_state["arregloimg"] is not None:
+                    if operacion != "FBP":
+                        errores = fn.calcular_nrmse_series(st.session_state["arregloimg"], st.session_state["I"])
+                        # Encontrar el índice y valor mínimo
+                        indice_min = np.argmin(errores)
+                        valor_min = errores[indice_min]
+                        fig_err, ax_err = plt.subplots()
+                        ax_err.scatter(range(1,len(errores)+1), errores, color="blue")
+                        ax_err.plot(indice_min + 1, valor_min, "ro", label="Mínimo")
+                        ax_err.set_title("N-RMSE vs Iteraciones")
+                        ax_err.set_xlabel("Iteración")
+                        ax_err.set_ylabel("N-RMSE")
+                        ax_err.grid(True)
+                        st.pyplot(fig_err)
+                        st.markdown(f"📉 **Error final (última iteración):** {errores[-1]:.4f}")
+                        st.markdown(f"🔻 **Mínimo N-RMSE** en la iteración {indice_min + 1}: {valor_min:.4f}")
+                    else:
+                        error_final = fn.calcular_nrmse(st.session_state["O"],st.session_state["I"])
+                        st.markdown(f"📉 **N-RMSE reconstrucción final vs. original:** {error_final:.4f}")
+            with yoli2:
+                if st.session_state["loglikelihoods"] is not None and operacion != "FBP" and operacion != "SART":
+                    fig_ll, ax_ll = plt.subplots()
+                    ax_ll.scatter(range(1,len(st.session_state["loglikelihoods"])+1),np.array(st.session_state["loglikelihoods"])*1e7, color="b")
+                    ax_ll.set_title("Log-Likelihood vs Iteraciones")
+                    ax_ll.set_xlabel("Iteración")
+                    ax_ll.set_ylabel("Log-Likelihood")
+                    ax_ll.grid(True)
+                    st.pyplot(fig_ll)
+                ###----------------------------------
             if st.session_state["I"] is not None and st.session_state["O"] is not None and st.session_state["getp"] is not None and st.session_state["geto"] is not None:
                 
                 fig1, axs1 = plt.subplots(1, 2, figsize=(10, 5))
@@ -1845,7 +1932,7 @@ match modulo:
                 st.subheader("🎞️ Animación de la reconstrucción")
                 #with st.spinner("🎥 Generando animación..."):
                 st.image(st.session_state["vid"])
-    
+        ###-------------------
     ##-----------------------------
     ##-----------------------------
 
