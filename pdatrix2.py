@@ -45,7 +45,7 @@ st.set_page_config(
     page_title="Datrix",
     page_icon=icono
 )
-###---------
+##---------
 #st.title("🧮 DaTrix")
 #titulo_personalizado("🧮 DaTrix", nivel=2, tamaño=56, color="black")
 # Función para convertir imagen local a base64
@@ -1437,21 +1437,21 @@ match modulo:
                     I = Image.open(archivo_I).convert("L")
                     I = np.array(I)
                     I = resize(I, (128,128), anti_aliasing=True, preserve_range=True)
-                    I = I.astype(np.uint8)
-                    #st.image(I, caption="Tu mapa de atenuación", width=150)
+                    I = I.astype(np.float32) / 255.0  # 👈 Acá la corrección
+
                     I_temp = I.copy()
-                    ###----------
+                    st.image(I, caption="Vista previa", width=150, clamp=True)
+
                     st.subheader("🧪 Ruido en la imagen original")
                     add_noise = st.checkbox("Agregar ruido gaussiano")
                     if add_noise:
                         sigma = st.slider("Desvío estándar del ruido", min_value=0.0, max_value=0.5, value=0.05, step=0.01)
                         I_temp = I_temp + np.random.normal(0, sigma, I_temp.shape)
-                        I_temp = np.clip(I_temp, 0, 1)  # Asegura que los valores estén entre 0 y 1
+                        I_temp = np.clip(I_temp, 0, 1)
                         st.image(I_temp, caption="Imagen con ruido", width=150, clamp=True)
-                    ###----------
                     #col_preview, _ = st.columns([1, 5])
                     #with col_preview:
-                    st.image(I, caption="Vista previa", width=150)
+                    
             else:
                 if atten_sel == "Shepp-Logan":
                     I = 0.6 * shepp_logan_phantom()
@@ -1473,8 +1473,8 @@ match modulo:
                     sigma = st.slider("Desvío estándar del ruido", min_value=0.0, max_value=0.5, value=0.05, step=0.01)
                     I_temp = I_temp + np.random.normal(0, sigma, I_temp.shape)
                     I_temp = np.clip(I_temp, 0, 1)  # Asegura que los valores estén entre 0 y 1
-                    st.image(I_temp, caption="Imagen con ruido", width=150, clamp=True)
-                ###--------
+                    st.image(I_temp, caption="Imagen con ruido", width=150,clamp=True)
+                    ###--------
 
             # Ahora I está listo: usa I_temp = I.copy() si es necesario
             #I_temp = I.copy()
