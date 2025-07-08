@@ -888,21 +888,6 @@ match modulo:
                                 error = sp.sqrt(sum([ri**2 for ri in residuo]))
                                 st.latex(rf"\text{{Error del residuo: }} \|C \cdot x - b\| = {sp.latex(error)}")
 
-                                df_resultado = pd.DataFrame({
-                                    "b": [str(bi) for bi in b],
-                                    "x (solución)": [str(xi) for xi in x]
-                                })
-                                buffer = io.BytesIO()
-                                with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-                                    df_resultado.to_excel(writer, sheet_name="Solución", index=False)
-                                buffer.seek(0)
-
-                                st.download_button(
-                                    label="📥 Descargar b y solución x (Excel)",
-                                    data=buffer,
-                                    file_name="solucion_sistema.xlsx",
-                                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                                )
                         except Exception as e:
                             st.error(f"No se pudo resolver el sistema simbólicamente: {e}")
                     else:
