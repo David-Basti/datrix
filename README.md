@@ -39,7 +39,23 @@ Simulador de reconstrución tomográfica de fantomas matemáticos.
 - Ángulo final
 - Paso angular
 - Número de iteraciones
-- Número de subsets.
+- Número de subsets
+- Estimación inicial (FBP o imagen en blanco)
+- Ruido
+- Tratamiento del field of view (FOV)
+
+### Gráficos
+- N-RMSE vs. número de iteración (con métodos iterativos)
+- Log-likelihood vs. número de iteración (con MLEM y OSEM)
+
+### Figuras
+- Imagen original sin ruido
+- Imagen original con ruido
+- Reconstrucción
+- Imágenes con ventaneo (en modo TC)
+
+### Animaciones
+- Gif de la reconstrucción (proyección a proyección con FBP, iteración a iteración con métodos iterativos)
 
 ---
 ## Capturas de pantalla
