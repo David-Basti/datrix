@@ -45,7 +45,7 @@ st.set_page_config(
     page_title="Datrix",
     page_icon=icono
 )
-###---------
+##---------
 #st.title("🧮 DaTrix")
 #titulo_personalizado("🧮 DaTrix", nivel=2, tamaño=56, color="black")
 # Función para convertir imagen local a base64
@@ -2076,19 +2076,35 @@ match modulo:
                             ax3.imshow(img_roi_recon, cmap="gray")
                             ax3.axis("off")
                             st.pyplot(fig3)
-                        
-                        st.write(f"🔍 Porcentaje de recuperación: {porcentaje:.2f} %")
+                        # Intensidades en la ROI
+                        intensidad_real = I_real[mask]
+                        intensidad_recon = I_reconstruida[mask]
 
-                        # Cálculo de intensidades
-                        intensidad_media_real = np.mean(I_real[mask])
-                        intensidad_media_recon = np.mean(I_reconstruida[mask])
-                        diferencia_media = np.abs(intensidad_media_recon - intensidad_media_real)
-                        diferencia_total = np.sum(np.abs(I_reconstruida[mask] - I_real[mask]))
+                        # Cálculo recuperación y referencia única
+                        actividad_real = np.sum(intensidad_real)
+                        actividad_estimada = np.sum(intensidad_recon)
+                        porcentaje_recuperacion = 100 * actividad_estimada / (actividad_real + 1e-8)
 
-                        st.write(f"📊 Diferencia de intensidad media en ROI: {diferencia_media:.4f}")
-                        st.write(f"📊 Diferencia de intensidad total en ROI: {diferencia_total:.4f}")
+                        # Diferencias absolutas (errores)
+                        error_absoluto_total = np.sum(np.abs(intensidad_recon - intensidad_real))
+                        error_absoluto_medio = np.mean(np.abs(intensidad_recon - intensidad_real))
 
-                        # Curva de recuperación vs iteración
+                        # Valores de referencia para errores relativos
+                        total_real = np.sum(np.abs(intensidad_real))
+                        media_real = np.mean(np.abs(intensidad_real))
+
+                        # Errores relativos (%)
+                        error_relativo_total = 100 * error_absoluto_total / (total_real + 1e-8)
+                        error_relativo_medio = 100 * error_absoluto_medio / (media_real + 1e-8)
+
+                        # Mostrar resultados
+                        st.write(f"Porcentaje de recuperación: {porcentaje_recuperacion:.4f} %")
+                        st.write(f"Diferencia de intensidad media (error absoluto medio) en ROI: {error_absoluto_medio:.4f}")
+                        st.write(f"Diferencia de intensidad total (error absoluto total) en ROI: {error_absoluto_total:.4f}")
+                        st.write(f"Error relativo total: {error_relativo_total:.2f} %")
+                        st.write(f"Error relativo medio: {error_relativo_medio:.2f} %")
+
+                        # Curva de recuperación y errores vs iteración
                         if "arregloimg" in st.session_state and operacion != "FBP":
                             recuperaciones = []
                             diferencias_media = []
@@ -2098,45 +2114,54 @@ match modulo:
                                 region_recon = imagen_iteracion[mask]
                                 region_real = I_real[mask]
 
-                                # Porcentaje de recuperación
                                 actividad_estimada = np.sum(region_recon)
-                                actividad_real = np.sum(region_real)
                                 porcentaje_iter = 100 * actividad_estimada / (actividad_real + 1e-8)
                                 recuperaciones.append(porcentaje_iter)
 
-                                # Diferencia de intensidad media
-                                diff_media = np.abs(np.mean(region_recon) - np.mean(region_real))
+                                # Ahora diferencia media como promedio de diferencias absolutas
+                                diff_media = np.mean(np.abs(region_recon - region_real))
                                 diferencias_media.append(diff_media)
 
-                                # Diferencia de intensidad total
                                 diff_total = np.sum(np.abs(region_recon - region_real))
                                 diferencias_total.append(diff_total)
-
+                            pol1,pol2=st.columns([0.3,0.7])
                             fig, axs = plt.subplots(3, 1, figsize=(8, 12))
 
-                            # Porcentaje de recuperación
                             axs[0].plot(recuperaciones, marker="o", color="blue", label="Recuperación (%)")
                             axs[0].axhline(100, color="gray", linestyle="--")
                             axs[0].set_ylabel("Recuperación (%)")
                             axs[0].set_title("Recuperación vs Iteración")
                             axs[0].legend()
 
-                            # Diferencia de intensidad media
-                            axs[1].plot(diferencias_media, marker="s", color="green", label="Δ intensidad media")
+                            axs[1].plot(diferencias_media, marker="s", color="green", label="Error absoluto medio")
+                            axs[1].set_yscale("log")
                             axs[1].axhline(0, color="gray", linestyle="--")
-                            axs[1].set_ylabel("Δ Intensidad media")
-                            axs[1].set_title("Diferencia de intensidad media vs Iteración")
+                            axs[1].set_ylabel("Error absoluto medio")
+                            axs[1].set_title("Error absoluto medio vs Iteración")
                             axs[1].legend()
 
-                            # Diferencia total
-                            axs[2].plot(diferencias_total, marker="^", color="red", label="Δ intensidad total")
+                            axs[2].plot(diferencias_total, marker="^", color="red", label="Error absoluto total")
+                            axs[2].set_yscale("log")
                             axs[2].axhline(0, color="gray", linestyle="--")
-                            axs[2].set_ylabel("Δ Intensidad total")
+                            axs[2].set_ylabel("Error absoluto total")
                             axs[2].set_xlabel("Iteración")
-                            axs[2].set_title("Diferencia total vs Iteración")
+                            axs[2].set_title("Error absoluto total vs Iteración")
                             axs[2].legend()
+                            with pol2:
+                                st.pyplot(fig)
 
-                            st.pyplot(fig)
+                            max_rec = max(recuperaciones)
+                            iter_max_rec = recuperaciones.index(max_rec)
+
+                            min_diff_media = min(diferencias_media)
+                            iter_min_diff_media = diferencias_media.index(min_diff_media)
+
+                            min_diff_total = min(diferencias_total)
+                            iter_min_diff_total = diferencias_total.index(min_diff_total)
+                            with pol1:
+                                st.write(f"Mejor recuperación: {max_rec:.2f}% en iteración {iter_max_rec}")
+                                st.write(f"Menor error absoluto medio: {min_diff_media:.4f} en iteración {iter_min_diff_media}")
+                                st.write(f"Menor error absoluto total: {min_diff_total:.4f} en iteración {iter_min_diff_total}")
                     else:
                         st.info("🟡 Dibujá un ROI para calcular la recuperación.")
                 else:
