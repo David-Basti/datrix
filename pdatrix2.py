@@ -45,7 +45,7 @@ st.set_page_config(
     page_title="Datrix",
     page_icon=icono
 )
-###---------
+##---------
 #st.title("🧮 DaTrix")
 #titulo_personalizado("🧮 DaTrix", nivel=2, tamaño=56, color="black")
 # Función para convertir imagen local a base64
@@ -1716,22 +1716,22 @@ match modulo:
                         if st.button("Reconstruir"):
                             I,O,getp,geto,reconstrucciones = fn.FBP(I_temp,a,b,p,sinograma=sinograma)
                             st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"]=I_temp2,O,sino,geto
-                            st.session_state["I_limpia2"] = I_limpia2
+                            st.session_state["I_limpia"] = I_limpia2
                     case "MLEM":
                         if st.button("Reconstruir"):
                             I,O,getp,geto,arregloimg,loglikelihoods =fn.MLEM(I_temp, N, a, b, p,modo_O,sinograma=sinograma)
                             st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"],st.session_state["loglikelihoods"]=I_temp2,O,sino,geto,arregloimg,loglikelihoods
-                            st.session_state["I_limpia2"] = I_limpia2
+                            st.session_state["I_limpia"] = I_limpia2
                     case "OSEM":
                         if st.button("Reconstruir"):
                             I,O,getp,geto,arregloimg,loglikelihoods =fn.OSEM(I_temp, N, a, b, p,s,modo_O,sinograma=sinograma)
                             st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"],st.session_state["loglikelihoods"]=I_temp2,O,sino,geto,arregloimg,loglikelihoods
-                            st.session_state["I_limpia2"] = I_limpia2
+                            st.session_state["I_limpia"] = I_limpia2
                     case "SART":
                         if st.button("Reconstruir"):
                             I,O,getp,geto,arregloimg = fn.SART(I_temp, N, a, b, p,sinograma=sinograma)
                             st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"]=I_temp2,O,sino,geto,arregloimg
-                            st.session_state["I_limpia2"] = I_limpia2
+                            st.session_state["I_limpia"] = I_limpia2
                 match operacion:
                     case "FBP":
                         if st.button("Generar Gif",key="AF"):
@@ -1816,164 +1816,97 @@ match modulo:
                             st.session_state["reconstrucciones"] = reconstrucciones
                             st.session_state["Ani"] = "OS"
         with tabsrt[1]:
-            if modo_sim == "SPECT":
-                yoli1,yoli2 = st.columns(2)
-                with yoli1:
-                    ###---------------
-                    if st.session_state["arregloimg"] is not None and st.session_state["I_limpia2"] is not None  and st.session_state["I_limpia2"].shape == st.session_state["arregloimg"][0].shape:
-                        if operacion != "FBP":
-                            errores = fn.calcular_nrmse_series(st.session_state["arregloimg"], st.session_state["I_limpia2"])
-                            # Encontrar el índice y valor mínimo
-                            indice_min = np.argmin(errores)
-                            valor_min = errores[indice_min]
-                            fig_err, ax_err = plt.subplots()
-                            ax_err.scatter(range(1,len(errores)+1), errores, color="blue")
-                            ax_err.plot(indice_min + 1, valor_min, "ro", label="Mínimo")
-                            ax_err.set_title("N-RMSE vs Iteraciones")
-                            ax_err.set_xlabel("Iteración")
-                            ax_err.set_ylabel("N-RMSE")
-                            ax_err.grid(True)
-                            st.pyplot(fig_err)
-                            st.markdown(f"📉 **Error final (última iteración):** {errores[-1]:.4f}")
-                            st.markdown(f"🔻 **Mínimo N-RMSE** en la iteración {indice_min + 1}: {valor_min:.4f}")
-                        else:
-                            error_final = fn.calcular_nrmse(st.session_state["O"],st.session_state["I_limpia2"])
-                            st.markdown(f"📉 **N-RMSE reconstrucción final vs. original:** {error_final:.4f}")
-                with yoli2:
-                    if st.session_state["loglikelihoods"] is not None and operacion != "FBP" and operacion != "SART" and st.session_state["I_limpia2"] is not None  and st.session_state["I_limpia2"].shape == st.session_state["arregloimg"][0].shape:
-                        fig_ll, ax_ll = plt.subplots()
-                        ax_ll.scatter(range(1,len(st.session_state["loglikelihoods"])+1),np.array(st.session_state["loglikelihoods"]), color="b")
-                        ax_ll.set_title("Log-Likelihood vs Iteraciones")
-                        ax_ll.set_xlabel("Iteración")
-                        ax_ll.set_ylabel("Log-Likelihood")
-                        ax_ll.grid(True)
-                        st.pyplot(fig_ll)
-                    ###----------------------------------
-                if st.session_state["I"] is not None and st.session_state["O"] is not None and st.session_state["getp"] is not None and st.session_state["geto"] is not None:
-                    
-                    verimagensinr = st.checkbox("Ver imagen orinal sin ruido",key="viosr")
-                    fig1, axs1 = plt.subplots(1, 2, figsize=(10, 5))
-                    if verimagensinr:
-                        im0 = axs1[0].imshow(st.session_state["I_limpia2"], cmap='gray')#,vmin=0, vmax=1)
+            
+            yoli1,yoli2 = st.columns(2)
+            with yoli1:
+                ###---------------
+                if st.session_state["arregloimg"] is not None and st.session_state["I_limpia"] is not None  and st.session_state["I_limpia"].shape == st.session_state["arregloimg"][0].shape:
+                    if operacion != "FBP":
+                        errores = fn.calcular_nrmse_series(st.session_state["arregloimg"], st.session_state["I_limpia"])
+                        # Encontrar el índice y valor mínimo
+                        indice_min = np.argmin(errores)
+                        valor_min = errores[indice_min]
+                        fig_err, ax_err = plt.subplots()
+                        ax_err.scatter(range(1,len(errores)+1), errores, color="blue")
+                        ax_err.plot(indice_min + 1, valor_min, "ro", label="Mínimo")
+                        ax_err.set_title("N-RMSE vs Iteraciones")
+                        ax_err.set_xlabel("Iteración")
+                        ax_err.set_ylabel("N-RMSE")
+                        ax_err.grid(True)
+                        st.pyplot(fig_err)
+                        st.markdown(f"📉 **Error final (última iteración):** {errores[-1]:.4f}")
+                        st.markdown(f"🔻 **Mínimo N-RMSE** en la iteración {indice_min + 1}: {valor_min:.4f}")
                     else:
-                        im0 = axs1[0].imshow(st.session_state["I"], cmap='gray')#,vmin=0, vmax=1)
-                    axs1[0].set_title("Imagen original")
-                    axs1[0].axis("off")
-                    fig1.colorbar(im0, ax=axs1[0], fraction=0.046, pad=0.04)
+                        error_final = fn.calcular_nrmse(st.session_state["O"],st.session_state["I_limpia"])
+                        st.markdown(f"📉 **N-RMSE reconstrucción final vs. original:** {error_final:.4f}")
+            with yoli2:
+                if st.session_state["loglikelihoods"] is not None and operacion != "FBP" and operacion != "SART" and st.session_state["I_limpia2"] is not None  and st.session_state["I_limpia2"].shape == st.session_state["arregloimg"][0].shape:
+                    fig_ll, ax_ll = plt.subplots()
+                    ax_ll.scatter(range(1,len(st.session_state["loglikelihoods"])+1),np.array(st.session_state["loglikelihoods"]), color="b")
+                    ax_ll.set_title("Log-Likelihood vs Iteraciones")
+                    ax_ll.set_xlabel("Iteración")
+                    ax_ll.set_ylabel("Log-Likelihood")
+                    ax_ll.grid(True)
+                    st.pyplot(fig_ll)
+                ###----------------------------------
+            if st.session_state["I"] is not None and st.session_state["O"] is not None and st.session_state["getp"] is not None and st.session_state["geto"] is not None:
+                
+                verimagensinr = st.checkbox("Ver imagen orinal sin ruido",key="viosr")
+                fig1, axs1 = plt.subplots(1, 2, figsize=(10, 5))
+                if verimagensinr:
+                    im0 = axs1[0].imshow(st.session_state["I_limpia"], cmap='gray')#,vmin=0, vmax=1)
+                else:
+                    im0 = axs1[0].imshow(st.session_state["I"], cmap='gray')#,vmin=0, vmax=1)
+                axs1[0].set_title("Imagen original")
+                axs1[0].axis("off")
+                fig1.colorbar(im0, ax=axs1[0], fraction=0.046, pad=0.04)
 
-                    im1 = axs1[1].imshow(st.session_state["O"], cmap='gray')
-                    axs1[1].set_title("Imagen reconstruida")
-                    axs1[1].axis("off")
-                    fig1.colorbar(im1, ax=axs1[1], fraction=0.046, pad=0.04)
-                    #fig1.tight_layout()
-                    st.session_state["fig1"] = fig1
-                    st.session_state["fig1"].tight_layout()
-                    #st.pyplot(fig1)
+                im1 = axs1[1].imshow(st.session_state["O"], cmap='gray')
+                axs1[1].set_title("Imagen reconstruida")
+                axs1[1].axis("off")
+                fig1.colorbar(im1, ax=axs1[1], fraction=0.046, pad=0.04)
+                #fig1.tight_layout()
+                st.session_state["fig1"] = fig1
+                st.session_state["fig1"].tight_layout()
+                #st.pyplot(fig1)
 
-                    fig2, axs2 = plt.subplots(1, 2, figsize=(5, 10))
-                    axs2[0].imshow(fn.normalizar(st.session_state["getp"].T), cmap='gray')#,vmin=0, vmax=1)
-                    axs2[0].set_title("Sinograma original")
-                    axs2[0].axis("off")
-                    axs2[1].imshow(fn.normalizar(st.session_state["geto"].T), cmap='gray')#,vmin=0, vmax=1)
-                    axs2[1].set_title("Sinograma reconstriodo")
-                    axs2[1].axis("off")
-                    #fig2.tight_layout()
-                    st.session_state["fig2"] = fig2
-                    st.session_state["fig2"].tight_layout()
+                fig2, axs2 = plt.subplots(1, 2, figsize=(5, 10))
+                axs2[0].imshow(fn.normalizar(st.session_state["getp"].T), cmap='gray')#,vmin=0, vmax=1)
+                axs2[0].set_title("Sinograma original")
+                axs2[0].axis("off")
+                axs2[1].imshow(fn.normalizar(st.session_state["geto"].T), cmap='gray')#,vmin=0, vmax=1)
+                axs2[1].set_title("Sinograma reconstriodo")
+                axs2[1].axis("off")
+                #fig2.tight_layout()
+                st.session_state["fig2"] = fig2
+                st.session_state["fig2"].tight_layout()
 
-                if st.session_state["fig1"] is not None and st.session_state["fig2"] is not None:
-                    st.subheader("🖼️ Imágenes")
-                    st.pyplot(st.session_state["fig1"])
-                    st.subheader("📈 Sinogramas")
-                    st.pyplot(st.session_state["fig2"])
-                if st.session_state["reconstrucciones"] is not None and st.session_state["Ani"] is not None and st.session_state["vid"] is None:
-                        #st.subheader("🎞️ Animación de la reconstrucción")
-                        #paso = st.slider("Paso", 1, len(st.session_state["reconstrucciones"]), 1)
-                        if "video_generado" not in st.session_state:
-                            with st.spinner("🎥 Generando animación..."):
-                # Primero el GIF para previsualizar con st.image
-                                with tempfile.NamedTemporaryFile(suffix=".gif", delete=False) as temp_gif:
-                                    fn.crear_video_reconstruccion(
-                                        st.session_state["reconstrucciones"],
-                                        output_path=temp_gif.name,
-                                        writer="pillow"
-                                        )
-                                    st.session_state["vid"] = temp_gif.name
-                                    #st.image(temp_gif.name)
-                if st.session_state["vid"] is not None and st.session_state["Ani"] is not None:
-                    st.subheader("🎞️ Animación de la reconstrucción")
-                    #with st.spinner("🎥 Generando animación..."):
-                    st.image(st.session_state["vid"])
-            elif modo_sim == "TC":  
-                yoli1,yoli2 = st.columns(2)
-                with yoli1:
-                    ###---------------
-                    if st.session_state["arregloimg"] is not None and st.session_state["I_limpia"] is not None  and st.session_state["I_limpia"].shape == st.session_state["arregloimg"][0].shape:
-                        if operacion != "FBP":
-                            errores = fn.calcular_nrmse_series(st.session_state["arregloimg"], st.session_state["I_limpia"])
-                            # Encontrar el índice y valor mínimo
-                            indice_min = np.argmin(errores)
-                            valor_min = errores[indice_min]
-                            fig_err, ax_err = plt.subplots()
-                            ax_err.scatter(range(1,len(errores)+1), errores, color="blue")
-                            ax_err.plot(indice_min + 1, valor_min, "ro", label="Mínimo")
-                            ax_err.set_title("N-RMSE vs Iteraciones")
-                            ax_err.set_xlabel("Iteración")
-                            ax_err.set_ylabel("N-RMSE")
-                            ax_err.grid(True)
-                            st.pyplot(fig_err)
-                            st.markdown(f"📉 **Error final (última iteración):** {errores[-1]:.4f}")
-                            st.markdown(f"🔻 **Mínimo N-RMSE** en la iteración {indice_min + 1}: {valor_min:.4f}")
-                        else:
-                            error_final = fn.calcular_nrmse(st.session_state["O"],st.session_state["I_limpia"])
-                            st.markdown(f"📉 **N-RMSE reconstrucción final vs. original:** {error_final:.4f}")
-                with yoli2:
-                    if st.session_state["loglikelihoods"] is not None and st.session_state["I_limpia"] is not None and operacion != "FBP" and operacion != "SART" and st.session_state["I_limpia"].shape == st.session_state["arregloimg"][0].shape:
-                        fig_ll, ax_ll = plt.subplots()
-                        ax_ll.scatter(range(1,len(st.session_state["loglikelihoods"])+1),np.array(st.session_state["loglikelihoods"]), color="b")
-                        ax_ll.set_title("Log-Likelihood vs Iteraciones")
-                        ax_ll.set_xlabel("Iteración")
-                        ax_ll.set_ylabel("Log-Likelihood")
-                        ax_ll.grid(True)
-                        st.pyplot(fig_ll)
-                    ###----------------------------------
+            if st.session_state["fig1"] is not None and st.session_state["fig2"] is not None:
+                st.subheader("🖼️ Imágenes")
+                st.pyplot(st.session_state["fig1"])
+                st.subheader("📈 Sinogramas")
+                st.pyplot(st.session_state["fig2"])
+            if st.session_state["reconstrucciones"] is not None and st.session_state["Ani"] is not None and st.session_state["vid"] is None:
+                    #st.subheader("🎞️ Animación de la reconstrucción")
+                    #paso = st.slider("Paso", 1, len(st.session_state["reconstrucciones"]), 1)
+                    if "video_generado" not in st.session_state:
+                        with st.spinner("🎥 Generando animación..."):
+            # Primero el GIF para previsualizar con st.image
+                            with tempfile.NamedTemporaryFile(suffix=".gif", delete=False) as temp_gif:
+                                fn.crear_video_reconstruccion(
+                                    st.session_state["reconstrucciones"],
+                                    output_path=temp_gif.name,
+                                    writer="pillow"
+                                    )
+                                st.session_state["vid"] = temp_gif.name
+                                #st.image(temp_gif.name)
+            if st.session_state["vid"] is not None and st.session_state["Ani"] is not None:
+                st.subheader("🎞️ Animación de la reconstrucción")
+                #with st.spinner("🎥 Generando animación..."):
+                st.image(st.session_state["vid"])
+            if modo_sim == "TC":  
+                
                 if st.session_state["I"] is not None and st.session_state["O"] is not None and st.session_state["getp"] is not None and st.session_state["geto"] is not None and st.session_state["I_limpia"] is not None:
-                    
-                    fig1, axs1 = plt.subplots(1, 2, figsize=(10, 5))
-                    verimagensinrtc = st.checkbox("Ver imagen orinal sin ruido",key="viosrtc")
-                    if verimagensinrtc:
-                        im0 = axs1[0].imshow(st.session_state["I_limpia"], cmap='gray')#,vmin=0, vmax=1)
-                    else:    
-                        im0 = axs1[0].imshow(st.session_state["I"], cmap='gray')#,vmin=0, vmax=1)
-                    axs1[0].set_title("Imagen original")
-                    axs1[0].axis("off")
-                    fig1.colorbar(im0, ax=axs1[0], fraction=0.046, pad=0.04)
-
-                    im1 = axs1[1].imshow(st.session_state["O"], cmap='gray')
-                    axs1[1].set_title("Imagen reconstruida")
-                    axs1[1].axis("off")
-                    fig1.colorbar(im1, ax=axs1[1], fraction=0.046, pad=0.04)
-                    #fig1.tight_layout()
-                    st.session_state["fig1"] = fig1
-                    st.session_state["fig1"].tight_layout()
-                    #st.pyplot(fig1)
-
-                    fig2, axs2 = plt.subplots(1, 2, figsize=(5, 10))
-                    axs2[0].imshow(fn.normalizar(st.session_state["getp"].T), cmap='gray')#,vmin=0, vmax=1)
-                    axs2[0].set_title("Sinograma original")
-                    axs2[0].axis("off")
-                    axs2[1].imshow(fn.normalizar(st.session_state["geto"].T), cmap='gray')#,vmin=0, vmax=1)
-                    axs2[1].set_title("Sinograma reconstruido")
-                    axs2[1].axis("off")
-                    #fig2.tight_layout()
-                    st.session_state["fig2"] = fig2
-                    st.session_state["fig2"].tight_layout()
-                    #st.pyplot(fig2)
-                    if st.session_state["fig1"] is not None and st.session_state["fig2"] is not None:
-                        st.subheader("🖼️ Imágenes")
-                        st.pyplot(st.session_state["fig1"])
-                        st.subheader("📈 Sinogramas")
-                        st.pyplot(st.session_state["fig2"])
 
                     colif1,colif2 = st.columns(2)
                     with colif1:
@@ -2022,6 +1955,7 @@ match modulo:
                     #with st.spinner("🎥 Generando animación..."):
                     st.image(st.session_state["vid"])
             ###-------------------
+        
         with tabsrt[2]:
             img_resized = None
             
@@ -2032,26 +1966,19 @@ match modulo:
             #        st.session_state[key] = None
 
             # Preparar imagen y reconstrucción según modo
-            if modo_sim == "SPECT":
-                canvas_key = "canvas_roi_spect"
-                if "I_limpia2" in st.session_state and "O" in st.session_state:
-                    if st.session_state["I_limpia2"] is not None and st.session_state["O"] is not None:
-                        I_real = st.session_state["I_limpia2"]
-                        I_reconstruida = st.session_state["O"]
-                        
-            elif modo_sim == "TC":
-                canvas_key = "canvas_roi_tc"
-                if "I_limpia" in st.session_state and "O" in st.session_state:
-                    if st.session_state["I_limpia"] is not None and st.session_state["O"] is not None:
-                        I_real = st.session_state["I_limpia"]
-                        I_reconstruida = st.session_state["O"]
-            else:
-                canvas_key = None
-                I_real = None
-                I_reconstruida = None
+            I_real = None
+            I_reconstruida = None
+            canvas_key = None
+            if "I_limpia" in st.session_state and "O" in st.session_state:
+                if st.session_state["I_limpia"] is not None and st.session_state["O"] is not None:
+                    I_real = st.session_state["I_limpia"]
+                    I_reconstruida = st.session_state["O"]
+                    canvas_key = "cankey"
+                else:
+                    canvas_key = None
 
             # Si tenemos imágenes válidas, preparar canvas
-            if st.session_state["O"] is not None:#I_real is not None and I_reconstruida is not None:
+            if I_real is not None and I_reconstruida is not None and canvas_key is not None:
                 #canvas_key = f"canvas_roi_{modo_sim}_{hash(I_real.tobytes())}"
                 img_np_view = I_real.copy()
                 vmin, vmax = np.min(img_np_view), np.max(img_np_view)
@@ -2075,155 +2002,153 @@ match modulo:
                 if "canvas_data_roi" not in st.session_state:
                     st.session_state["canvas_data_roi"] = None
 
-                if img_resized is not None and img_resized.size != 0:
-                    canvas_result = st_canvas(
-                        fill_color="rgba(255,255,255,0.0)",
-                        stroke_width=2,
-                        stroke_color="lime",
-                        background_image=img_resized,
-                        height=canvas_height,
-                        width=canvas_width,
-                        drawing_mode=roi_tipo,
-                        key=canvas_key,
-                        update_streamlit=True
-                    )
+                #if img_resized is not None and img_resized.size != 0:
+                canvas_result = st_canvas(
+                    fill_color="rgba(255,255,255,0.0)",
+                    stroke_width=2,
+                    stroke_color="lime",
+                    background_image=img_resized,
+                    height=canvas_height,
+                    width=canvas_width,
+                    drawing_mode=roi_tipo,
+                    key=canvas_key,
+                    update_streamlit=True
+                )
 
-                    # Guardar JSON del canvas
-                    if canvas_result.json_data:
-                        st.session_state["canvas_data_roi"] = canvas_result.json_data
+                # Guardar JSON del canvas
+                if canvas_result.json_data:
+                    st.session_state["canvas_data_roi"] = canvas_result.json_data
 
-                    roi_objs = []
-                    canvas_data = st.session_state["canvas_data_roi"]
-                    if canvas_data and "objects" in canvas_data:
-                        roi_objs = canvas_data["objects"]
+                roi_objs = []
+                canvas_data = st.session_state["canvas_data_roi"]
+                if canvas_data and "objects" in canvas_data:
+                    roi_objs = canvas_data["objects"]
 
-                    # Procesar objetos
-                    roi, patch, stats, mask, info = fn.procesar_lista_de_objetos(
-                        roi_objs, scale, I_real, color="lime"
-                    )
+                # Procesar objetos
+                roi, patch, stats, mask, info = fn.procesar_lista_de_objetos(
+                    roi_objs, scale, I_real, color="lime"
+                )
 
-                    # Si se dibujó algún ROI válido
-                    if mask is not None and np.any(mask):
-                        img_roi = np.zeros_like(I_real)
-                        img_roi[mask] = I_real[mask]
+                # Si se dibujó algún ROI válido
+                if mask is not None and np.any(mask):
+                    img_roi = np.zeros_like(I_real)
+                    img_roi[mask] = I_real[mask]
 
-                        act_estimada = np.sum(I_reconstruida[mask])
-                        act_real = np.sum(I_real[mask])
-                        porcentaje = 100 * act_estimada / (act_real + 1e-8)
+                    act_estimada = np.sum(I_reconstruida[mask])
+                    act_real = np.sum(I_real[mask])
+                    porcentaje = 100 * act_estimada / (act_real + 1e-8)
 
-                        st.write(f"🔍 Porcentaje de recuperación: {porcentaje:.2f} %")
+                    st.write(f"🔍 Porcentaje de recuperación: {porcentaje:.2f} %")
 
-                        udo1, udo2 = st.columns(2)
-                        with udo1:
-                            st.write("🖼️ Imagen real con solo la ROI:")
-                            fig2, ax2 = plt.subplots()
-                            ax2.imshow(img_roi, cmap="gray")
-                            ax2.axis("off")
-                            st.pyplot(fig2)
+                    udo1, udo2 = st.columns(2)
+                    with udo1:
+                        st.write("🖼️ Imagen real con solo la ROI:")
+                        fig2, ax2 = plt.subplots()
+                        ax2.imshow(img_roi, cmap="gray")
+                        ax2.axis("off")
+                        st.pyplot(fig2)
 
-                        img_roi_recon = np.zeros_like(I_reconstruida)
-                        img_roi_recon[mask] = I_reconstruida[mask]
+                    img_roi_recon = np.zeros_like(I_reconstruida)
+                    img_roi_recon[mask] = I_reconstruida[mask]
 
-                        with udo2:
-                            st.write("🖼️ Imagen reconstruida con sólo la ROI:")
-                            fig3, ax3 = plt.subplots()
-                            ax3.imshow(img_roi_recon, cmap="gray")
-                            ax3.axis("off")
-                            st.pyplot(fig3)
-                        # Intensidades en la ROI
-                        intensidad_real = I_real[mask]
-                        intensidad_recon = I_reconstruida[mask]
+                    with udo2:
+                        st.write("🖼️ Imagen reconstruida con sólo la ROI:")
+                        fig3, ax3 = plt.subplots()
+                        ax3.imshow(img_roi_recon, cmap="gray")
+                        ax3.axis("off")
+                        st.pyplot(fig3)
+                    # Intensidades en la ROI
+                    intensidad_real = I_real[mask]
+                    intensidad_recon = I_reconstruida[mask]
 
-                        # Cálculo recuperación y referencia única
-                        actividad_real = np.sum(intensidad_real)
-                        actividad_estimada = np.sum(intensidad_recon)
-                        porcentaje_recuperacion = 100 * actividad_estimada / (actividad_real + 1e-8)
+                    # Cálculo recuperación y referencia única
+                    actividad_real = np.sum(intensidad_real)
+                    actividad_estimada = np.sum(intensidad_recon)
+                    porcentaje_recuperacion = 100 * actividad_estimada / (actividad_real + 1e-8)
 
-                        # Diferencias absolutas (errores)
-                        error_absoluto_total = np.sum(np.abs(intensidad_recon - intensidad_real))
-                        error_absoluto_medio = np.mean(np.abs(intensidad_recon - intensidad_real))
+                    # Diferencias absolutas (errores)
+                    error_absoluto_total = np.sum(np.abs(intensidad_recon - intensidad_real))
+                    error_absoluto_medio = np.mean(np.abs(intensidad_recon - intensidad_real))
 
-                        # Valores de referencia para errores relativos
-                        total_real = np.sum(np.abs(intensidad_real))
-                        media_real = np.mean(np.abs(intensidad_real))
+                    # Valores de referencia para errores relativos
+                    total_real = np.sum(np.abs(intensidad_real))
+                    media_real = np.mean(np.abs(intensidad_real))
 
-                        # Errores relativos (%)
-                        error_relativo_total = 100 * error_absoluto_total / (total_real + 1e-8)
-                        error_relativo_medio = 100 * error_absoluto_medio / (media_real + 1e-8)
+                    # Errores relativos (%)
+                    error_relativo_total = 100 * error_absoluto_total / (total_real + 1e-8)
+                    error_relativo_medio = 100 * error_absoluto_medio / (media_real + 1e-8)
 
-                        # Mostrar resultados
-                        st.write(f"Porcentaje de recuperación: {porcentaje_recuperacion:.4f} %")
-                        st.write(f"Diferencia de intensidad media (error absoluto medio) en ROI: {error_absoluto_medio:.4f}")
-                        st.write(f"Diferencia de intensidad total (error absoluto total) en ROI: {error_absoluto_total:.4f}")
-                        st.write(f"Error relativo total: {error_relativo_total:.2f} %")
-                        st.write(f"Error relativo medio: {error_relativo_medio:.2f} %")
+                    # Mostrar resultados
+                    st.write(f"Porcentaje de recuperación: {porcentaje_recuperacion:.4f} %")
+                    st.write(f"Diferencia de intensidad media (error absoluto medio) en ROI: {error_absoluto_medio:.4f}")
+                    st.write(f"Diferencia de intensidad total (error absoluto total) en ROI: {error_absoluto_total:.4f}")
+                    st.write(f"Error relativo total: {error_relativo_total:.2f} %")
+                    st.write(f"Error relativo medio: {error_relativo_medio:.2f} %")
 
-                        # Curva de recuperación y errores vs iteración
-                        if "arregloimg" in st.session_state and operacion != "FBP":
-                            recuperaciones = []
-                            diferencias_media = []
-                            diferencias_total = []
+                    # Curva de recuperación y errores vs iteración
+                    if "arregloimg" in st.session_state and operacion != "FBP":
+                        recuperaciones = []
+                        diferencias_media = []
+                        diferencias_total = []
 
-                            for imagen_iteracion in st.session_state["arregloimg"]:
-                                region_recon = imagen_iteracion[mask]
-                                region_real = I_real[mask]
+                        for imagen_iteracion in st.session_state["arregloimg"]:
+                            region_recon = imagen_iteracion[mask]
+                            region_real = I_real[mask]
 
-                                actividad_estimada = np.sum(region_recon)
-                                porcentaje_iter = 100 * actividad_estimada / (actividad_real + 1e-8)
-                                recuperaciones.append(porcentaje_iter)
+                            actividad_estimada = np.sum(region_recon)
+                            porcentaje_iter = 100 * actividad_estimada / (actividad_real + 1e-8)
+                            recuperaciones.append(porcentaje_iter)
 
-                                # Ahora diferencia media como promedio de diferencias absolutas
-                                diff_media = np.mean(np.abs(region_recon - region_real))
-                                diferencias_media.append(diff_media)
+                            # Ahora diferencia media como promedio de diferencias absolutas
+                            diff_media = np.mean(np.abs(region_recon - region_real))
+                            diferencias_media.append(diff_media)
 
-                                diff_total = np.sum(np.abs(region_recon - region_real))
-                                diferencias_total.append(diff_total)
-                            pol1,pol2=st.columns([0.3,0.7])
-                            iteraciones = list(range(1, len(st.session_state["arregloimg"]) + 1))
+                            diff_total = np.sum(np.abs(region_recon - region_real))
+                            diferencias_total.append(diff_total)
+                        pol1,pol2=st.columns([0.3,0.7])
+                        iteraciones = list(range(1, len(st.session_state["arregloimg"]) + 1))
 
-                            fig, axs = plt.subplots(3, 1, figsize=(8, 12))
+                        fig, axs = plt.subplots(3, 1, figsize=(8, 12))
 
-                            # Porcentaje de recuperación
-                            axs[0].plot(iteraciones, recuperaciones, marker="o", color="blue", label="Recuperación (%)")
-                            axs[0].axhline(100, color="gray", linestyle="--")
-                            axs[0].set_ylabel("Recuperación (%)")
-                            axs[0].set_title("Recuperación vs Iteración")
-                            axs[0].legend()
+                        # Porcentaje de recuperación
+                        axs[0].plot(iteraciones, recuperaciones, marker="o", color="blue", label="Recuperación (%)")
+                        axs[0].axhline(100, color="gray", linestyle="--")
+                        axs[0].set_ylabel("Recuperación (%)")
+                        axs[0].set_title("Recuperación vs Iteración")
+                        axs[0].legend()
 
-                            # Diferencia de intensidad media
-                            axs[1].plot(iteraciones, diferencias_media, marker="s", color="green", label="Δ intensidad media")
-                            axs[1].axhline(0, color="gray", linestyle="--")
-                            axs[1].set_ylabel("Δ Intensidad media")
-                            axs[1].set_title("Diferencia de intensidad media vs Iteración")
-                            axs[1].legend()
+                        # Diferencia de intensidad media
+                        axs[1].plot(iteraciones, diferencias_media, marker="s", color="green", label="Δ intensidad media")
+                        axs[1].axhline(0, color="gray", linestyle="--")
+                        axs[1].set_ylabel("Δ Intensidad media")
+                        axs[1].set_title("Diferencia de intensidad media vs Iteración")
+                        axs[1].legend()
 
-                            # Diferencia total
-                            axs[2].plot(iteraciones, diferencias_total, marker="^", color="red", label="Δ intensidad total")
-                            axs[2].axhline(0, color="gray", linestyle="--")
-                            axs[2].set_ylabel("Δ Intensidad total")
-                            axs[2].set_xlabel("Iteración")
-                            axs[2].set_title("Diferencia total vs Iteración")
-                            axs[2].legend()
-                            with pol2:
-                                st.pyplot(fig)
+                        # Diferencia total
+                        axs[2].plot(iteraciones, diferencias_total, marker="^", color="red", label="Δ intensidad total")
+                        axs[2].axhline(0, color="gray", linestyle="--")
+                        axs[2].set_ylabel("Δ Intensidad total")
+                        axs[2].set_xlabel("Iteración")
+                        axs[2].set_title("Diferencia total vs Iteración")
+                        axs[2].legend()
+                        with pol2:
+                            st.pyplot(fig)
 
-                            max_rec = max(recuperaciones)
-                            iter_max_rec = recuperaciones.index(max_rec) + 1
+                        max_rec = max(recuperaciones)
+                        iter_max_rec = recuperaciones.index(max_rec) + 1
 
-                            min_diff_media = min(diferencias_media)
-                            iter_min_diff_media = diferencias_media.index(min_diff_media) + 1
+                        min_diff_media = min(diferencias_media)
+                        iter_min_diff_media = diferencias_media.index(min_diff_media) + 1
 
-                            min_diff_total = min(diferencias_total)
-                            iter_min_diff_total = diferencias_total.index(min_diff_total) + 1
+                        min_diff_total = min(diferencias_total)
+                        iter_min_diff_total = diferencias_total.index(min_diff_total) + 1
 
-                            with pol1:
-                                st.write(f"Mejor recuperación: {max_rec:.2f}% en iteración {iter_max_rec}")
-                                st.write(f"Menor error absoluto medio: {min_diff_media:.4f} en iteración {iter_min_diff_media}")
-                                st.write(f"Menor error absoluto total: {min_diff_total:.4f} en iteración {iter_min_diff_total}")
+                        with pol1:
+                            st.write(f"Mejor recuperación: {max_rec:.2f}% en iteración {iter_max_rec}")
+                            st.write(f"Menor error absoluto medio: {min_diff_media:.4f} en iteración {iter_min_diff_media}")
+                            st.write(f"Menor error absoluto total: {min_diff_total:.4f} en iteración {iter_min_diff_total}")
                     else:
                         st.info("🟡 Dibujá un ROI para calcular la recuperación.")
-                else:
-                    st.warning("⚠️ La imagen para el canvas no está disponible o es inválida.")
             else:
                 st.warning("⚠️ Las imágenes no están cargadas o son inválidas para este modo.")
     ##-----------------------------
