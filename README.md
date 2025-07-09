@@ -101,6 +101,13 @@ Simulador de reconstrución tomográfica de fantomas matemáticos.
 ### Animaciones
 - Gif de la reconstrucción (proyección a proyección con FBP, iteración a iteración con métodos iterativos)
 
+### Región de interés
+- Comparación entre la misma ROI marcada en la imagen original y reconstruida.
+- Diferencia de intensidad media.
+- Diferencia de intensidad total.
+- Error relativo.
+- Gráfico del porcentaje de recuperación, diferencia de intensidad media y diferencia de intensidad total en función del número de iteración.
+
 ---
 ## Capturas de pantalla
 
