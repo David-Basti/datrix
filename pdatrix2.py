@@ -44,6 +44,7 @@ icono = Image.open("logodatrix.jpg")
 st.set_page_config(
     page_title="Datrix",
     page_icon=icono
+    layout="wide"
 )
 ###---------
 #st.title("🧮 DaTrix")
