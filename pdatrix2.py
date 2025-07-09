@@ -40,7 +40,7 @@ from io import BytesIO
 from scipy.interpolate import UnivariateSpline
 
 icono = Image.open("logodatrix.jpg")
-###---------
+##---------
 st.set_page_config(
     page_title="Datrix",
     page_icon=icono,
@@ -193,7 +193,7 @@ match modulo:
                         fila_simb = [sp.sympify(elem.strip()) for elem in elementos]
                         A.append(fila_simb)
                 
-                    A = sp.Matrix(A)
+                    A = sp.simplify(sp.Matrix(A))
                     st.latex(sp.latex(A))
                 
                 except:
@@ -289,7 +289,7 @@ match modulo:
             R = None
             try:
             # Evaluar la expresión acumulada
-                R = sp.sympify(st.session_state['expresion']).subs(A, A)  # Asumiendo que A es tu matriz original
+                R = sp.simplify(sp.sympify(st.session_state['expresion'])).subs(A, A)  # Asumiendo que A es tu matriz original
                 #st.write("Resultado de la operación acumulada:")
                 with st.container():
                     cl1, cl2 = st.columns(2)
@@ -377,13 +377,13 @@ match modulo:
                     if isinstance(st.session_state["resultado"], str):
                         st.error(st.session_state["resultado"])
                     else:
-                        resultado = st.session_state["resultado"]
+                        resultado = sp.simplify(st.session_state["resultado"])
                         with st.expander("Resultado", expanded=True):
                             usar_d = st.checkbox("Mostrar resultado con decimales",key="mostrar1")
                             if usar_d:
                                 st.latex(sp.latex(resultado.evalf()))
                             else:
-                                st.latex(sp.latex(resultado))
+                                st.latex(sp.latex(sp.simplify(resultado)))
                             if st.button("Copiar",key="Copiar1"):
                                 if isinstance(resultado, sp.Matrix):
                                     st.session_state["copiado"] = "\n".join(",".join(str(val) for val in fila) for fila in resultado.tolist())
@@ -443,7 +443,7 @@ match modulo:
                         elementos = fila.strip().split(",")
                         fila_simb = [sp.sympify(elem.strip()) for elem in elementos]
                         A1.append(fila_simb)
-                    A1 = sp.Matrix(A1)
+                    A1 = sp.simplify(sp.Matrix(A1))
                     st.latex(sp.latex(A1))
                 except:
                     st.error(f"❌ Error al interpretar la matriz A")
@@ -472,7 +472,7 @@ match modulo:
                         fila_simb = [sp.sympify(elem.strip()) for elem in elementos]
                         B.append(fila_simb)
                 
-                    B = sp.Matrix(B)
+                    B = sp.simplify(sp.Matrix(B))
                     st.latex(sp.latex(B))
                 except:
                     st.error(f"❌ Error al interpretar la matriz B")
@@ -580,7 +580,7 @@ match modulo:
                 if usar_dab:
                     st.latex(sp.latex(st.session_state["resultado2"].evalf()))
                 else:
-                    st.latex(sp.latex(st.session_state["resultado2"]))
+                    st.latex(sp.latex(sp.simplify(st.session_state["resultado2"])))
                 if st.button("Copiar",key="Copiar2"):
                                 if isinstance(st.session_state["resultado2"],sp.Integer):
                                     st.session_state["copiado"] = str(st.session_state["resultado2"])
