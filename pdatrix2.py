@@ -47,7 +47,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state = "collapsed"
 )
-###---------
+##---------
 #st.title("🧮 DaTrix")
 #titulo_personalizado("🧮 DaTrix", nivel=2, tamaño=56, color="black")
 # Función para convertir imagen local a base64
@@ -383,7 +383,7 @@ match modulo:
                             if usar_d:
                                 st.latex(sp.latex(resultado.evalf()))
                             else:
-                                st.latex(sp.latex(sp.simplify(resultado)))
+                                st.latex(sp.latex(resultado))
                             if st.button("Copiar",key="Copiar1"):
                                 if isinstance(resultado, sp.Matrix):
                                     st.session_state["copiado"] = "\n".join(",".join(str(val) for val in fila) for fila in resultado.tolist())
@@ -396,7 +396,7 @@ match modulo:
                     if isinstance(st.session_state["resultado"], str):
                         st.error(st.session_state["resultado"])
                     else:
-                        resultadoa = st.session_state["resultadoa"]
+                        resultadoa = sp.simplify(st.session_state["resultadoa"])
                         rv = st.session_state["resulvect"]
                         with st.expander("Autovalores y autovectores", expanded=True):
                             usar1 = st.checkbox("Mostrar decimales, autovalores", key="Autovalores_dec")
