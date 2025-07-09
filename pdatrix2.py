@@ -1420,7 +1420,7 @@ match modulo:
                     archivo_I = None
                     archivo_I2 = None
                     vale3 = 1
-        tabsrt = st.tabs(["Ajustes de reconstrucción", "Figuras y gráficos", "ROI"])
+        tabsrt = st.tabs(["Ajustes de reconstrucción", "Figuras y gráficos", "Región de interés"])
         with tabsrt[0]:
             modo_sim = st.selectbox("Modo de adquisición",["TC", "SPECT"],key="modo_sim")
             modo_sim_bool = True if st.session_state["modo_sim"] == "SPECT" else False
