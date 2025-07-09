@@ -1884,8 +1884,9 @@ match modulo:
             if st.session_state["fig1"] is not None and st.session_state["fig2"] is not None:
                 st.subheader("🖼️ Imágenes")
                 st.pyplot(st.session_state["fig1"])
-                st.subheader("📈 Sinogramas")
-                st.pyplot(st.session_state["fig2"])
+                with st.expander("Ver sinogramas"):
+                    st.subheader("📈 Sinogramas")
+                    st.pyplot(st.session_state["fig2"])
             if st.session_state["reconstrucciones"] is not None and st.session_state["Ani"] is not None and st.session_state["vid"] is None:
                     #st.subheader("🎞️ Animación de la reconstrucción")
                     #paso = st.slider("Paso", 1, len(st.session_state["reconstrucciones"]), 1)
@@ -1907,7 +1908,7 @@ match modulo:
             if modo_sim == "TC":  
                 
                 if st.session_state["I"] is not None and st.session_state["O"] is not None and st.session_state["getp"] is not None and st.session_state["geto"] is not None and st.session_state["I_limpia"] is not None:
-
+                    st.subheader("Imagen con ventaneo")
                     colif1,colif2 = st.columns(2)
                     with colif1:
                         window_center = st.slider('Centro de ventana (nivel, L)', min_value=-1000, max_value=1000, value=0, step=10)
