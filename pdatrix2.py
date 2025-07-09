@@ -44,7 +44,8 @@ icono = Image.open("logodatrix.jpg")
 st.set_page_config(
     page_title="Datrix",
     page_icon=icono,
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state = "collapsed"
 )
 ##---------
 #st.title("🧮 DaTrix")
