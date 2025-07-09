@@ -132,7 +132,7 @@ match modulo:
     case "Álgebra y análisis numérico":
         #with st.expander("Módulo 1",expanded=True):
         st.title("🔢 Módulo 1: Álgebra y análisis numérico")
-        tabs = st.tabs(["Operaciones con matrices", "Señales y sistemas"])
+        tabs = st.tabs(["Operaciones con matrices", "Sistemas y curvas"])
         #titulo_personalizado("🔢 Módulo 1: Operaciones con matriz única", nivel=2, tamaño=56, color="black")
         with tabs[0]:
             cool, _ =st.columns([1,5])
