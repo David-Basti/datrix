@@ -75,6 +75,7 @@ st.markdown(
 
 # Menú principal
 modulo = st.sidebar.selectbox("Seleccionar módulo", [
+    "Inicio",
     "Álgebra y análisis numérico",
     "Procesamiento de imágenes",
     "Reconstrucción tomográfica",
@@ -87,6 +88,47 @@ st.sidebar.markdown("[📲 Donar vía MercadoPago](http://link.mercadopago.com.a
 st.sidebar.markdown("[📂 Repositorio en GitHub](https://github.com/David-Basti/datrix)")
 
 match modulo:
+    case "Inicio":
+        st.title("Bienvenido a DaTrix")
+        
+        st.write("**DaTrix** es una app con tres módulos principales, que podés explorar desde el menú lateral:")
+
+        col1, col2, col3 = st.columns(3)
+        kol1,kol2,kol3 =st.columns(3)
+
+        with col1:
+            st.markdown("#### 🔢 Álgebra y Análisis Numérico")
+        with kol1:    
+            st.markdown("""
+            - Operaciones con matrices  
+            - Resolución de sistemas  
+            - Ajustes e interpolación  
+            - Integración y ecuaciones  
+            - Análisis de Fourier  
+            """)
+
+        with col2:
+            st.markdown("#### 🖼️ Procesamiento de Imágenes")
+        with kol2:
+            st.markdown("""
+            - Visualización con ventaneo  
+            - Edición y filtrado  
+            - Calibración y escalas  
+            - Histogramas y perfiles  
+            - Regiones de interés (ROI)  
+            """)
+
+        with col3:
+            st.markdown("#### 💻 Reconstrucción Tomográfica")
+        with kol3:
+            st.markdown("""
+            - Simulación de CT y SPECT  
+            - Métodos: FBP, MLEM, OSEM, SART  
+            - Parámetros personalizables  
+            - Comparación ROI real/reconstruida  
+            - Gráficos iterativos  
+            """)
+        st.write("👈 Usá el menú lateral para comenzar.")
     case "Álgebra y análisis numérico":
         #with st.expander("Módulo 1",expanded=True):
         st.title("🔢 Módulo 1: Álgebra y análisis numérico")
