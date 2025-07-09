@@ -40,12 +40,12 @@ from io import BytesIO
 from scipy.interpolate import UnivariateSpline
 
 icono = Image.open("logodatrix.jpg")
-###---------
+##---------
 st.set_page_config(
     page_title="Datrix",
     page_icon=icono
 )
-###---------
+##---------
 #st.title("🧮 DaTrix")
 #titulo_personalizado("🧮 DaTrix", nivel=2, tamaño=56, color="black")
 # Función para convertir imagen local a base64
@@ -1420,6 +1420,7 @@ match modulo:
                     archivo_I = None
                     archivo_I2 = None
                     vale3 = 1
+        
         tabsrt = st.tabs(["Ajustes de reconstrucción", "Figuras y gráficos", "Región de interés"])
         with tabsrt[0]:
             modo_sim = st.selectbox("Modo de adquisición",["TC", "SPECT"],key="modo_sim")
@@ -1981,24 +1982,35 @@ match modulo:
             ###-------------------
         with tabsrt[2]:
             img_resized = None
-            I_real = None
-            I_reconstruida = None
-            canvas_key = f"canvas_roi_{modo_sim.lower()}"  # Diferente clave para cada modo
+            
+            #canvas_key = f"canvas_roi_{modo_sim.lower()}"  # Diferente clave para cada modo
+            # Inicializar claves si no existen (opcional, más robusto)
+            #for key in ["I_limpia", "I_limpia2", "O"]:
+            #    if key not in st.session_state:
+            #        st.session_state[key] = None
 
             # Preparar imagen y reconstrucción según modo
             if modo_sim == "SPECT":
-                if "I_limpia2" in st.session_state and "I" in st.session_state:
+                canvas_key = "canvas_roi_spect"
+                if "I_limpia2" in st.session_state and "O" in st.session_state:
                     if st.session_state["I_limpia2"] is not None and st.session_state["O"] is not None:
                         I_real = st.session_state["I_limpia2"]
                         I_reconstruida = st.session_state["O"]
+                        
             elif modo_sim == "TC":
+                canvas_key = "canvas_roi_tc"
                 if "I_limpia" in st.session_state and "O" in st.session_state:
                     if st.session_state["I_limpia"] is not None and st.session_state["O"] is not None:
                         I_real = st.session_state["I_limpia"]
                         I_reconstruida = st.session_state["O"]
+            else:
+                canvas_key = None
+                I_real = None
+                I_reconstruida = None
 
             # Si tenemos imágenes válidas, preparar canvas
-            if I_real is not None and I_reconstruida is not None:
+            if st.session_state["O"] is not None:#I_real is not None and I_reconstruida is not None:
+                #canvas_key = f"canvas_roi_{modo_sim}_{hash(I_real.tobytes())}"
                 img_np_view = I_real.copy()
                 vmin, vmax = np.min(img_np_view), np.max(img_np_view)
                 img_view = np.clip((img_np_view - vmin) / (vmax - vmin), 0, 1)
