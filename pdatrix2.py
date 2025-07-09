@@ -2154,13 +2154,14 @@ match modulo:
                                 st.pyplot(fig)
 
                             max_rec = max(recuperaciones)
-                            iter_max_rec = recuperaciones.index(max_rec)
+                            iter_max_rec = recuperaciones.index(max_rec) + 1
 
                             min_diff_media = min(diferencias_media)
-                            iter_min_diff_media = diferencias_media.index(min_diff_media)
+                            iter_min_diff_media = diferencias_media.index(min_diff_media) + 1
 
                             min_diff_total = min(diferencias_total)
-                            iter_min_diff_total = diferencias_total.index(min_diff_total)
+                            iter_min_diff_total = diferencias_total.index(min_diff_total) + 1
+
                             with pol1:
                                 st.write(f"Mejor recuperación: {max_rec:.2f}% en iteración {iter_max_rec}")
                                 st.write(f"Menor error absoluto medio: {min_diff_media:.4f} en iteración {iter_min_diff_media}")
