@@ -45,7 +45,7 @@ st.set_page_config(
     page_title="Datrix",
     page_icon=icono
 )
-###---------
+##---------
 #st.title("🧮 DaTrix")
 #titulo_personalizado("🧮 DaTrix", nivel=2, tamaño=56, color="black")
 # Función para convertir imagen local a base64
@@ -1400,6 +1400,7 @@ match modulo:
     case "Reconstrucción tomográfica":
         #with st.expander("Módulo 4",expanded=True):
         st.title("💻 Módulo 3: Reconstrucción tomográfica")
+        
         cool, _ = st.columns([1,5])
         with cool:
                 if st.button("🔄 Reiniciar"):
@@ -1419,562 +1420,689 @@ match modulo:
                     archivo_I = None
                     archivo_I2 = None
                     vale3 = 1
-        modo_sim = st.selectbox("Modo de adquisición",["TC", "SPECT"],key="modo_sim")
-        modo_sim_bool = True if st.session_state["modo_sim"] == "SPECT" else False
-        colum1, colum2 = st.columns(2)
-        with colum1:
-            # 2.1) Selección unificada
-            atten_sel = st.selectbox(
-                "Mapa de atenuación",
-                ["Shepp-Logan", "Fantoma-Discos", "Fantoma-Tórax", "Fantoma-Agua", "Fantoma-Aire", "Subir mi imagen"],
-                key="atten_sel"
-            )
+        tabsrt = st.tabs(["Ajustes de reconstrucción", "Figuras y gráficos", "ROI"])
+        with tabsrt[0]:
+            modo_sim = st.selectbox("Modo de adquisición",["TC", "SPECT"],key="modo_sim")
+            modo_sim_bool = True if st.session_state["modo_sim"] == "SPECT" else False
+            colum1, colum2 = st.columns(2)
+            with colum1:
+                # 2.1) Selección unificada
+                atten_sel = st.selectbox(
+                    "Mapa de atenuación",
+                    ["Shepp-Logan", "Fantoma-Discos", "Fantoma-Tórax", "Fantoma-Agua", "Fantoma-Aire", "Subir mi imagen"],
+                    key="atten_sel"
+                )
 
-            # 2.2) Carga o fantoma + preview
-            if atten_sel == "Subir mi imagen":
-                archivo_I = st.file_uploader("Subí tu propio mapa de atenuación", type=["png","jpg","jpeg"])
-                if archivo_I:
-                    I = Image.open(archivo_I).convert("L")
-                    I = np.array(I)
+                # 2.2) Carga o fantoma + preview
+                if atten_sel == "Subir mi imagen":
+                    archivo_I = st.file_uploader("Subí tu propio mapa de atenuación", type=["png","jpg","jpeg"])
+                    if archivo_I:
+                        I = Image.open(archivo_I).convert("L")
+                        I = np.array(I)
+                        I = resize(I, (128,128), anti_aliasing=True, preserve_range=True)
+                        I = I.astype(np.float32) / 255.0  # 👈 Acá la corrección
+
+                        I_temp = I.copy()
+                        I_limpia = I.copy()
+                        st.image(I, caption="Vista previa", width=150, clamp=True)
+
+                        if modo_sim == "TC":
+                            st.subheader("🧪 Ruido en la imagen original")
+                            add_noise = st.checkbox("Agregar ruido gaussiano",key="addnoise1")
+                            if add_noise:
+                                sigma = st.slider("Desvío estándar del ruido", min_value=0.0, max_value=0.5, value=0.05, step=0.01)
+                                I_temp += np.random.normal(0, sigma * I_temp, I_temp.shape)
+                                st.image(np.clip(I_temp, 0, 1), caption="Imagen con ruido", width=150, clamp=True)
+                        #col_preview, _ = st.columns([1, 5])
+                        #with col_preview:
+                        
+                else:
+                    if atten_sel == "Shepp-Logan":
+                        I = 0.6 * shepp_logan_phantom()
+                    elif atten_sel == "Fantoma-Discos":
+                        I = fn.fantoma_discos_atenuacion()
+                    elif atten_sel == "Fantoma-Tórax":
+                        I = fn.fantoma_torax_atenuacion()
+                    elif atten_sel == "Fantoma-Agua":
+                        I = fn.fantoma_agua_atenuacion()
+                    else:
+                        I = fn.fantoma_aire()
                     I = resize(I, (128,128), anti_aliasing=True, preserve_range=True)
-                    I = I.astype(np.float32) / 255.0  # 👈 Acá la corrección
-
+                    st.image(I, caption=atten_sel, width=150)
                     I_temp = I.copy()
                     I_limpia = I.copy()
-                    st.image(I, caption="Vista previa", width=150, clamp=True)
-
+                    ###---------
                     if modo_sim == "TC":
                         st.subheader("🧪 Ruido en la imagen original")
-                        add_noise = st.checkbox("Agregar ruido gaussiano",key="addnoise1")
+                        add_noise = st.checkbox("Agregar ruido gaussiano",key="addnoise2")
                         if add_noise:
                             sigma = st.slider("Desvío estándar del ruido", min_value=0.0, max_value=0.5, value=0.05, step=0.01)
                             I_temp += np.random.normal(0, sigma * I_temp, I_temp.shape)
                             st.image(np.clip(I_temp, 0, 1), caption="Imagen con ruido", width=150, clamp=True)
-                    #col_preview, _ = st.columns([1, 5])
-                    #with col_preview:
-                    
-            else:
-                if atten_sel == "Shepp-Logan":
-                    I = 0.6 * shepp_logan_phantom()
-                elif atten_sel == "Fantoma-Discos":
-                    I = fn.fantoma_discos_atenuacion()
-                elif atten_sel == "Fantoma-Tórax":
-                    I = fn.fantoma_torax_atenuacion()
-                elif atten_sel == "Fantoma-Agua":
-                    I = fn.fantoma_agua_atenuacion()
-                else:
-                    I = fn.fantoma_aire()
-                I = resize(I, (128,128), anti_aliasing=True, preserve_range=True)
-                st.image(I, caption=atten_sel, width=150)
-                I_temp = I.copy()
-                I_limpia = I.copy()
-                ###---------
-                if modo_sim == "TC":
-                    st.subheader("🧪 Ruido en la imagen original")
-                    add_noise = st.checkbox("Agregar ruido gaussiano",key="addnoise2")
-                    if add_noise:
-                        sigma = st.slider("Desvío estándar del ruido", min_value=0.0, max_value=0.5, value=0.05, step=0.01)
-                        I_temp += np.random.normal(0, sigma * I_temp, I_temp.shape)
-                        st.image(np.clip(I_temp, 0, 1), caption="Imagen con ruido", width=150, clamp=True)
-                    #col_preview, _ = st.columns([1, 5])
+                        #col_preview, _ = st.columns([1, 5])
 
-            # Ahora I está listo: usa I_temp = I.copy() si es necesario
-            #I_temp = I.copy()
-        with colum2:    
-            if modo_sim == "SPECT":
-                act_sel = st.selectbox(
-                    "Mapa de actividad",
-                    ["Fantoma de círculos", "Fantoma de díscos", "Subir mi imagen"],
-                    key="act_sel"
-                )
-                if act_sel == "Subir mi imagen":
-                    archivo_I2 = st.file_uploader("Subí tu mapa de actividad", type=["png","jpg","jpeg"])
-                    if archivo_I2:
-                        I2 = Image.open(archivo_I2).convert("L")
-                        I2 = np.array(I2)
-                        I2 = resize(I2, (128,128), anti_aliasing=True, preserve_range=True)
-                        I2 = I2.astype(np.uint8)
-                        #st.image(I2, caption="Tu mapa de actividad", width=150)
+                # Ahora I está listo: usa I_temp = I.copy() si es necesario
+                #I_temp = I.copy()
+            with colum2:    
+                if modo_sim == "SPECT":
+                    act_sel = st.selectbox(
+                        "Mapa de actividad",
+                        ["Fantoma de círculos", "Fantoma de díscos", "Subir mi imagen"],
+                        key="act_sel"
+                    )
+                    if act_sel == "Subir mi imagen":
+                        archivo_I2 = st.file_uploader("Subí tu mapa de actividad", type=["png","jpg","jpeg"])
+                        if archivo_I2:
+                            I2 = Image.open(archivo_I2).convert("L")
+                            I2 = np.array(I2)
+                            I2 = resize(I2, (128,128), anti_aliasing=True, preserve_range=True)
+                            I2 = I2.astype(np.uint8)
+                            #st.image(I2, caption="Tu mapa de actividad", width=150)
+                            I_temp2 = I2.copy()
+                            I_limpia2 = I2.copy()
+                            #col_preview2, _ = st.columns([1, 5])
+                            #with col_preview2:
+                            st.image(I2, caption="Vista previa", width=150)
+                            
+                    elif act_sel == "Fantoma de círculos":
+                        I2 = fn.crear_mapa_actividad(N=128, radio=4, A1=100, desplazamiento=40)
+                        st.image(I2/100, caption="Fantoma de círculos", width=150, clamp=True)
+                        #I2 = I2.astype(np.uint8)
                         I_temp2 = I2.copy()
-                        I_limpia2 = I2.copy()
-                        #col_preview2, _ = st.columns([1, 5])
-                        #with col_preview2:
-                        st.image(I2, caption="Vista previa", width=150)
                         
-                elif act_sel == "Fantoma de círculos":
-                    I2 = fn.crear_mapa_actividad(N=128, radio=4, A1=100, desplazamiento=40)
-                    st.image(I2/100, caption="Fantoma de círculos", width=150, clamp=True)
-                    #I2 = I2.astype(np.uint8)
-                    I_temp2 = I2.copy()
-                    
-                else:
-                    I2 = fn.fantoma_discos_actividad()
-                    st.image(I2/200, caption="Fantoma de díscos", width=150, clamp=True)
-                    #I2 = I2.astype(float)
-                    I_temp2 = I2.copy()
-                # I_temp2 = I2.copy()
-                I_limpia2 = I2.copy()
-                st.subheader("🧪 Ruido en la imagen original")
-                add_noise = st.checkbox("Agregar ruido gaussiano",key="addnoise3")
-                if add_noise:
-                    sigma_rel = st.slider("Desvío relativo del ruido", 0.0, 0.5, 0.05, 0.01)
-                    ruido = np.random.normal(0, sigma_rel * I_temp2, I_temp2.shape)
-                    I_temp2 += ruido
-                    I_temp2 = np.clip(I_temp2, 0, None)  # Evita negativos
-                    st.image(I_temp2 / np.max(I_temp2), caption="Con ruido", width=150, clamp=True)
-
-        if "I2" not in st.session_state:
-            st.session_state["I2"]=None
-        if "I" not in st.session_state:
-            st.session_state["I"]=None
-        if "O" not in st.session_state:
-            st.session_state["O"]=None
-        if "getp" not in st.session_state:
-            st.session_state["getp"]=None
-        if "I" not in st.session_state:
-            st.session_state["geto"]=None
-        if "reconstrucciones" not in st.session_state:
-            st.session_state["reconstrucciones"] = None
-        if "fig1" not in st.session_state:
-            st.session_state["fig1"] = None
-        if "fig2" not in st.session_state:
-            st.session_state["fig2"] = None
-        if "fig3" not in st.session_state:
-            st.session_state["fig3"] = None
-        if "vid" not in st.session_state:
-            st.session_state["vid"] = None
-        if "arregloimg" not in st.session_state:
-            st.session_state["arregloimg"] = None
-        if "loglikelihoods" not in st.session_state:
-            st.session_state["loglikelihoods"] = None
-        if "I_limpia2" not in st.session_state:
-            st.session_state["I_limpia2"] = None
-        if "I_limpia" not in st.session_state:
-            st.session_state["I_limpia"] = None
-        col1, col2 = st.columns(2)
-        with col1:
-            st.header("⚙️ Método de recostrucción")
-            operacion = st.radio("Elejí un método", ["FBP", "SART", "MLEM", "OSEM"], key="metodo_reconstruccion")
-            operacion = st.session_state["metodo_reconstruccion"]
-            modo_fov = st.radio("¿Cómo querés manejar la realación imagen-FOV?",
-                                            ["Estándar",
-                                            "Expandir imagen",
-                                            "Eliminar fuera del FOV"],key="modo_fov")
-            modo_fov = st.session_state["modo_fov"]
-        with col2:     
-            st.subheader("🌀 Parámetros de proyección")
-            a = st.number_input("Ángulo inicial (°)", value=0, step=1)
-            b = st.number_input("Ángulo final (°)", value=180, step=1)
-            p = st.number_input("Paso (°)", value=1.0, step=0.1)#, min_value=1.0)
-            if p <= 0:
-                st.error("⚠️ El paso 'p' debe ser un número positivo.")
-                st.stop()
-
-            if a >= b:
-                st.error("⚠️ El valor de 'a' debe ser menor que 'b'.")
-                st.stop()
-            if p >= (b - a):
-                st.error("⚠️ El paso debe ser menor que la diferencia entre a y b.")
-                st.stop()
-        with col1:
-            match modo_fov:
-                case "Estándar":
-                    st.write("El FOV tiene un radio igual a la altura de la matriz." \
-                             " Si existen píxeles con valores distintos de cero fuera del FOV puede haber artefactos.")
-                case "Expandir imagen":
-                    st.write("Expande la imagen de forma rectangular con píxeles de valor cero." \
-                             " La imagen original queda centrada en la imagen expandida y se sitúa dentro del FOV.")
-                case "Eliminar fuera del FOV":
-                    st.write("Lleva a cero los valores de la imagen fuera del FOV")
-            #modo_vid=st.radio("Modo video",["Desctivado", "Activado"],key="modo_vid")
-        #modo_vid_bool = True if st.session_state["modo_vid"] == "Activado" else False
-        if operacion == "OSEM":
-                    with col2:
-                        #st.subheader("🔁 Iteraciones")
-                        N = st.number_input("🔁 Iteraciones", min_value=1, value=10, step=1,format="%d")
-                        s = st.number_input("Subsets", min_value=1, value=4, step=1,format="%d")
-                        modo_O = st.radio("Elige tu imagen inicial:",["Imagen en blanco", "Imagen por FBP"])
-                        #st.subheader("Subsets")
-        if operacion == "MLEM":
-                    with col2:
-                        #st.subheader("🔁 Iteraciones")
-                        N = st.number_input("🔁 Iteraciones", min_value=1, value=10, step=1,format="%d")
-                        modo_O = st.radio("Elige tu imagen inicial:",["Imagen en blanco", "Imagen por FBP"])
-        if operacion == "SART":
-                    with col2:
-                        #st.subheader("🔁 Iteraciones")
-                        N = st.number_input("🔁 Iteraciones", min_value=1, value=10, step=1,format="%d")
-        if atten_sel == "Subir mi imagen":
-            if archivo_I is not None:
-                match modo_fov:
-                        case "Estándar":
-                            pass
-                        case "Expandir imagen":
-                            I_temp = fn.expandir_a_fov(I_temp)
-                            I_limpia = fn.expandir_a_fov(I_limpia)
-                        case "Eliminar fuera del FOV":
-                            I_temp = fn.aplicar_mascara_circular(I_temp,factor_radio=1)
-                            I_limpia = fn.aplicar_mascara_circular(I_limpia,factor_radio=1)
-            else:
-                st.error("⚠️Debe cargar una imagen")
-                st.stop()
-        else:
-             match modo_fov:
-                        case "Estándar":
-                            pass
-                        case "Expandir imagen":
-                            I_temp = fn.expandir_a_fov(I_temp)
-                            I_limpia = fn.expandir_a_fov(I_limpia)
-                        case "Eliminar fuera del FOV":
-                            I_temp = fn.aplicar_mascara_circular(I_temp,factor_radio=1)
-                            I_limpia = fn.aplicar_mascara_circular(I_limpia,factor_radio=1)
-        if modo_sim == "SPECT":
-                if act_sel == "Subir mi imagen":
-                    if archivo_I2 is not None:
-                        match modo_fov:
-                            case "Estándar":
-                                pass
-                            case "Expandir imagen":
-                                I_temp2 = fn.expandir_a_fov(I_temp2)
-                                I_limpia2 = fn.expandir_a_fov(I_limpia2)
-                            case "Eliminar fuera del FOV":
-                                I_temp2 = fn.aplicar_mascara_circular(I_temp2,factor_radio=1)
-                                I_limpia2 = fn.aplicar_mascara_circular(I_limpia2,factor_radio=1)
                     else:
-                        st.error("⚠️Debe cargar una imagen")
-                        st.stop()
-                else:
+                        I2 = fn.fantoma_discos_actividad()
+                        st.image(I2/200, caption="Fantoma de díscos", width=150, clamp=True)
+                        #I2 = I2.astype(float)
+                        I_temp2 = I2.copy()
+                    # I_temp2 = I2.copy()
+                    I_limpia2 = I2.copy()
+                    st.subheader("🧪 Ruido en la imagen original")
+                    add_noise = st.checkbox("Agregar ruido gaussiano",key="addnoise3")
+                    if add_noise:
+                        sigma_rel = st.slider("Desvío relativo del ruido", 0.0, 0.5, 0.05, 0.01)
+                        ruido = np.random.normal(0, sigma_rel * I_temp2, I_temp2.shape)
+                        I_temp2 += ruido
+                        I_temp2 = np.clip(I_temp2, 0, None)  # Evita negativos
+                        st.image(I_temp2 / np.max(I_temp2), caption="Con ruido", width=150, clamp=True)
+
+            if "I2" not in st.session_state:
+                st.session_state["I2"]=None
+            if "I" not in st.session_state:
+                st.session_state["I"]=None
+            if "O" not in st.session_state:
+                st.session_state["O"]=None
+            if "getp" not in st.session_state:
+                st.session_state["getp"]=None
+            if "I" not in st.session_state:
+                st.session_state["geto"]=None
+            if "reconstrucciones" not in st.session_state:
+                st.session_state["reconstrucciones"] = None
+            if "fig1" not in st.session_state:
+                st.session_state["fig1"] = None
+            if "fig2" not in st.session_state:
+                st.session_state["fig2"] = None
+            if "fig3" not in st.session_state:
+                st.session_state["fig3"] = None
+            if "vid" not in st.session_state:
+                st.session_state["vid"] = None
+            if "arregloimg" not in st.session_state:
+                st.session_state["arregloimg"] = None
+            if "loglikelihoods" not in st.session_state:
+                st.session_state["loglikelihoods"] = None
+            if "I_limpia2" not in st.session_state:
+                st.session_state["I_limpia2"] = None
+            if "I_limpia" not in st.session_state:
+                st.session_state["I_limpia"] = None
+            col1, col2 = st.columns(2)
+            with col1:
+                st.header("⚙️ Método de recostrucción")
+                operacion = st.radio("Elejí un método", ["FBP", "SART", "MLEM", "OSEM"], key="metodo_reconstruccion")
+                operacion = st.session_state["metodo_reconstruccion"]
+                modo_fov = st.radio("¿Cómo querés manejar la realación imagen-FOV?",
+                                                ["Estándar",
+                                                "Expandir imagen",
+                                                "Eliminar fuera del FOV"],key="modo_fov")
+                modo_fov = st.session_state["modo_fov"]
+            with col2:     
+                st.subheader("🌀 Parámetros de proyección")
+                a = st.number_input("Ángulo inicial (°)", value=0, step=1)
+                b = st.number_input("Ángulo final (°)", value=180, step=1)
+                p = st.number_input("Paso (°)", value=1.0, step=0.1)#, min_value=1.0)
+                if p <= 0:
+                    st.error("⚠️ El paso 'p' debe ser un número positivo.")
+                    st.stop()
+
+                if a >= b:
+                    st.error("⚠️ El valor de 'a' debe ser menor que 'b'.")
+                    st.stop()
+                if p >= (b - a):
+                    st.error("⚠️ El paso debe ser menor que la diferencia entre a y b.")
+                    st.stop()
+            with col1:
+                match modo_fov:
+                    case "Estándar":
+                        st.write("El FOV tiene un radio igual a la altura de la matriz." \
+                                " Si existen píxeles con valores distintos de cero fuera del FOV puede haber artefactos.")
+                    case "Expandir imagen":
+                        st.write("Expande la imagen de forma rectangular con píxeles de valor cero." \
+                                " La imagen original queda centrada en la imagen expandida y se sitúa dentro del FOV.")
+                    case "Eliminar fuera del FOV":
+                        st.write("Lleva a cero los valores de la imagen fuera del FOV")
+                #modo_vid=st.radio("Modo video",["Desctivado", "Activado"],key="modo_vid")
+            #modo_vid_bool = True if st.session_state["modo_vid"] == "Activado" else False
+            if operacion == "OSEM":
+                        with col2:
+                            #st.subheader("🔁 Iteraciones")
+                            N = st.number_input("🔁 Iteraciones", min_value=1, value=10, step=1,format="%d")
+                            s = st.number_input("Subsets", min_value=1, value=4, step=1,format="%d")
+                            modo_O = st.radio("Elige tu imagen inicial:",["Imagen en blanco", "Imagen por FBP"])
+                            #st.subheader("Subsets")
+            if operacion == "MLEM":
+                        with col2:
+                            #st.subheader("🔁 Iteraciones")
+                            N = st.number_input("🔁 Iteraciones", min_value=1, value=10, step=1,format="%d")
+                            modo_O = st.radio("Elige tu imagen inicial:",["Imagen en blanco", "Imagen por FBP"])
+            if operacion == "SART":
+                        with col2:
+                            #st.subheader("🔁 Iteraciones")
+                            N = st.number_input("🔁 Iteraciones", min_value=1, value=10, step=1,format="%d")
+            if atten_sel == "Subir mi imagen":
+                if archivo_I is not None:
                     match modo_fov:
                             case "Estándar":
                                 pass
                             case "Expandir imagen":
-                                I_temp2 = fn.expandir_a_fov(I_temp2)
-                                I_limpia2 = fn.expandir_a_fov(I_limpia2)
+                                I_temp = fn.expandir_a_fov(I_temp)
+                                I_limpia = fn.expandir_a_fov(I_limpia)
                             case "Eliminar fuera del FOV":
-                                I_temp2 = fn.aplicar_mascara_circular(I_temp2,factor_radio=1)
-                                I_limpia2 = fn.aplicar_mascara_circular(I_limpia2,factor_radio=1)
-
-        if modo_sim == "SPECT":
-            angulos = np.arange(a, b, p)
-            #assert I_temp.shape == I_temp2.shape
-            sinograma = fn.forward_projection_simple(
-                            activity=I_temp2,
-                            mu=I_temp,
-                            angulos=angulos,
-                            circle=True
-                            )
-            sino = radon(I_temp2,angulos,circle=True)
-                #st.session_state["getp"] = sinograma
-            match operacion:
-                case "FBP":
-                    if st.button("Reconstruir"):
-                        I,O,getp,geto,reconstrucciones = fn.FBP(I_temp,a,b,p,sinograma=sinograma)
-                        st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"]=I_temp2,O,sino,geto
-                        st.session_state["I_limpia2"] = I_limpia2
-                case "MLEM":
-                    if st.button("Reconstruir"):
-                        I,O,getp,geto,arregloimg,loglikelihoods =fn.MLEM(I_temp, N, a, b, p,modo_O,sinograma=sinograma)
-                        st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"],st.session_state["loglikelihoods"]=I_temp2,O,sino,geto,arregloimg,loglikelihoods
-                        st.session_state["I_limpia2"] = I_limpia2
-                case "OSEM":
-                    if st.button("Reconstruir"):
-                        I,O,getp,geto,arregloimg,loglikelihoods =fn.OSEM(I_temp, N, a, b, p,s,modo_O,sinograma=sinograma)
-                        st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"],st.session_state["loglikelihoods"]=I_temp2,O,sino,geto,arregloimg,loglikelihoods
-                        st.session_state["I_limpia2"] = I_limpia2
-                case "SART":
-                    if st.button("Reconstruir"):
-                        I,O,getp,geto,arregloimg = fn.SART(I_temp, N, a, b, p,sinograma=sinograma)
-                        st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"]=I_temp2,O,sino,geto,arregloimg
-                        st.session_state["I_limpia2"] = I_limpia2
-            match operacion:
-                case "FBP":
-                    if st.button("Generar Gif",key="AF"):
-                        st.session_state["Ani"] = None
-                        st.session_state["vid"] = None
-                        reconstrucciones = fn.FBP_vid(I_temp,a,b,p,sinograma=sinograma)
-                        st.session_state["reconstrucciones"] = reconstrucciones
-                        st.session_state["Ani"] = "AF"
-                case "SART":
-                    if st.button("Generar Gif",key="SA"):
-                            st.session_state["Ani"] = None
-                            st.session_state["vid"] = None
-                            reconstrucciones = fn.SART_vid(I_temp,N,a,b,p,sinograma=sinograma)
-                            st.session_state["reconstrucciones"] = reconstrucciones
-                            st.session_state["Ani"] = "SA"
-                case "MLEM":
-                    if st.button("Generar Gif",key="AM"):
-                            st.session_state["Ani"] = None
-                            st.session_state["vid"] = None
-                            reconstrucciones = fn.MLEM_vid(I_temp,N,a,b,p,modo_O,sinograma=sinograma)
-                            st.session_state["reconstrucciones"] = reconstrucciones
-                            st.session_state["Ani"] = "AM"
-                case "OSEM":
-                    if st.button("Generar Gif",key="OS"):
-                        st.session_state["Ani"] = None
-                        st.session_state["vid"] = None
-                        reconstrucciones = fn.OSEM_vid(I_temp,N,a,b,p,s,modo_O,sinograma=sinograma)
-                        st.session_state["reconstrucciones"] = reconstrucciones
-                        st.session_state["Ani"] = "OS"
-            
-            yoli1,yoli2 = st.columns(2)
-            with yoli1:
-                ###---------------
-                if st.session_state["arregloimg"] is not None and st.session_state["I_limpia2"] is not None  and st.session_state["I_limpia2"].shape == st.session_state["arregloimg"][0].shape:
-                    if operacion != "FBP":
-                        errores = fn.calcular_nrmse_series(st.session_state["arregloimg"], st.session_state["I_limpia2"])
-                        # Encontrar el índice y valor mínimo
-                        indice_min = np.argmin(errores)
-                        valor_min = errores[indice_min]
-                        fig_err, ax_err = plt.subplots()
-                        ax_err.scatter(range(1,len(errores)+1), errores, color="blue")
-                        ax_err.plot(indice_min + 1, valor_min, "ro", label="Mínimo")
-                        ax_err.set_title("N-RMSE vs Iteraciones")
-                        ax_err.set_xlabel("Iteración")
-                        ax_err.set_ylabel("N-RMSE")
-                        ax_err.grid(True)
-                        st.pyplot(fig_err)
-                        st.markdown(f"📉 **Error final (última iteración):** {errores[-1]:.4f}")
-                        st.markdown(f"🔻 **Mínimo N-RMSE** en la iteración {indice_min + 1}: {valor_min:.4f}")
-                    else:
-                        error_final = fn.calcular_nrmse(st.session_state["O"],st.session_state["I_limpia2"])
-                        st.markdown(f"📉 **N-RMSE reconstrucción final vs. original:** {error_final:.4f}")
-            with yoli2:
-                if st.session_state["loglikelihoods"] is not None and operacion != "FBP" and operacion != "SART" and st.session_state["I_limpia2"] is not None  and st.session_state["I_limpia2"].shape == st.session_state["arregloimg"][0].shape:
-                    fig_ll, ax_ll = plt.subplots()
-                    ax_ll.scatter(range(1,len(st.session_state["loglikelihoods"])+1),np.array(st.session_state["loglikelihoods"]), color="b")
-                    ax_ll.set_title("Log-Likelihood vs Iteraciones")
-                    ax_ll.set_xlabel("Iteración")
-                    ax_ll.set_ylabel("Log-Likelihood")
-                    ax_ll.grid(True)
-                    st.pyplot(fig_ll)
-                ###----------------------------------
-            if st.session_state["I"] is not None and st.session_state["O"] is not None and st.session_state["getp"] is not None and st.session_state["geto"] is not None:
-                
-                verimagensinr = st.checkbox("Ver imagen orinal sin ruido",key="viosr")
-                fig1, axs1 = plt.subplots(1, 2, figsize=(10, 5))
-                if verimagensinr:
-                    im0 = axs1[0].imshow(st.session_state["I_limpia2"], cmap='gray')#,vmin=0, vmax=1)
+                                I_temp = fn.aplicar_mascara_circular(I_temp,factor_radio=1)
+                                I_limpia = fn.aplicar_mascara_circular(I_limpia,factor_radio=1)
                 else:
-                    im0 = axs1[0].imshow(st.session_state["I"], cmap='gray')#,vmin=0, vmax=1)
-                axs1[0].set_title("Imagen original")
-                axs1[0].axis("off")
-                fig1.colorbar(im0, ax=axs1[0], fraction=0.046, pad=0.04)
-
-                im1 = axs1[1].imshow(st.session_state["O"], cmap='gray')
-                axs1[1].set_title("Imagen reconstruida")
-                axs1[1].axis("off")
-                fig1.colorbar(im1, ax=axs1[1], fraction=0.046, pad=0.04)
-                #fig1.tight_layout()
-                st.session_state["fig1"] = fig1
-                st.session_state["fig1"].tight_layout()
-                #st.pyplot(fig1)
-
-                fig2, axs2 = plt.subplots(1, 2, figsize=(5, 10))
-                axs2[0].imshow(fn.normalizar(st.session_state["getp"].T), cmap='gray')#,vmin=0, vmax=1)
-                axs2[0].set_title("Sinograma original")
-                axs2[0].axis("off")
-                axs2[1].imshow(fn.normalizar(st.session_state["geto"].T), cmap='gray')#,vmin=0, vmax=1)
-                axs2[1].set_title("Sinograma reconstriodo")
-                axs2[1].axis("off")
-                #fig2.tight_layout()
-                st.session_state["fig2"] = fig2
-                st.session_state["fig2"].tight_layout()
-
-            if st.session_state["fig1"] is not None and st.session_state["fig2"] is not None:
-                st.subheader("🖼️ Imágenes")
-                st.pyplot(st.session_state["fig1"])
-                st.subheader("📈 Sinogramas")
-                st.pyplot(st.session_state["fig2"])
-            if st.session_state["reconstrucciones"] is not None and st.session_state["Ani"] is not None and st.session_state["vid"] is None:
-                    #st.subheader("🎞️ Animación de la reconstrucción")
-                    #paso = st.slider("Paso", 1, len(st.session_state["reconstrucciones"]), 1)
-                    if "video_generado" not in st.session_state:
-                        with st.spinner("🎥 Generando animación..."):
-            # Primero el GIF para previsualizar con st.image
-                            with tempfile.NamedTemporaryFile(suffix=".gif", delete=False) as temp_gif:
-                                fn.crear_video_reconstruccion(
-                                    st.session_state["reconstrucciones"],
-                                    output_path=temp_gif.name,
-                                    writer="pillow"
-                                    )
-                                st.session_state["vid"] = temp_gif.name
-                                #st.image(temp_gif.name)
-            if st.session_state["vid"] is not None and st.session_state["Ani"] is not None:
-                st.subheader("🎞️ Animación de la reconstrucción")
-                #with st.spinner("🎥 Generando animación..."):
-                st.image(st.session_state["vid"])
-
-        else:
-            match operacion:
-                case "FBP":
+                    st.error("⚠️Debe cargar una imagen")
+                    st.stop()
+            else:
+                match modo_fov:
+                            case "Estándar":
+                                pass
+                            case "Expandir imagen":
+                                I_temp = fn.expandir_a_fov(I_temp)
+                                I_limpia = fn.expandir_a_fov(I_limpia)
+                            case "Eliminar fuera del FOV":
+                                I_temp = fn.aplicar_mascara_circular(I_temp,factor_radio=1)
+                                I_limpia = fn.aplicar_mascara_circular(I_limpia,factor_radio=1)
+            if modo_sim == "SPECT":
+                    if act_sel == "Subir mi imagen":
+                        if archivo_I2 is not None:
+                            match modo_fov:
+                                case "Estándar":
+                                    pass
+                                case "Expandir imagen":
+                                    I_temp2 = fn.expandir_a_fov(I_temp2)
+                                    I_limpia2 = fn.expandir_a_fov(I_limpia2)
+                                case "Eliminar fuera del FOV":
+                                    I_temp2 = fn.aplicar_mascara_circular(I_temp2,factor_radio=1)
+                                    I_limpia2 = fn.aplicar_mascara_circular(I_limpia2,factor_radio=1)
+                        else:
+                            st.error("⚠️Debe cargar una imagen")
+                            st.stop()
+                    else:
+                        match modo_fov:
+                                case "Estándar":
+                                    pass
+                                case "Expandir imagen":
+                                    I_temp2 = fn.expandir_a_fov(I_temp2)
+                                    I_limpia2 = fn.expandir_a_fov(I_limpia2)
+                                case "Eliminar fuera del FOV":
+                                    I_temp2 = fn.aplicar_mascara_circular(I_temp2,factor_radio=1)
+                                    I_limpia2 = fn.aplicar_mascara_circular(I_limpia2,factor_radio=1)
+        
+            if modo_sim == "SPECT":
+                angulos = np.arange(a, b, p)
+                #assert I_temp.shape == I_temp2.shape
+                sinograma = fn.forward_projection_simple(
+                                activity=I_temp2,
+                                mu=I_temp,
+                                angulos=angulos,
+                                circle=True
+                                )
+                sino = radon(I_temp2,angulos,circle=True)
+                    #st.session_state["getp"] = sinograma
+                match operacion:
+                    case "FBP":
                         if st.button("Reconstruir"):
-                                I,O,getp,geto,reconstrucciones = fn.FBP(I_temp, a, b, p)
-                                #if modo_vid_bool:
-                                #    st.session_state["reconstrucciones"] = reconstrucciones
-                                st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"]=I,O,getp,geto
-                                st.session_state["I_limpia"] = I_limpia
-                case "MLEM":
+                            I,O,getp,geto,reconstrucciones = fn.FBP(I_temp,a,b,p,sinograma=sinograma)
+                            st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"]=I_temp2,O,sino,geto
+                            st.session_state["I_limpia2"] = I_limpia2
+                    case "MLEM":
+                        if st.button("Reconstruir"):
+                            I,O,getp,geto,arregloimg,loglikelihoods =fn.MLEM(I_temp, N, a, b, p,modo_O,sinograma=sinograma)
+                            st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"],st.session_state["loglikelihoods"]=I_temp2,O,sino,geto,arregloimg,loglikelihoods
+                            st.session_state["I_limpia2"] = I_limpia2
+                    case "OSEM":
+                        if st.button("Reconstruir"):
+                            I,O,getp,geto,arregloimg,loglikelihoods =fn.OSEM(I_temp, N, a, b, p,s,modo_O,sinograma=sinograma)
+                            st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"],st.session_state["loglikelihoods"]=I_temp2,O,sino,geto,arregloimg,loglikelihoods
+                            st.session_state["I_limpia2"] = I_limpia2
+                    case "SART":
+                        if st.button("Reconstruir"):
+                            I,O,getp,geto,arregloimg = fn.SART(I_temp, N, a, b, p,sinograma=sinograma)
+                            st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"]=I_temp2,O,sino,geto,arregloimg
+                            st.session_state["I_limpia2"] = I_limpia2
+                match operacion:
+                    case "FBP":
+                        if st.button("Generar Gif",key="AF"):
+                            st.session_state["Ani"] = None
+                            st.session_state["vid"] = None
+                            reconstrucciones = fn.FBP_vid(I_temp,a,b,p,sinograma=sinograma)
+                            st.session_state["reconstrucciones"] = reconstrucciones
+                            st.session_state["Ani"] = "AF"
+                    case "SART":
+                        if st.button("Generar Gif",key="SA"):
+                                st.session_state["Ani"] = None
+                                st.session_state["vid"] = None
+                                reconstrucciones = fn.SART_vid(I_temp,N,a,b,p,sinograma=sinograma)
+                                st.session_state["reconstrucciones"] = reconstrucciones
+                                st.session_state["Ani"] = "SA"
+                    case "MLEM":
+                        if st.button("Generar Gif",key="AM"):
+                                st.session_state["Ani"] = None
+                                st.session_state["vid"] = None
+                                reconstrucciones = fn.MLEM_vid(I_temp,N,a,b,p,modo_O,sinograma=sinograma)
+                                st.session_state["reconstrucciones"] = reconstrucciones
+                                st.session_state["Ani"] = "AM"
+                    case "OSEM":
+                        if st.button("Generar Gif",key="OS"):
+                            st.session_state["Ani"] = None
+                            st.session_state["vid"] = None
+                            reconstrucciones = fn.OSEM_vid(I_temp,N,a,b,p,s,modo_O,sinograma=sinograma)
+                            st.session_state["reconstrucciones"] = reconstrucciones
+                            st.session_state["Ani"] = "OS"
+
+            else:
+                match operacion:
+                    case "FBP":
                             if st.button("Reconstruir"):
-                                I,O,getp,geto,arregloimg,loglikelihoods =fn.MLEM(I_temp, N, a, b, p,modo_O)
+                                    I,O,getp,geto,reconstrucciones = fn.FBP(I_temp, a, b, p)
+                                    #if modo_vid_bool:
+                                    #    st.session_state["reconstrucciones"] = reconstrucciones
+                                    st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"]=I,O,getp,geto
+                                    st.session_state["I_limpia"] = I_limpia
+                    case "MLEM":
+                                if st.button("Reconstruir"):
+                                    I,O,getp,geto,arregloimg,loglikelihoods =fn.MLEM(I_temp, N, a, b, p,modo_O)
+                                    st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"],st.session_state["loglikelihoods"]=I,O,getp,geto,arregloimg,loglikelihoods
+                                    st.session_state["I_limpia"] = I_limpia
+                    case "OSEM":
+                            if st.button("Reconstruir"):
+                                I,O,getp,geto,arregloimg,loglikelihoods =fn.OSEM(I_temp, N, a, b, p,s,modo_O)
                                 st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"],st.session_state["loglikelihoods"]=I,O,getp,geto,arregloimg,loglikelihoods
                                 st.session_state["I_limpia"] = I_limpia
-                case "OSEM":
-                        if st.button("Reconstruir"):
-                            I,O,getp,geto,arregloimg,loglikelihoods =fn.OSEM(I_temp, N, a, b, p,s,modo_O)
-                            st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"],st.session_state["loglikelihoods"]=I,O,getp,geto,arregloimg,loglikelihoods
-                            st.session_state["I_limpia"] = I_limpia
-                case "SART":
-                        if st.button("Reconstruir"):
-                            I,O,getp,geto,arregloimg = fn.SART(I_temp, N, a, b, p)
-                            st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"]=I,O,getp,geto,arregloimg
-                            st.session_state["I_limpia"] = I_limpia
-            match operacion:
-                case "FBP":
-                    if st.button("Generar Gif",key="AF"):
-                        st.session_state["Ani"] = None
-                        st.session_state["vid"] = None
-                        reconstrucciones = fn.FBP_vid(I_temp,a,b,p,)
-                        st.session_state["reconstrucciones"] = reconstrucciones
-                        st.session_state["Ani"] = "AF"
-                case "SART":
-                    if st.button("Generar Gif",key="SA"):
+                    case "SART":
+                            if st.button("Reconstruir"):
+                                I,O,getp,geto,arregloimg = fn.SART(I_temp, N, a, b, p)
+                                st.session_state["I"],st.session_state["O"],st.session_state["getp"],st.session_state["geto"],st.session_state["arregloimg"]=I,O,getp,geto,arregloimg
+                                st.session_state["I_limpia"] = I_limpia
+                match operacion:
+                    case "FBP":
+                        if st.button("Generar Gif",key="AF"):
                             st.session_state["Ani"] = None
                             st.session_state["vid"] = None
-                            reconstrucciones = fn.SART_vid(I_temp,N,a,b,p)
+                            reconstrucciones = fn.FBP_vid(I_temp,a,b,p,)
                             st.session_state["reconstrucciones"] = reconstrucciones
-                            st.session_state["Ani"] = "SA"
-                case "MLEM":
-                    if st.button("Generar Gif",key="AM"):
+                            st.session_state["Ani"] = "AF"
+                    case "SART":
+                        if st.button("Generar Gif",key="SA"):
+                                st.session_state["Ani"] = None
+                                st.session_state["vid"] = None
+                                reconstrucciones = fn.SART_vid(I_temp,N,a,b,p)
+                                st.session_state["reconstrucciones"] = reconstrucciones
+                                st.session_state["Ani"] = "SA"
+                    case "MLEM":
+                        if st.button("Generar Gif",key="AM"):
+                                st.session_state["Ani"] = None
+                                st.session_state["vid"] = None
+                                reconstrucciones = fn.MLEM_vid(I_temp,N,a,b,p,modo_O)
+                                st.session_state["reconstrucciones"] = reconstrucciones
+                                st.session_state["Ani"] = "AM"
+                    case "OSEM":
+                        if st.button("Generar Gif",key="OS"):
                             st.session_state["Ani"] = None
                             st.session_state["vid"] = None
-                            reconstrucciones = fn.MLEM_vid(I_temp,N,a,b,p,modo_O)
+                            reconstrucciones = fn.OSEM_vid(I_temp,N,a,b,p,s,modo_O)
                             st.session_state["reconstrucciones"] = reconstrucciones
-                            st.session_state["Ani"] = "AM"
-                case "OSEM":
-                    if st.button("Generar Gif",key="OS"):
-                        st.session_state["Ani"] = None
-                        st.session_state["vid"] = None
-                        reconstrucciones = fn.OSEM_vid(I_temp,N,a,b,p,s,modo_O)
-                        st.session_state["reconstrucciones"] = reconstrucciones
-                        st.session_state["Ani"] = "OS"
-                
-            yoli1,yoli2 = st.columns(2)
-            with yoli1:
-                ###---------------
-                if st.session_state["arregloimg"] is not None and st.session_state["I_limpia"] is not None  and st.session_state["I_limpia"].shape == st.session_state["arregloimg"][0].shape:
-                    if operacion != "FBP":
-                        errores = fn.calcular_nrmse_series(st.session_state["arregloimg"], st.session_state["I_limpia"])
-                        # Encontrar el índice y valor mínimo
-                        indice_min = np.argmin(errores)
-                        valor_min = errores[indice_min]
-                        fig_err, ax_err = plt.subplots()
-                        ax_err.scatter(range(1,len(errores)+1), errores, color="blue")
-                        ax_err.plot(indice_min + 1, valor_min, "ro", label="Mínimo")
-                        ax_err.set_title("N-RMSE vs Iteraciones")
-                        ax_err.set_xlabel("Iteración")
-                        ax_err.set_ylabel("N-RMSE")
-                        ax_err.grid(True)
-                        st.pyplot(fig_err)
-                        st.markdown(f"📉 **Error final (última iteración):** {errores[-1]:.4f}")
-                        st.markdown(f"🔻 **Mínimo N-RMSE** en la iteración {indice_min + 1}: {valor_min:.4f}")
+                            st.session_state["Ani"] = "OS"
+        with tabsrt[1]:
+            if modo_sim == "SPECT":
+                yoli1,yoli2 = st.columns(2)
+                with yoli1:
+                    ###---------------
+                    if st.session_state["arregloimg"] is not None and st.session_state["I_limpia2"] is not None  and st.session_state["I_limpia2"].shape == st.session_state["arregloimg"][0].shape:
+                        if operacion != "FBP":
+                            errores = fn.calcular_nrmse_series(st.session_state["arregloimg"], st.session_state["I_limpia2"])
+                            # Encontrar el índice y valor mínimo
+                            indice_min = np.argmin(errores)
+                            valor_min = errores[indice_min]
+                            fig_err, ax_err = plt.subplots()
+                            ax_err.scatter(range(1,len(errores)+1), errores, color="blue")
+                            ax_err.plot(indice_min + 1, valor_min, "ro", label="Mínimo")
+                            ax_err.set_title("N-RMSE vs Iteraciones")
+                            ax_err.set_xlabel("Iteración")
+                            ax_err.set_ylabel("N-RMSE")
+                            ax_err.grid(True)
+                            st.pyplot(fig_err)
+                            st.markdown(f"📉 **Error final (última iteración):** {errores[-1]:.4f}")
+                            st.markdown(f"🔻 **Mínimo N-RMSE** en la iteración {indice_min + 1}: {valor_min:.4f}")
+                        else:
+                            error_final = fn.calcular_nrmse(st.session_state["O"],st.session_state["I_limpia2"])
+                            st.markdown(f"📉 **N-RMSE reconstrucción final vs. original:** {error_final:.4f}")
+                with yoli2:
+                    if st.session_state["loglikelihoods"] is not None and operacion != "FBP" and operacion != "SART" and st.session_state["I_limpia2"] is not None  and st.session_state["I_limpia2"].shape == st.session_state["arregloimg"][0].shape:
+                        fig_ll, ax_ll = plt.subplots()
+                        ax_ll.scatter(range(1,len(st.session_state["loglikelihoods"])+1),np.array(st.session_state["loglikelihoods"]), color="b")
+                        ax_ll.set_title("Log-Likelihood vs Iteraciones")
+                        ax_ll.set_xlabel("Iteración")
+                        ax_ll.set_ylabel("Log-Likelihood")
+                        ax_ll.grid(True)
+                        st.pyplot(fig_ll)
+                    ###----------------------------------
+                if st.session_state["I"] is not None and st.session_state["O"] is not None and st.session_state["getp"] is not None and st.session_state["geto"] is not None:
+                    
+                    verimagensinr = st.checkbox("Ver imagen orinal sin ruido",key="viosr")
+                    fig1, axs1 = plt.subplots(1, 2, figsize=(10, 5))
+                    if verimagensinr:
+                        im0 = axs1[0].imshow(st.session_state["I_limpia2"], cmap='gray')#,vmin=0, vmax=1)
                     else:
-                        error_final = fn.calcular_nrmse(st.session_state["O"],st.session_state["I_limpia"])
-                        st.markdown(f"📉 **N-RMSE reconstrucción final vs. original:** {error_final:.4f}")
-            with yoli2:
-                if st.session_state["loglikelihoods"] is not None and st.session_state["I_limpia"] is not None and operacion != "FBP" and operacion != "SART" and st.session_state["I_limpia"].shape == st.session_state["arregloimg"][0].shape:
-                    fig_ll, ax_ll = plt.subplots()
-                    ax_ll.scatter(range(1,len(st.session_state["loglikelihoods"])+1),np.array(st.session_state["loglikelihoods"]), color="b")
-                    ax_ll.set_title("Log-Likelihood vs Iteraciones")
-                    ax_ll.set_xlabel("Iteración")
-                    ax_ll.set_ylabel("Log-Likelihood")
-                    ax_ll.grid(True)
-                    st.pyplot(fig_ll)
-                ###----------------------------------
-            if st.session_state["I"] is not None and st.session_state["O"] is not None and st.session_state["getp"] is not None and st.session_state["geto"] is not None:
-                
-                fig1, axs1 = plt.subplots(1, 2, figsize=(10, 5))
-                verimagensinrtc = st.checkbox("Ver imagen orinal sin ruido",key="viosrtc")
-                if verimagensinrtc:
-                    im0 = axs1[0].imshow(st.session_state["I_limpia"], cmap='gray')#,vmin=0, vmax=1)
-                else:    
-                    im0 = axs1[0].imshow(st.session_state["I"], cmap='gray')#,vmin=0, vmax=1)
-                axs1[0].set_title("Imagen original")
-                axs1[0].axis("off")
-                fig1.colorbar(im0, ax=axs1[0], fraction=0.046, pad=0.04)
+                        im0 = axs1[0].imshow(st.session_state["I"], cmap='gray')#,vmin=0, vmax=1)
+                    axs1[0].set_title("Imagen original")
+                    axs1[0].axis("off")
+                    fig1.colorbar(im0, ax=axs1[0], fraction=0.046, pad=0.04)
 
-                im1 = axs1[1].imshow(st.session_state["O"], cmap='gray')
-                axs1[1].set_title("Imagen reconstruida")
-                axs1[1].axis("off")
-                fig1.colorbar(im1, ax=axs1[1], fraction=0.046, pad=0.04)
-                #fig1.tight_layout()
-                st.session_state["fig1"] = fig1
-                st.session_state["fig1"].tight_layout()
-                #st.pyplot(fig1)
+                    im1 = axs1[1].imshow(st.session_state["O"], cmap='gray')
+                    axs1[1].set_title("Imagen reconstruida")
+                    axs1[1].axis("off")
+                    fig1.colorbar(im1, ax=axs1[1], fraction=0.046, pad=0.04)
+                    #fig1.tight_layout()
+                    st.session_state["fig1"] = fig1
+                    st.session_state["fig1"].tight_layout()
+                    #st.pyplot(fig1)
 
-                fig2, axs2 = plt.subplots(1, 2, figsize=(5, 10))
-                axs2[0].imshow(fn.normalizar(st.session_state["getp"].T), cmap='gray')#,vmin=0, vmax=1)
-                axs2[0].set_title("Sinograma original")
-                axs2[0].axis("off")
-                axs2[1].imshow(fn.normalizar(st.session_state["geto"].T), cmap='gray')#,vmin=0, vmax=1)
-                axs2[1].set_title("Sinograma reconstruido")
-                axs2[1].axis("off")
-                #fig2.tight_layout()
-                st.session_state["fig2"] = fig2
-                st.session_state["fig2"].tight_layout()
-                #st.pyplot(fig2)
+                    fig2, axs2 = plt.subplots(1, 2, figsize=(5, 10))
+                    axs2[0].imshow(fn.normalizar(st.session_state["getp"].T), cmap='gray')#,vmin=0, vmax=1)
+                    axs2[0].set_title("Sinograma original")
+                    axs2[0].axis("off")
+                    axs2[1].imshow(fn.normalizar(st.session_state["geto"].T), cmap='gray')#,vmin=0, vmax=1)
+                    axs2[1].set_title("Sinograma reconstriodo")
+                    axs2[1].axis("off")
+                    #fig2.tight_layout()
+                    st.session_state["fig2"] = fig2
+                    st.session_state["fig2"].tight_layout()
+
                 if st.session_state["fig1"] is not None and st.session_state["fig2"] is not None:
                     st.subheader("🖼️ Imágenes")
                     st.pyplot(st.session_state["fig1"])
                     st.subheader("📈 Sinogramas")
                     st.pyplot(st.session_state["fig2"])
+                if st.session_state["reconstrucciones"] is not None and st.session_state["Ani"] is not None and st.session_state["vid"] is None:
+                        #st.subheader("🎞️ Animación de la reconstrucción")
+                        #paso = st.slider("Paso", 1, len(st.session_state["reconstrucciones"]), 1)
+                        if "video_generado" not in st.session_state:
+                            with st.spinner("🎥 Generando animación..."):
+                # Primero el GIF para previsualizar con st.image
+                                with tempfile.NamedTemporaryFile(suffix=".gif", delete=False) as temp_gif:
+                                    fn.crear_video_reconstruccion(
+                                        st.session_state["reconstrucciones"],
+                                        output_path=temp_gif.name,
+                                        writer="pillow"
+                                        )
+                                    st.session_state["vid"] = temp_gif.name
+                                    #st.image(temp_gif.name)
+                if st.session_state["vid"] is not None and st.session_state["Ani"] is not None:
+                    st.subheader("🎞️ Animación de la reconstrucción")
+                    #with st.spinner("🎥 Generando animación..."):
+                    st.image(st.session_state["vid"])
+            elif modo_sim == "TC":  
+                yoli1,yoli2 = st.columns(2)
+                with yoli1:
+                    ###---------------
+                    if st.session_state["arregloimg"] is not None and st.session_state["I_limpia"] is not None  and st.session_state["I_limpia"].shape == st.session_state["arregloimg"][0].shape:
+                        if operacion != "FBP":
+                            errores = fn.calcular_nrmse_series(st.session_state["arregloimg"], st.session_state["I_limpia"])
+                            # Encontrar el índice y valor mínimo
+                            indice_min = np.argmin(errores)
+                            valor_min = errores[indice_min]
+                            fig_err, ax_err = plt.subplots()
+                            ax_err.scatter(range(1,len(errores)+1), errores, color="blue")
+                            ax_err.plot(indice_min + 1, valor_min, "ro", label="Mínimo")
+                            ax_err.set_title("N-RMSE vs Iteraciones")
+                            ax_err.set_xlabel("Iteración")
+                            ax_err.set_ylabel("N-RMSE")
+                            ax_err.grid(True)
+                            st.pyplot(fig_err)
+                            st.markdown(f"📉 **Error final (última iteración):** {errores[-1]:.4f}")
+                            st.markdown(f"🔻 **Mínimo N-RMSE** en la iteración {indice_min + 1}: {valor_min:.4f}")
+                        else:
+                            error_final = fn.calcular_nrmse(st.session_state["O"],st.session_state["I_limpia"])
+                            st.markdown(f"📉 **N-RMSE reconstrucción final vs. original:** {error_final:.4f}")
+                with yoli2:
+                    if st.session_state["loglikelihoods"] is not None and st.session_state["I_limpia"] is not None and operacion != "FBP" and operacion != "SART" and st.session_state["I_limpia"].shape == st.session_state["arregloimg"][0].shape:
+                        fig_ll, ax_ll = plt.subplots()
+                        ax_ll.scatter(range(1,len(st.session_state["loglikelihoods"])+1),np.array(st.session_state["loglikelihoods"]), color="b")
+                        ax_ll.set_title("Log-Likelihood vs Iteraciones")
+                        ax_ll.set_xlabel("Iteración")
+                        ax_ll.set_ylabel("Log-Likelihood")
+                        ax_ll.grid(True)
+                        st.pyplot(fig_ll)
+                    ###----------------------------------
+                if st.session_state["I"] is not None and st.session_state["O"] is not None and st.session_state["getp"] is not None and st.session_state["geto"] is not None and st.session_state["I_limpia"] is not None:
+                    
+                    fig1, axs1 = plt.subplots(1, 2, figsize=(10, 5))
+                    verimagensinrtc = st.checkbox("Ver imagen orinal sin ruido",key="viosrtc")
+                    if verimagensinrtc:
+                        im0 = axs1[0].imshow(st.session_state["I_limpia"], cmap='gray')#,vmin=0, vmax=1)
+                    else:    
+                        im0 = axs1[0].imshow(st.session_state["I"], cmap='gray')#,vmin=0, vmax=1)
+                    axs1[0].set_title("Imagen original")
+                    axs1[0].axis("off")
+                    fig1.colorbar(im0, ax=axs1[0], fraction=0.046, pad=0.04)
 
-                colif1,colif2 = st.columns(2)
-                with colif1:
-                    window_center = st.slider('Centro de ventana (nivel, L)', min_value=-1000, max_value=1000, value=0, step=10)
-                    window_width = st.slider('Ancho de ventana (W)', min_value=1, max_value=2000, value=400, step=10)
-                    verimg = st.radio("Elegí que imagen ver en HU", ["Imagen original sin ruido", "Imagen original con ruido", "Imagen recosntruida"])
-                    if verimg == "Imagen original sin ruido":
-                        IUH = fn.convertir_a_hounsfield(st.session_state["I_limpia"])
-                        cadena = "Imagen original s/r con ventaneo"
-                    elif verimg =="Imagen original con ruido":
-                        IUH = fn.convertir_a_hounsfield(st.session_state["I"])
-                        cadena = "Imagen original c/r con ventaneo"
+                    im1 = axs1[1].imshow(st.session_state["O"], cmap='gray')
+                    axs1[1].set_title("Imagen reconstruida")
+                    axs1[1].axis("off")
+                    fig1.colorbar(im1, ax=axs1[1], fraction=0.046, pad=0.04)
+                    #fig1.tight_layout()
+                    st.session_state["fig1"] = fig1
+                    st.session_state["fig1"].tight_layout()
+                    #st.pyplot(fig1)
+
+                    fig2, axs2 = plt.subplots(1, 2, figsize=(5, 10))
+                    axs2[0].imshow(fn.normalizar(st.session_state["getp"].T), cmap='gray')#,vmin=0, vmax=1)
+                    axs2[0].set_title("Sinograma original")
+                    axs2[0].axis("off")
+                    axs2[1].imshow(fn.normalizar(st.session_state["geto"].T), cmap='gray')#,vmin=0, vmax=1)
+                    axs2[1].set_title("Sinograma reconstruido")
+                    axs2[1].axis("off")
+                    #fig2.tight_layout()
+                    st.session_state["fig2"] = fig2
+                    st.session_state["fig2"].tight_layout()
+                    #st.pyplot(fig2)
+                    if st.session_state["fig1"] is not None and st.session_state["fig2"] is not None:
+                        st.subheader("🖼️ Imágenes")
+                        st.pyplot(st.session_state["fig1"])
+                        st.subheader("📈 Sinogramas")
+                        st.pyplot(st.session_state["fig2"])
+
+                    colif1,colif2 = st.columns(2)
+                    with colif1:
+                        window_center = st.slider('Centro de ventana (nivel, L)', min_value=-1000, max_value=1000, value=0, step=10)
+                        window_width = st.slider('Ancho de ventana (W)', min_value=1, max_value=2000, value=400, step=10)
+                        verimg = st.radio("Elegí que imagen ver en HU", ["Imagen original sin ruido", "Imagen original con ruido", "Imagen recosntruida"])
+                        if verimg == "Imagen original sin ruido":
+                            IUH = fn.convertir_a_hounsfield(st.session_state["I_limpia"])
+                            cadena = "Imagen original s/r con ventaneo"
+                        elif verimg =="Imagen original con ruido":
+                            IUH = fn.convertir_a_hounsfield(st.session_state["I"])
+                            cadena = "Imagen original c/r con ventaneo"
+                        else:
+                            IUH = fn.convertir_a_hounsfield(st.session_state["O"])
+                            cadena = "Imagen reconstruida con ventaneo"
+        # Aplicar ventaneo a la imagen
+                    L = window_center
+                    W = window_width
+                    I_ventaneado = np.clip((IUH - (L - W / 2)) / W, 0, 1)
+                    fig3, axs3 = plt.subplots(1,1,figsize=(5,10))
+                    im3 = axs3.imshow(I_ventaneado, cmap='gray')
+                    axs3.set_title(f'{cadena} ({L}, {W})')
+                    axs3.axis('off')
+                    im3 = fig3.colorbar(im3,ax= axs3,fraction=0.046, pad=0.04)
+                    st.session_state["fig3"] = fig3#plt.show()
+
+                if st.session_state["fig3"] is not None:
+                    with colif2:
+                        st.pyplot(st.session_state["fig3"])
+                if st.session_state["reconstrucciones"] is not None and st.session_state["Ani"] is not None and st.session_state["vid"] is None:
+                        #st.subheader("🎞️ Animación de la reconstrucción")
+                        #paso = st.slider("Paso", 1, len(st.session_state["reconstrucciones"]), 1)
+                        if "video_generado" not in st.session_state:
+                            with st.spinner("🎥 Generando animación..."):
+                # Primero el GIF para previsualizar con st.image
+                                with tempfile.NamedTemporaryFile(suffix=".gif", delete=False) as temp_gif:
+                                    fn.crear_video_reconstruccion(
+                                        st.session_state["reconstrucciones"],
+                                        output_path=temp_gif.name,
+                                        writer="pillow"
+                                        )
+                                    st.session_state["vid"] = temp_gif.name
+                                    #st.image(temp_gif.name)
+                if st.session_state["vid"] is not None and st.session_state["Ani"] is not None:
+                    st.subheader("🎞️ Animación de la reconstrucción")
+                    #with st.spinner("🎥 Generando animación..."):
+                    st.image(st.session_state["vid"])
+            ###-------------------
+        with tabsrt[2]:
+            img_resized = None
+            I_real = None
+            I_reconstruida = None
+            canvas_key = f"canvas_roi_{modo_sim.lower()}"  # Diferente clave para cada modo
+
+            # Preparar imagen y reconstrucción según modo
+            if modo_sim == "SPECT":
+                if "I_limpia2" in st.session_state and "I" in st.session_state:
+                    if st.session_state["I_limpia2"] is not None and st.session_state["O"] is not None:
+                        I_real = st.session_state["I_limpia2"]
+                        I_reconstruida = st.session_state["O"]
+            elif modo_sim == "TC":
+                if "I_limpia" in st.session_state and "O" in st.session_state:
+                    if st.session_state["I_limpia"] is not None and st.session_state["O"] is not None:
+                        I_real = st.session_state["I_limpia"]
+                        I_reconstruida = st.session_state["O"]
+
+            # Si tenemos imágenes válidas, preparar canvas
+            if I_real is not None and I_reconstruida is not None:
+                img_np_view = I_real.copy()
+                vmin, vmax = np.min(img_np_view), np.max(img_np_view)
+                img_view = np.clip((img_np_view - vmin) / (vmax - vmin), 0, 1)
+                img_view = (img_view * 255).astype(np.uint8)
+                img_pil = Image.fromarray(img_view).convert("RGB")
+
+                height_orig, width_orig = I_real.shape[:2]
+                max_canvas_size = 512
+                scale = min(max_canvas_size / width_orig, max_canvas_size / height_orig)
+                canvas_width = int(width_orig * scale)
+                canvas_height = int(height_orig * scale)
+                img_resized = img_pil.resize((canvas_width, canvas_height))
+
+                roi_tipo = st.selectbox("Tipo de ROI", ["rect", "circle", "freedraw"], index=0, format_func=lambda x: {
+                    "rect": "Rectángulo",
+                    "circle": "Círculo",
+                    "freedraw": "Mano alzada"
+                }[x])
+
+                if "canvas_data_roi" not in st.session_state:
+                    st.session_state["canvas_data_roi"] = None
+
+                if img_resized is not None and img_resized.size != 0:
+                    canvas_result = st_canvas(
+                        fill_color="rgba(255,255,255,0.0)",
+                        stroke_width=2,
+                        stroke_color="lime",
+                        background_image=img_resized,
+                        height=canvas_height,
+                        width=canvas_width,
+                        drawing_mode=roi_tipo,
+                        key=canvas_key,
+                        update_streamlit=True
+                    )
+
+                    # Guardar JSON del canvas
+                    if canvas_result.json_data:
+                        st.session_state["canvas_data_roi"] = canvas_result.json_data
+
+                    roi_objs = []
+                    canvas_data = st.session_state["canvas_data_roi"]
+                    if canvas_data and "objects" in canvas_data:
+                        roi_objs = canvas_data["objects"]
+
+                    # Procesar objetos
+                    roi, patch, stats, mask, info = fn.procesar_lista_de_objetos(
+                        roi_objs, scale, I_real, color="lime"
+                    )
+
+                    # Si se dibujó algún ROI válido
+                    if mask is not None and np.any(mask):
+                        img_roi = np.zeros_like(I_real)
+                        img_roi[mask] = I_real[mask]
+
+                        act_estimada = np.sum(I_reconstruida[mask])
+                        act_real = np.sum(I_real[mask])
+                        porcentaje = 100 * act_estimada / (act_real + 1e-8)
+
+                        st.write(f"🔍 Porcentaje de recuperación: {porcentaje:.2f} %")
+
+                        udo1, udo2 = st.columns(2)
+                        with udo1:
+                            st.write("🖼️ Imagen real con solo la ROI:")
+                            fig2, ax2 = plt.subplots()
+                            ax2.imshow(img_roi, cmap="gray")
+                            ax2.axis("off")
+                            st.pyplot(fig2)
+
+                        img_roi_recon = np.zeros_like(I_reconstruida)
+                        img_roi_recon[mask] = I_reconstruida[mask]
+
+                        with udo2:
+                            st.write("🖼️ Imagen reconstruida con sólo la ROI:")
+                            fig3, ax3 = plt.subplots()
+                            ax3.imshow(img_roi_recon, cmap="gray")
+                            ax3.axis("off")
+                            st.pyplot(fig3)
+
+                        # Curva de recuperación vs iteración
+                        if "arregloimg" in st.session_state and operacion != "FBP":
+                            recuperaciones = []
+                            for i, imagen_iteracion in enumerate(st.session_state["arregloimg"]):
+                                actividad_estimada = np.sum(imagen_iteracion[mask])
+                                actividad_real = np.sum(I_real[mask])
+                                porcentaje_iter = 100 * actividad_estimada / (actividad_real + 1e-8)
+                                recuperaciones.append(porcentaje_iter)
+
+                            fig, ax = plt.subplots()
+                            ax.plot(recuperaciones, marker="o", color="blue", label="Recuperación")
+                            ax.axhline(100, color="gray", linestyle="--", label="100% ideal")
+                            ax.set_xlabel("Iteración")
+                            ax.set_ylabel("Recuperación (%)")
+                            ax.set_title("Porcentaje de recuperación vs Iteración")
+                            max_rec = max(recuperaciones)
+                            iter_max = recuperaciones.index(max_rec)
+                            ax.plot(iter_max, max_rec, "ro", label=f"Máximo ({max_rec:.2f}%)")
+                            ax.legend()
+                            st.pyplot(fig)
                     else:
-                        IUH = fn.convertir_a_hounsfield(st.session_state["O"])
-                        cadena = "Imagen reconstruida con ventaneo"
-    # Aplicar ventaneo a la imagen
-                L = window_center
-                W = window_width
-                I_ventaneado = np.clip((IUH - (L - W / 2)) / W, 0, 1)
-                fig3, axs3 = plt.subplots(1,1,figsize=(5,10))
-                im3 = axs3.imshow(I_ventaneado, cmap='gray')
-                axs3.set_title(f'{cadena} ({L}, {W})')
-                axs3.axis('off')
-                im3 = fig3.colorbar(im3,ax= axs3,fraction=0.046, pad=0.04)
-                st.session_state["fig3"] = fig3#plt.show()
-
-            if st.session_state["fig3"] is not None:
-                with colif2:
-                    st.pyplot(st.session_state["fig3"])
-            if st.session_state["reconstrucciones"] is not None and st.session_state["Ani"] is not None and st.session_state["vid"] is None:
-                    #st.subheader("🎞️ Animación de la reconstrucción")
-                    #paso = st.slider("Paso", 1, len(st.session_state["reconstrucciones"]), 1)
-                    if "video_generado" not in st.session_state:
-                        with st.spinner("🎥 Generando animación..."):
-            # Primero el GIF para previsualizar con st.image
-                            with tempfile.NamedTemporaryFile(suffix=".gif", delete=False) as temp_gif:
-                                fn.crear_video_reconstruccion(
-                                    st.session_state["reconstrucciones"],
-                                    output_path=temp_gif.name,
-                                    writer="pillow"
-                                    )
-                                st.session_state["vid"] = temp_gif.name
-                                #st.image(temp_gif.name)
-            if st.session_state["vid"] is not None and st.session_state["Ani"] is not None:
-                st.subheader("🎞️ Animación de la reconstrucción")
-                #with st.spinner("🎥 Generando animación..."):
-                st.image(st.session_state["vid"])
-        ###-------------------
+                        st.info("🟡 Dibujá un ROI para calcular la recuperación.")
+                else:
+                    st.warning("⚠️ La imagen para el canvas no está disponible o es inválida.")
+            else:
+                st.warning("⚠️ Las imágenes no están cargadas o son inválidas para este modo.")
     ##-----------------------------
     ##-----------------------------
 
