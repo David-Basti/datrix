@@ -2125,27 +2125,30 @@ match modulo:
                                 diff_total = np.sum(np.abs(region_recon - region_real))
                                 diferencias_total.append(diff_total)
                             pol1,pol2=st.columns([0.3,0.7])
+                            iteraciones = list(range(1, len(st.session_state["arregloimg"]) + 1))
+
                             fig, axs = plt.subplots(3, 1, figsize=(8, 12))
 
-                            axs[0].plot(recuperaciones, marker="o", color="blue", label="Recuperación (%)")
+                            # Porcentaje de recuperación
+                            axs[0].plot(iteraciones, recuperaciones, marker="o", color="blue", label="Recuperación (%)")
                             axs[0].axhline(100, color="gray", linestyle="--")
                             axs[0].set_ylabel("Recuperación (%)")
                             axs[0].set_title("Recuperación vs Iteración")
                             axs[0].legend()
 
-                            axs[1].plot(diferencias_media, marker="s", color="green", label="Error absoluto medio")
-                            axs[1].set_yscale("log")
+                            # Diferencia de intensidad media
+                            axs[1].plot(iteraciones, diferencias_media, marker="s", color="green", label="Δ intensidad media")
                             axs[1].axhline(0, color="gray", linestyle="--")
-                            axs[1].set_ylabel("Error absoluto medio")
-                            axs[1].set_title("Error absoluto medio vs Iteración")
+                            axs[1].set_ylabel("Δ Intensidad media")
+                            axs[1].set_title("Diferencia de intensidad media vs Iteración")
                             axs[1].legend()
 
-                            axs[2].plot(diferencias_total, marker="^", color="red", label="Error absoluto total")
-                            axs[2].set_yscale("log")
+                            # Diferencia total
+                            axs[2].plot(iteraciones, diferencias_total, marker="^", color="red", label="Δ intensidad total")
                             axs[2].axhline(0, color="gray", linestyle="--")
-                            axs[2].set_ylabel("Error absoluto total")
+                            axs[2].set_ylabel("Δ Intensidad total")
                             axs[2].set_xlabel("Iteración")
-                            axs[2].set_title("Error absoluto total vs Iteración")
+                            axs[2].set_title("Diferencia total vs Iteración")
                             axs[2].legend()
                             with pol2:
                                 st.pyplot(fig)
