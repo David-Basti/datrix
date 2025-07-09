@@ -2147,8 +2147,8 @@ match modulo:
                             st.write(f"Mejor recuperación: {max_rec:.2f}% en iteración {iter_max_rec}")
                             st.write(f"Menor error absoluto medio: {min_diff_media:.4f} en iteración {iter_min_diff_media}")
                             st.write(f"Menor error absoluto total: {min_diff_total:.4f} en iteración {iter_min_diff_total}")
-                    else:
-                        st.info("🟡 Dibujá un ROI para calcular la recuperación.")
+                else:
+                    st.info("🟡 Dibujá un ROI para calcular la recuperación.")
             else:
                 st.warning("⚠️ Las imágenes no están cargadas o son inválidas para este modo.")
     ##-----------------------------
