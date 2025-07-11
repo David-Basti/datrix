@@ -76,7 +76,7 @@ st.markdown(
 #st.write("Una app para operaciones con matrices, procesamiento de imágenes y simulaciones de reconstrucción tomográfica.")
 
 # Menú principal
-modulo = st.sidebar.selectbox("Seleccionar módulo", [
+modulo = st.sidebar.radio("Seleccionar módulo", [
     "Inicio",
     "Álgebra y análisis numérico",
     "Procesamiento de imágenes",
