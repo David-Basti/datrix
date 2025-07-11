@@ -96,11 +96,10 @@ match modulo:
         st.write("**DaTrix** es una app con tres módulos principales, que podés explorar desde el menú lateral:")
 
         col1, col2, col3 = st.columns(3)
-        kol1,kol2,kol3 =st.columns(3)
 
         with col1:
             st.markdown("#### 🔢 Álgebra y Análisis Numérico")
-        with kol1:    
+            st.markdown(" --- ")
             st.markdown("""
             - Operaciones con matrices  
             - Resolución de sistemas  
@@ -111,7 +110,7 @@ match modulo:
 
         with col2:
             st.markdown("#### 🖼️ Procesamiento de Imágenes")
-        with kol2:
+            st.markdown(" --- ")
             st.markdown("""
             - Visualización con ventaneo  
             - Edición y filtrado  
@@ -122,7 +121,7 @@ match modulo:
 
         with col3:
             st.markdown("#### 💻 Reconstrucción Tomográfica")
-        with kol3:
+            st.markdown(" --- ")
             st.markdown("""
             - Simulación de CT y SPECT  
             - Métodos: FBP, MLEM, OSEM, SART  
