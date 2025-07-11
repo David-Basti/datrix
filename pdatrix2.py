@@ -1841,7 +1841,7 @@ match modulo:
                         error_final = fn.calcular_nrmse(st.session_state["O"],st.session_state["I_limpia"])
                         st.markdown(f"📉 **N-RMSE reconstrucción final vs. original:** {error_final:.4f}")
             with yoli2:
-                if st.session_state["loglikelihoods"] is not None and operacion != "FBP" and operacion != "SART" and st.session_state["I_limpia2"] is not None  and st.session_state["I_limpia2"].shape == st.session_state["arregloimg"][0].shape:
+                if st.session_state["loglikelihoods"] is not None and operacion != "FBP" and operacion != "SART" and st.session_state["I_limpia"] is not None  and st.session_state["I_limpia"].shape == st.session_state["arregloimg"][0].shape:
                     fig_ll, ax_ll = plt.subplots()
                     ax_ll.scatter(range(1,len(st.session_state["loglikelihoods"])+1),np.array(st.session_state["loglikelihoods"]), color="b")
                     ax_ll.set_title("Log-Likelihood vs Iteraciones")
