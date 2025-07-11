@@ -1938,24 +1938,7 @@ match modulo:
                 if st.session_state["fig3"] is not None:
                     with colif2:
                         st.pyplot(st.session_state["fig3"])
-                if st.session_state["reconstrucciones"] is not None and st.session_state["Ani"] is not None and st.session_state["vid"] is None:
-                        #st.subheader("🎞️ Animación de la reconstrucción")
-                        #paso = st.slider("Paso", 1, len(st.session_state["reconstrucciones"]), 1)
-                        if "video_generado" not in st.session_state:
-                            with st.spinner("🎥 Generando animación..."):
-                # Primero el GIF para previsualizar con st.image
-                                with tempfile.NamedTemporaryFile(suffix=".gif", delete=False) as temp_gif:
-                                    fn.crear_video_reconstruccion(
-                                        st.session_state["reconstrucciones"],
-                                        output_path=temp_gif.name,
-                                        writer="pillow"
-                                        )
-                                    st.session_state["vid"] = temp_gif.name
-                                    #st.image(temp_gif.name)
-                if st.session_state["vid"] is not None and st.session_state["Ani"] is not None:
-                    st.subheader("🎞️ Animación de la reconstrucción")
-                    #with st.spinner("🎥 Generando animación..."):
-                    st.image(st.session_state["vid"])
+                
             ###-------------------
         
         with tabsrt[2]:
