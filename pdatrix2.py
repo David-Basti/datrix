@@ -2089,7 +2089,7 @@ match modulo:
                     st.write(f"Error relativo medio: {error_relativo_medio:.2f} %")
 
                     # Curva de recuperación y errores vs iteración
-                    if "arregloimg" in st.session_state and operacion != "FBP":
+                    if st.session_state["arregloimg"] is not None and operacion != "FBP":
                         recuperaciones = []
                         diferencias_media = []
                         diferencias_total = []
