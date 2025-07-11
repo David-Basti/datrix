@@ -1953,7 +1953,7 @@ match modulo:
             # Preparar imagen y reconstrucción según modo
             I_real = None
             I_reconstruida = None
-            canvas_key = None
+            #canvas_key = None
             if "I_limpia" in st.session_state and "O" in st.session_state:
                 if st.session_state["I_limpia"] is not None and st.session_state["O"] is not None:
                     I_real = st.session_state["I_limpia"]
@@ -1963,7 +1963,7 @@ match modulo:
                     canvas_key = None
 
             # Si tenemos imágenes válidas, preparar canvas
-            if I_real is not None and I_reconstruida is not None and canvas_key is not None:
+            if canvas_key is not None:
                 #canvas_key = f"canvas_roi_{modo_sim}_{hash(I_real.tobytes())}"
                 img_np_view = I_real.copy()
                 vmin, vmax = np.min(img_np_view), np.max(img_np_view)
