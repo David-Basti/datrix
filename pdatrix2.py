@@ -66,7 +66,7 @@ st.markdown(
             <img src='data:image/jpeg;base64,{img_base64}' width='56'/>
             DaTrix
         </h1>
-        <p style='font-size: 20px;'>App hecha con amor.</p>
+        <p style='font-size: 20px;'>App hecha con amor</p>
     </div>
     """,
     unsafe_allow_html=True
