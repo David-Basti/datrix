@@ -2119,8 +2119,11 @@ match modulo:
                         with pol2:
                             st.pyplot(fig)
 
-                        max_rec = max(recuperaciones)
-                        iter_max_rec = recuperaciones.index(max_rec) + 1
+                        # Buscar la iteración con recuperación más cercana a 100 %
+                        errores_recuperacion = [abs(r - 100) for r in recuperaciones]
+                        mejor_rec = min(errores_recuperacion)
+                        iter_mejor_rec = errores_recuperacion.index(mejor_rec) + 1
+                        recuperacion_ideal = recuperaciones[iter_mejor_rec - 1]
 
                         min_diff_media = min(diferencias_media)
                         iter_min_diff_media = diferencias_media.index(min_diff_media) + 1
@@ -2129,7 +2132,7 @@ match modulo:
                         iter_min_diff_total = diferencias_total.index(min_diff_total) + 1
 
                         with pol1:
-                            st.write(f"Mejor recuperación: {max_rec:.2f}% en iteración {iter_max_rec}")
+                            st.write(f"Mejor recuperación: {recuperacion_ideal:.2f}% en iteración {iter_mejor_rec}")
                             st.write(f"Menor error absoluto medio: {min_diff_media:.4f} en iteración {iter_min_diff_media}")
                             st.write(f"Menor error absoluto total: {min_diff_total:.4f} en iteración {iter_min_diff_total}")
                 else:
