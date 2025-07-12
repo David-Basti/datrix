@@ -155,6 +155,10 @@ Simulador de reconstrución tomográfica de fantomas matemáticos.
 
 ## Futuras actualizaciones
 
+### Inicio
+
+- Descripción de cada módulo, tutoriales.
+
 ### Procesamiento de imágenes
 
 - Previsualización de la imagen rgb (recombinada) en el editor de imágenes.
