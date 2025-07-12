@@ -153,6 +153,21 @@ Simulador de reconstrución tomográfica de fantomas matemáticos.
 
 ---
 
+## Futuras actualizaciones
+
+### Procesamiento de imágenes
+
+- Previsualización de la imagen rgb (recombinada) en el editor de imágenes.
+
+### Reconstrucción tomográfica
+
+- Se añadirá  efecto de dispersión a la reconstrucción SPECT.
+- Opción para incorporar correción de la atenuación y dispersión a los algoritmos MLEM y OSEM.
+- Corrección de la atenuación post-reconstrucción a partir de un mapa de atenuación deterinado por FBP.
+- Corrección de la atenuación por el método de Chang.
+
+---
+
 ## Enlace a la app
 
 👉 [Ir a app]: https://datrix.streamlit.app/
