@@ -2021,9 +2021,9 @@ match modulo:
 
                     act_estimada = np.sum(I_reconstruida[mask])
                     act_real = np.sum(I_real[mask])
-                    porcentaje = 100 * act_estimada / (act_real + 1e-8)
+                    #porcentaje = 100 * act_estimada / (act_real + 1e-8)
 
-                    st.write(f"🔍 Porcentaje de recuperación: {porcentaje:.2f} %")
+                    #st.write(f"🔍 Porcentaje de recuperación: {porcentaje:.2f} %")
 
                     udo1, udo2 = st.columns(2)
                     with udo1:
