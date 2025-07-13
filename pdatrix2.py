@@ -42,7 +42,7 @@ from scipy.interpolate import UnivariateSpline
 icono = Image.open("logodatrix.jpg")
 ##---------
 st.set_page_config(
-    page_title="Datrix",
+    page_title="Datrix, áñgebra y análisis numérico, procesamiento de imágenes, reconstrucción tomográfica",
     page_icon=icono,
     #layout="wide",
     #initial_sidebar_state = "collapsed"
