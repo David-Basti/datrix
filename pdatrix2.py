@@ -91,7 +91,7 @@ st.sidebar.markdown("[📂 Repositorio en GitHub](https://github.com/David-Basti
 
 match modulo:
     case "Inicio":
-        st.title("Bienvenido a DaTrix")
+        st.subheader("Bienvenido a DaTrix")
         
         st.write("**DaTrix** es una app con tres módulos principales, que podés explorar desde el menú lateral:")
 
