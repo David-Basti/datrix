@@ -635,7 +635,11 @@ match modulo:
                                 st.subheader("Personalización del gráfico")
                                 col1, col2 = st.columns([0.3,0.7])
                                 with col1:
-                                    grado = st.number_input("Grado del polinomio", min_value=1, max_value=len(U)-1, value=1,step=1)
+                                    if 1<=len(U)-1:
+                                        grado = st.number_input("Grado del polinomio", min_value=1, max_value=len(U)-1, value=1,step=1)
+                                    else:
+                                        st.error("El grado 1 es mayor al grado máximo 0")
+                                        st.stop()
                                     st.write(f"Grado sugerido {len(U)-1}")
                                     titulo = st.text_input("Título del gráfico", value="V vs U")
                                     xlabel = st.text_input("Etiqueta del eje X", value="U, []")
