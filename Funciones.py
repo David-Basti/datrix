@@ -2030,3 +2030,13 @@ def ajustar_mascara(mask, shape_objetivo):
                                     if mask.shape != shape_objetivo:
                                         return resize(mask.astype(float), shape_objetivo, order=0, preserve_range=True).astype(bool)
                                     return mask
+
+import plotly.graph_objects as go
+def crear_histograma_plotly(bin_centers, hist, color='gray', nombre=''):
+    return go.Bar(
+        x=bin_centers,
+        y=hist,
+        name=nombre,
+        marker_color=color,
+        width=1,  # Simula líneas finas
+    )
