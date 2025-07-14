@@ -163,7 +163,7 @@ Simulador de reconstrución tomográfica de fantomas matemáticos.
 
 - Se añadirá  efecto de dispersión a la reconstrucción SPECT.
 - Opción para incorporar correción de la atenuación y dispersión a los algoritmos MLEM y OSEM.
-- Corrección de la atenuación post-reconstrucción a partir de un mapa de atenuación deterinado por FBP.
+- Corrección de la atenuación post-reconstrucción a partir de un mapa de atenuación determinado por FBP.
 - Corrección de la atenuación por el método de Chang.
 
 ---
