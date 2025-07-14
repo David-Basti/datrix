@@ -159,10 +159,6 @@ Simulador de reconstrución tomográfica de fantomas matemáticos.
 
 - Descripción de cada módulo, tutoriales.
 
-### Procesamiento de imágenes
-
-- Previsualización de la imagen rgb (recombinada) en el editor de imágenes.
-
 ### Reconstrucción tomográfica
 
 - Se añadirá  efecto de dispersión a la reconstrucción SPECT.
