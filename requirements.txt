@@ -15,3 +15,4 @@ pandas
 imageio
 XlsxWriter
 openpyxl
+plotly
