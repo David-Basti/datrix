@@ -3219,7 +3219,8 @@ match modulo:
                         canalG_crop = st.session_state["canalG"][:min_shape[0], :min_shape[1]]
                         canalB_crop = st.session_state["canalB"][:min_shape[0], :min_shape[1]]
                         imagen_recombinada = np.stack((canalR_crop, canalG_crop, canalB_crop), axis=-1)
-                        if st.button("Recombinar"):
+                        verimgfinal = st.checkbox("Ver imagen final",key="vifrgb")
+                        if verimgfinal:
                             columnaf1, columnaf2 = st.columns(2)
                             #if EDI:
                             with columnaf1:
@@ -3489,27 +3490,29 @@ match modulo:
                             st.image(fn.normalizar_0_255(st.session_state["canalGray"]),use_container_width=True)
                             #else:
                             #    pass
-                        columnaf1, columnaf2 = st.columns(2)
-                        with columnaf1:
-                            fignrecom, axsfnr = plt.subplots(figsize=(15,5))
-                            axsfnr.imshow(img_a, cmap='gray')
-                            axsfnr.axis('off')
-                            st.write("Imagen Original")
-                            #if EDI:
-                            st.pyplot(fignrecom)
-                            #else:
-                            #    pass                        
-                        with columnaf2:
-                            imagen_gris = st.session_state["canalGray"]
-                            figrecomgray, axsfgray = plt.subplots(figsize=(15,5))
-                            axsfgray.imshow(imagen_gris, cmap='gray')
-                            axsfgray.axis('off')
-                            st.write("Imagen Final")
-                            #if EDI:
-                            st.pyplot(figrecomgray)
-                            #else:
-                            #    pass
-                        st.image(fn.normalizar_0_255(imagen_gris), caption="Imagen Gris", clamp=True,use_container_width=True)
+                        imagen_gris = st.session_state["canalGray"]
+                        verimgfinal = st.checkbox("Ver imagen final",key="vifg")
+                        if verimgfinal:
+                            columnaf1, columnaf2 = st.columns(2)
+                            with columnaf1:
+                                fignrecom, axsfnr = plt.subplots(figsize=(15,5))
+                                axsfnr.imshow(img_a, cmap='gray')
+                                axsfnr.axis('off')
+                                st.write("Imagen Original")
+                                #if EDI:
+                                st.pyplot(fignrecom)
+                                #else:
+                                #    pass                        
+                            with columnaf2:
+                                figrecomgray, axsfgray = plt.subplots(figsize=(15,5))
+                                axsfgray.imshow(imagen_gris, cmap='gray')
+                                axsfgray.axis('off')
+                                st.write("Imagen Final")
+                                #if EDI:
+                                st.pyplot(figrecomgray)
+                                #else:
+                                #    pass
+                            st.image(fn.normalizar_0_255(imagen_gris), caption="Imagen Gris", clamp=True,use_container_width=True)
                     # Opcional: Guardarla en el session_state si después la querés seguir usando
                         
                         st.session_state["img_analisis"] = imagen_gris
