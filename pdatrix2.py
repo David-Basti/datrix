@@ -3756,70 +3756,159 @@ match modulo:
                         max_val_hist = datos_hist.max()
                         st.write(f"🔢 Rango de valores: {min_val_hist:.2f} a {max_val_hist:.2f}")
 
-                        # Escala de grises
-                        if img_np.ndim == 2:
-                            bin_centers, hist = fn.plot_histograma_estilo_matlab(datos_hist, color='gray')
-                            fig, ax = plt.subplots()
-                            ax.vlines(bin_centers, 0, hist, color='gray', lw=1)
-                            ax.set_title("Histograma - Escala de grises")
-                            ax.set_xlabel("Valor de píxel")
-                            ax.set_ylabel("Frecuencia")
-                            if log_escala:
-                                ax.set_yscale('log')
-                            st.pyplot(fig)
+                        
+                        modo_visualizacion = st.radio("Modo de visualización", ["Matplotlib", "Plotly"], horizontal=True, key="mv_histo")
+                        if modo_visualizacion == "Matplotlib":
+                            # Escala de grises
+                            if img_np.ndim == 2:
+                                bin_centers, hist = fn.plot_histograma_estilo_matlab(datos_hist, color='gray')
+                                fig, ax = plt.subplots()
+                                ax.vlines(bin_centers, 0, hist, color='gray', lw=1)
+                                ax.set_title("Histograma - Escala de grises")
+                                ax.set_xlabel("Valor de píxel")
+                                ax.set_ylabel("Frecuencia")
+                                if log_escala:
+                                    ax.set_yscale('log')
+                                st.pyplot(fig)
 
-                        # Imagen RGB con selección de canal
-                        elif img_np.ndim == 3 and img_np.shape[2] == 3:
-                            opcion = st.selectbox(
-                                "Canal a mostrar",
-                                options=["Todos", "Rojo", "Verde", "Azul", "Promedio RGB"],
-                                index=0
-                            )
-                            fig, ax = plt.subplots()
-                            if opcion == "Todos":
-                                colores = ['r', 'g', 'b']
-                                etiquetas = ['Rojo', 'Verde', 'Azul']
+                            # Imagen RGB con selección de canal
+                            elif img_np.ndim == 3 and img_np.shape[2] == 3:
+                                opcion = st.selectbox(
+                                    "Canal a mostrar",
+                                    options=["Todos", "Rojo", "Verde", "Azul", "Promedio RGB"],
+                                    index=0
+                                )
+                                fig, ax = plt.subplots()
+                                if opcion == "Todos":
+                                    colores = ['r', 'g', 'b']
+                                    etiquetas = ['Rojo', 'Verde', 'Azul']
+                                    for i, c in enumerate(colores):
+                                        canal = img_np[:, :, i].ravel()
+                                        bin_centers, hist = fn.plot_histograma_estilo_matlab(canal, color=c)
+                                        ax.vlines(bin_centers, 0, hist, color=c, lw=1, label=etiquetas[i])
+                                    ax.legend()
+                                elif opcion in ["Rojo", "Verde", "Azul"]:
+                                    canal_idx = {"Rojo": 0, "Verde": 1, "Azul": 2}[opcion]
+                                    color = {"Rojo": 'r', "Verde": 'g', "Azul": 'b'}[opcion]
+                                    canal = img_np[:, :, canal_idx].ravel()
+                                    bin_centers, hist = fn.plot_histograma_estilo_matlab(canal, color=color)
+                                    ax.vlines(bin_centers, 0, hist, color=color, lw=1)
+                                elif opcion == "Promedio RGB":
+                                    promedio = img_np.mean(axis=2).ravel()
+                                    bin_centers, hist = fn.plot_histograma_estilo_matlab(promedio, color='gray')
+                                    ax.vlines(bin_centers, 0, hist, color='gray', lw=1)
+                                ax.set_title(f"Histograma - {opcion}")
+                                ax.set_xlabel("Valor de píxel")
+                                ax.set_ylabel("Frecuencia")
+                                if log_escala:
+                                    ax.set_yscale('log')
+                                st.pyplot(fig)
+
+                            # Imagen RGBA (sin selector aún, pero puede agregarse igual)
+                            elif img_np.ndim == 3 and img_np.shape[2] == 4:
+                                fig, ax = plt.subplots()
+                                colores = ['r', 'g', 'b', 'k']
+                                etiquetas = ['Rojo', 'Verde', 'Azul', 'Alfa']
                                 for i, c in enumerate(colores):
                                     canal = img_np[:, :, i].ravel()
                                     bin_centers, hist = fn.plot_histograma_estilo_matlab(canal, color=c)
                                     ax.vlines(bin_centers, 0, hist, color=c, lw=1, label=etiquetas[i])
+                                ax.set_title("Histograma por canal (RGBA)")
+                                ax.set_xlabel("Valor de píxel")
+                                ax.set_ylabel("Frecuencia")
+                                if log_escala:
+                                    ax.set_yscale('log')
                                 ax.legend()
-                            elif opcion in ["Rojo", "Verde", "Azul"]:
-                                canal_idx = {"Rojo": 0, "Verde": 1, "Azul": 2}[opcion]
-                                color = {"Rojo": 'r', "Verde": 'g', "Azul": 'b'}[opcion]
-                                canal = img_np[:, :, canal_idx].ravel()
-                                bin_centers, hist = fn.plot_histograma_estilo_matlab(canal, color=color)
-                                ax.vlines(bin_centers, 0, hist, color=color, lw=1)
-                            elif opcion == "Promedio RGB":
-                                promedio = img_np.mean(axis=2).ravel()
-                                bin_centers, hist = fn.plot_histograma_estilo_matlab(promedio, color='gray')
-                                ax.vlines(bin_centers, 0, hist, color='gray', lw=1)
-                            ax.set_title(f"Histograma - {opcion}")
-                            ax.set_xlabel("Valor de píxel")
-                            ax.set_ylabel("Frecuencia")
-                            if log_escala:
-                                ax.set_yscale('log')
-                            st.pyplot(fig)
+                                st.pyplot(fig)
 
-                        # Imagen RGBA (sin selector aún, pero puede agregarse igual)
-                        elif img_np.ndim == 3 and img_np.shape[2] == 4:
-                            fig, ax = plt.subplots()
-                            colores = ['r', 'g', 'b', 'k']
-                            etiquetas = ['Rojo', 'Verde', 'Azul', 'Alfa']
-                            for i, c in enumerate(colores):
-                                canal = img_np[:, :, i].ravel()
-                                bin_centers, hist = fn.plot_histograma_estilo_matlab(canal, color=c)
-                                ax.vlines(bin_centers, 0, hist, color=c, lw=1, label=etiquetas[i])
-                            ax.set_title("Histograma por canal (RGBA)")
-                            ax.set_xlabel("Valor de píxel")
-                            ax.set_ylabel("Frecuencia")
-                            if log_escala:
-                                ax.set_yscale('log')
-                            ax.legend()
-                            st.pyplot(fig)
-
+                            else:
+                                st.warning("No se pudo calcular el histograma: formato de imagen no compatible.")
                         else:
-                            st.warning("No se pudo calcular el histograma: formato de imagen no compatible.")
+                                                        
+                            if img_np.ndim == 2:
+                                # Escala de grises
+                                bin_centers, hist = fn.plot_histograma_estilo_matlab(datos_hist, color='gray')
+                                fig = go.Figure()
+                                fig.add_trace(fn.crear_histograma_plotly(bin_centers, hist, color='gray', nombre="Gris"))
+                                fig.update_layout(
+                                    title="Histograma - Escala de grises",
+                                    xaxis_title="Valor de píxel",
+                                    yaxis_title="Frecuencia",
+                                    plot_bgcolor="white",
+                                    #paper_bgcolor="white",
+                                    showlegend=False,
+                                )
+                                if log_escala:
+                                    fig.update_yaxes(type="log")
+                                st.plotly_chart(fig, use_container_width=True)
+
+                            elif img_np.ndim == 3 and img_np.shape[2] == 3:
+                                # Imagen RGB
+                                opcion = st.selectbox(
+                                    "Canal a mostrar",
+                                    options=["Todos", "Rojo", "Verde", "Azul", "Promedio RGB"],
+                                    index=0
+                                )
+                                fig = go.Figure()
+
+                                if opcion == "Todos":
+                                    colores = ['red', 'green', 'blue']
+                                    etiquetas = ['Rojo', 'Verde', 'Azul']
+                                    for i, color in enumerate(colores):
+                                        canal = img_np[:, :, i].ravel()
+                                        bin_centers, hist = fn.plot_histograma_estilo_matlab(canal, color=color)
+                                        fig.add_trace(fn.crear_histograma_plotly(bin_centers, hist, color=color, nombre=etiquetas[i]))
+                                    fig.update_layout(showlegend=False)
+
+                                elif opcion in ["Rojo", "Verde", "Azul"]:
+                                    canal_idx = {"Rojo": 0, "Verde": 1, "Azul": 2}[opcion]
+                                    color = {"Rojo": 'red', "Verde": 'green', "Azul": 'blue'}[opcion]
+                                    canal = img_np[:, :, canal_idx].ravel()
+                                    bin_centers, hist = fn.plot_histograma_estilo_matlab(canal, color=color)
+                                    fig.add_trace(fn.crear_histograma_plotly(bin_centers, hist, color=color, nombre=opcion))
+                                    fig.update_layout(showlegend=False)
+
+                                elif opcion == "Promedio RGB":
+                                    promedio = img_np.mean(axis=2).ravel()
+                                    bin_centers, hist = fn.plot_histograma_estilo_matlab(promedio, color='gray')
+                                    fig.add_trace(fn.crear_histograma_plotly(bin_centers, hist, color='gray', nombre='Promedio RGB'))
+                                    fig.update_layout(showlegend=False)
+
+                                fig.update_layout(
+                                    title=f"Histograma - {opcion}",
+                                    xaxis_title="Valor de píxel",
+                                    yaxis_title="Frecuencia",
+                                    plot_bgcolor="white",
+                                    #paper_bgcolor="white"
+                                )
+                                if log_escala:
+                                    fig.update_yaxes(type="log")
+                                st.plotly_chart(fig, use_container_width=True)
+
+                            elif img_np.ndim == 3 and img_np.shape[2] == 4:
+                                # Imagen RGBA
+                                fig = go.Figure()
+                                colores = ['red', 'green', 'blue', 'black']
+                                etiquetas = ['Rojo', 'Verde', 'Azul', 'Alfa']
+                                for i, color in enumerate(colores):
+                                    canal = img_np[:, :, i].ravel()
+                                    bin_centers, hist = fn.plot_histograma_estilo_matlab(canal, color=color)
+                                    fig.add_trace(fn.crear_histograma_plotly(bin_centers, hist, color=color, nombre=etiquetas[i]))
+
+                                fig.update_layout(
+                                    title="Histograma por canal (RGBA)",
+                                    xaxis_title="Valor de píxel",
+                                    yaxis_title="Frecuencia",
+                                    plot_bgcolor="white",
+                                    #paper_bgcolor="white",
+                                    showlegend=False
+                                )
+                                if log_escala:
+                                    fig.update_yaxes(type="log")
+                                st.plotly_chart(fig, use_container_width=True)
+
+                            else:
+                                st.warning("No se pudo calcular el histograma: formato de imagen no compatible.")
 
                     case "Calibración":
                         st.subheader("📏 Calibración de escala")
