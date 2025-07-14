@@ -38,6 +38,7 @@ from matplotlib.patches import Rectangle, Ellipse, Polygon
 import base64
 from io import BytesIO
 from scipy.interpolate import UnivariateSpline
+import plotly.graph_objects as go
 
 icono = Image.open("logodatrix.jpg")
 ##---------
@@ -4227,8 +4228,6 @@ match modulo:
                                         )
                                     else:
                                        
-                                        import plotly.graph_objects as go
-
                                         fig2 = go.Figure()
 
                                         # === Agregado de curvas ===
@@ -4895,6 +4894,7 @@ match modulo:
                                                             min_value=y_min_full, max_value=y_max_full,
                                                             value=(y_min_full, y_max_full),
                                                             step=(y_max_full - y_min_full) / 100, format="%.2f")
+                                        modo_visualizacion = st.radio("Modo de visualización", ["Matplotlib", "Plotly"], horizontal=True)
 
                                     # Buscar máximos y mínimos dentro del rectángulo
                                     y_max = -np.inf
@@ -4916,19 +4916,84 @@ match modulo:
                                     st.success(f"📈 Dentro del rectángulo:\n\n🔽 Mínimo f(x) = {y_min:.2f} en x = {x_min:.2f}\n🔼 Máximo f(x) = {y_max:.2f} en x = {x_max:.2f}")
 
                                     with colcurv2:
-                                        fig_detalle, ax = plt.subplots()
-                                        ax.plot(x_full, y_full, label="Spline", color='blue')
-                                        ax.plot(x_min, y_min, 'gv', label='Mín.')
-                                        ax.plot(x_max, y_max, 'r^', label='Máx.')
+                                        
+                                        if modo_visualizacion == "Matplotlib":
+                                            fig_detalle, ax = plt.subplots()
+                                            ax.plot(x_full, y_full, label="Spline", color='blue')
+                                            ax.plot(x_min, y_min, 'gv', label='Mín.')
+                                            ax.plot(x_max, y_max, 'r^', label='Máx.')
 
-                                        ax.axvline(x=x_lines[0], color='cyan', linestyle='--', label=f'x₁ = {x_lines[0]:.2f}')
-                                        ax.axvline(x=x_lines[1], color='cyan', linestyle='--', label=f'x₂ = {x_lines[1]:.2f}')
-                                        ax.axhline(y=y_lines[0], color='y', linestyle='--', label=f'y₁ = {y_lines[0]:.2f}')
-                                        ax.axhline(y=y_lines[1], color='y', linestyle='--', label=f'y₂ = {y_lines[1]:.2f}')
-                                        ax.legend()
-                                        ax.set_xlabel("Tiempo (s)")
-                                        ax.set_ylabel("Intensidad")
-                                        st.pyplot(fig_detalle)
+                                            ax.axvline(x=x_lines[0], color='cyan', linestyle='--', label=f'x₁ = {x_lines[0]:.2f}')
+                                            ax.axvline(x=x_lines[1], color='cyan', linestyle='--', label=f'x₂ = {x_lines[1]:.2f}')
+                                            ax.axhline(y=y_lines[0], color='y', linestyle='--', label=f'y₁ = {y_lines[0]:.2f}')
+                                            ax.axhline(y=y_lines[1], color='y', linestyle='--', label=f'y₂ = {y_lines[1]:.2f}')
+                                            ax.legend()
+                                            ax.set_xlabel("Tiempo (s)")
+                                            ax.set_ylabel("Intensidad")
+                                            st.pyplot(fig_detalle)
+                                        else:
+
+                                            fig_detalle = go.Figure()
+
+                                            # Curva principal (Spline)
+                                            fig_detalle.add_trace(go.Scatter(
+                                                x=x_full, y=y_full,
+                                                mode='lines',
+                                                name='Spline',
+                                                line=dict(color='blue')
+                                            ))
+
+                                            # Mínimo
+                                            fig_detalle.add_trace(go.Scatter(
+                                                x=[x_min], y=[y_min],
+                                                mode='markers',
+                                                name='Mín.',
+                                                marker=dict(color='green', symbol='triangle-down', size=10)
+                                            ))
+
+                                            # Máximo
+                                            fig_detalle.add_trace(go.Scatter(
+                                                x=[x_max], y=[y_max],
+                                                mode='markers',
+                                                name='Máx.',
+                                                marker=dict(color='red', symbol='triangle-up', size=10)
+                                            ))
+
+                                            # Líneas verticales auxiliares
+                                            fig_detalle.add_vline(
+                                                x=x_lines[0], line_dash="dash", line_color="cyan",
+                                                annotation_text=f"x₁ = {x_lines[0]:.2f}", annotation_position="top left"
+                                            )
+                                            fig_detalle.add_vline(
+                                                x=x_lines[1], line_dash="dash", line_color="cyan",
+                                                annotation_text=f"x₂ = {x_lines[1]:.2f}", annotation_position="top right"
+                                            )
+
+                                            # Líneas horizontales auxiliares
+                                            fig_detalle.add_hline(
+                                                y=y_lines[0], line_dash="dash", line_color="yellow",
+                                                annotation_text=f"y₁ = {y_lines[0]:.2f}", annotation_position="bottom left"
+                                            )
+                                            fig_detalle.add_hline(
+                                                y=y_lines[1], line_dash="dash", line_color="yellow",
+                                                annotation_text=f"y₂ = {y_lines[1]:.2f}", annotation_position="bottom right"
+                                            )
+
+                                            # Estética del gráfico
+                                            fig_detalle.update_layout(
+                                                #title=None,
+                                                xaxis_title="Tiempo (s)",
+                                                yaxis_title="Intensidad",
+                                                plot_bgcolor="white",
+                                                #paper_bgcolor="white",
+                                                showlegend=False
+                                            )
+
+                                            fig_detalle.update_xaxes(showgrid=False)
+                                            fig_detalle.update_yaxes(showgrid=False)
+
+                                            # Mostrar en Streamlit
+                                            st.plotly_chart(fig_detalle, use_container_width=True)
 
                                     # --- Análisis avanzado ---
                                     tab1, tab2, tab3 = st.tabs(["📐 Integración", "🔍 Resolver f(x) = p", "🔉 Transformada de Fourier"])
@@ -5303,6 +5368,7 @@ match modulo:
                                                             min_value=y_min_full, max_value=y_max_full,
                                                             value=(y_min_full, y_max_full),
                                                             step=(y_max_full - y_min_full) / 100, format="%.2f")
+                                        modo_visualizacion = st.radio("Modo de visualización", ["Matplotlib", "Plotly"], horizontal=True)
 
                                     # Buscar máximos y mínimos dentro del rectángulo
                                     y_max = -np.inf
@@ -5324,19 +5390,84 @@ match modulo:
                                     st.success(f"📈 Dentro del rectángulo:\n\n🔽 Mínimo f(x) = {y_min:.2f} en x = {x_min:.2f}\n🔼 Máximo f(x) = {y_max:.2f} en x = {x_max:.2f}")
 
                                     with colcurv2:
-                                        fig_detalle, ax = plt.subplots()
-                                        ax.plot(x_full, y_full, label="Spline", color='blue')
-                                        ax.plot(x_min, y_min, 'gv', label='Mín.')
-                                        ax.plot(x_max, y_max, 'r^', label='Máx.')
+                                        
+                                        if modo_visualizacion == "Matplotlib":
+                                            fig_detalle, ax = plt.subplots()
+                                            ax.plot(x_full, y_full, label="Spline", color='blue')
+                                            ax.plot(x_min, y_min, 'gv', label='Mín.')
+                                            ax.plot(x_max, y_max, 'r^', label='Máx.')
 
-                                        ax.axvline(x=x_lines[0], color='cyan', linestyle='--', label=f'x₁ = {x_lines[0]:.2f}')
-                                        ax.axvline(x=x_lines[1], color='cyan', linestyle='--', label=f'x₂ = {x_lines[1]:.2f}')
-                                        ax.axhline(y=y_lines[0], color='y', linestyle='--', label=f'y₁ = {y_lines[0]:.2f}')
-                                        ax.axhline(y=y_lines[1], color='y', linestyle='--', label=f'y₂ = {y_lines[1]:.2f}')
-                                        ax.legend()
-                                        ax.set_xlabel(f"{unidad}")
-                                        ax.set_ylabel("Intensidad")
-                                        st.pyplot(fig_detalle)
+                                            ax.axvline(x=x_lines[0], color='cyan', linestyle='--', label=f'x₁ = {x_lines[0]:.2f}')
+                                            ax.axvline(x=x_lines[1], color='cyan', linestyle='--', label=f'x₂ = {x_lines[1]:.2f}')
+                                            ax.axhline(y=y_lines[0], color='y', linestyle='--', label=f'y₁ = {y_lines[0]:.2f}')
+                                            ax.axhline(y=y_lines[1], color='y', linestyle='--', label=f'y₂ = {y_lines[1]:.2f}')
+                                            ax.legend()
+                                            ax.set_xlabel("Tiempo (s)")
+                                            ax.set_ylabel("Intensidad")
+                                            st.pyplot(fig_detalle)
+                                        else:
+
+                                            fig_detalle = go.Figure()
+
+                                            # Curva principal (Spline)
+                                            fig_detalle.add_trace(go.Scatter(
+                                                x=x_full, y=y_full,
+                                                mode='lines',
+                                                name='Spline',
+                                                line=dict(color='blue')
+                                            ))
+
+                                            # Mínimo
+                                            fig_detalle.add_trace(go.Scatter(
+                                                x=[x_min], y=[y_min],
+                                                mode='markers',
+                                                name='Mín.',
+                                                marker=dict(color='green', symbol='triangle-down', size=10)
+                                            ))
+
+                                            # Máximo
+                                            fig_detalle.add_trace(go.Scatter(
+                                                x=[x_max], y=[y_max],
+                                                mode='markers',
+                                                name='Máx.',
+                                                marker=dict(color='red', symbol='triangle-up', size=10)
+                                            ))
+
+                                            # Líneas verticales auxiliares
+                                            fig_detalle.add_vline(
+                                                x=x_lines[0], line_dash="dash", line_color="cyan",
+                                                annotation_text=f"x₁ = {x_lines[0]:.2f}", annotation_position="top left"
+                                            )
+                                            fig_detalle.add_vline(
+                                                x=x_lines[1], line_dash="dash", line_color="cyan",
+                                                annotation_text=f"x₂ = {x_lines[1]:.2f}", annotation_position="top right"
+                                            )
+
+                                            # Líneas horizontales auxiliares
+                                            fig_detalle.add_hline(
+                                                y=y_lines[0], line_dash="dash", line_color="yellow",
+                                                annotation_text=f"y₁ = {y_lines[0]:.2f}", annotation_position="bottom left"
+                                            )
+                                            fig_detalle.add_hline(
+                                                y=y_lines[1], line_dash="dash", line_color="yellow",
+                                                annotation_text=f"y₂ = {y_lines[1]:.2f}", annotation_position="bottom right"
+                                            )
+
+                                            # Estética del gráfico
+                                            fig_detalle.update_layout(
+                                                #title=None,
+                                                xaxis_title="Tiempo (s)",
+                                                yaxis_title="Intensidad",
+                                                plot_bgcolor="white",
+                                                #paper_bgcolor="white",
+                                                showlegend=False
+                                            )
+
+                                            fig_detalle.update_xaxes(showgrid=False)
+                                            fig_detalle.update_yaxes(showgrid=False)
+
+                                            # Mostrar en Streamlit
+                                            st.plotly_chart(fig_detalle, use_container_width=True)
 
                                     # --- Análisis avanzado ---
                                     tab1,tab2,tab3 = st.tabs(["📐 Integración", "🔍 Resolver f(x) = p", "🔉 Transformada de Fourier"])
