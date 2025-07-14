@@ -4154,74 +4154,171 @@ match modulo:
 
 
                                 with col1:
+                                    modo_visualizacion = st.radio("Modo de visualización",["Matplotlib", "Plotly"],horizontal=True)
+
+                                    if modo_visualizacion == "Matplotlib":
                                     
-                                    fig2, ax2 = plt.subplots()
+                                        fig2, ax2 = plt.subplots()
 
-                                    if profile.ndim == 2 and profile.shape[1] == 3:
-                                        if usar_curva_filtrada_perfil and st.session_state["CurvaFiltradaPerfil"] is not None:
-                                            ax2.plot(distances,columna,label="Perfil de intensidad", color="black")
-                                        else:
-                                            if opcion_canal == "Todos":
-                                                ax2.plot(distances, df["Intensidad R"], label="Rojo", color="red")
-                                                ax2.plot(distances, df["Intensidad G"], label="Verde", color="green")
-                                                ax2.plot(distances, df["Intensidad B"], label="Azul", color="blue")
+                                        if profile.ndim == 2 and profile.shape[1] == 3:
+                                            if usar_curva_filtrada_perfil and st.session_state["CurvaFiltradaPerfil"] is not None:
+                                                ax2.plot(distances,columna,label="Perfil de intensidad", color="black")
                                             else:
-                                                # Plot del canal o promedio seleccionado
-                                                if columna == "Intensidad R":
-                                                    color = "red"
-                                                elif columna == "Intensidad G":
-                                                    color = "green"
-                                                elif columna == "Intensidad B":
-                                                    color = "blue"
-                                                elif columna == "Promedio":
-                                                    color = "black"
+                                                if opcion_canal == "Todos":
+                                                    ax2.plot(distances, df["Intensidad R"], label="Rojo", color="red")
+                                                    ax2.plot(distances, df["Intensidad G"], label="Verde", color="green")
+                                                    ax2.plot(distances, df["Intensidad B"], label="Azul", color="blue")
                                                 else:
-                                                    color = "gray"  # o algún color por defecto
+                                                    # Plot del canal o promedio seleccionado
+                                                    if columna == "Intensidad R":
+                                                        color = "red"
+                                                    elif columna == "Intensidad G":
+                                                        color = "green"
+                                                    elif columna == "Intensidad B":
+                                                        color = "blue"
+                                                    elif columna == "Promedio":
+                                                        color = "black"
+                                                    else:
+                                                        color = "gray"  # o algún color por defecto
 
-                                                ax2.plot(distances, df[columna], label=columna, color=color)
+                                                    ax2.plot(distances, df[columna], label=columna, color=color)
 
-                                    else:
-                                        # Escala de grises o promedio 1D
-                                        if usar_curva_filtrada_perfil and st.session_state["CurvaFiltradaPerfil"] is not None:
-                                            ax2.plot(distances,columna,label="Perfil de intensidad", color="black")
                                         else:
-                                            ax2.plot(distances, df["Intensidad"], label="Perfil de intensidad", color="black")
+                                            # Escala de grises o promedio 1D
+                                            if usar_curva_filtrada_perfil and st.session_state["CurvaFiltradaPerfil"] is not None:
+                                                ax2.plot(distances,columna,label="Perfil de intensidad", color="black")
+                                            else:
+                                                ax2.plot(distances, df["Intensidad"], label="Perfil de intensidad", color="black")
 
-                                    ax2.set_title("Perfil de intensidad")
-                                    ax2.set_xlabel(f"Posición ({unidad})")
-                                    ax2.set_ylabel("Valor de píxel")
-                                    ax2.grid()
-                                    ax2.axvline(x_ini, color="cyan", linestyle="--")
-                                    ax2.axvline(x_fin, color="cyan", linestyle="--")
-                                    ax2.axhline(y1_int, color="orange", linestyle="--")
-                                    ax2.axhline(y2_int, color="orange", linestyle="--")
-                                    y_centro = (y1_int + y2_int) / 2
-                                    ax2.axhline(y_centro, color="orange", linestyle=":", linewidth=1)
-                                    ax2.text(distances[-1], y_centro, "Media", va="center", ha="right", color="orange", fontsize=8)
-                                    if x_max_abs is not None:
-                                        #ax.plot(x_min, y_min, 'gv', label='Mín.')
-                                        #ax.plot(x_max, y_max, 'r^', label='Máx.')
-                                        ax2.plot(x_max_abs, y_max_abs, 'r^', label='Máximo abs.')
-                                        ax2.plot(x_min_abs, y_min_abs, 'gv', label='Mínimo abs.')
-                                        #ax2.legend()
-                                    # 📘 Mostrar leyenda si corresponde
-                                    #if opcion_canal != "Promedio" or (profile.ndim == 2 and profile.shape[1] == 3):
-                                    #    ax2.legend()
+                                        ax2.set_title("Perfil de intensidad")
+                                        ax2.set_xlabel(f"Posición ({unidad})")
+                                        ax2.set_ylabel("Valor de píxel")
+                                        ax2.grid()
+                                        ax2.axvline(x_ini, color="cyan", linestyle="--")
+                                        ax2.axvline(x_fin, color="cyan", linestyle="--")
+                                        ax2.axhline(y1_int, color="orange", linestyle="--")
+                                        ax2.axhline(y2_int, color="orange", linestyle="--")
+                                        y_centro = (y1_int + y2_int) / 2
+                                        ax2.axhline(y_centro, color="orange", linestyle=":", linewidth=1)
+                                        ax2.text(distances[-1], y_centro, "Media", va="center", ha="right", color="orange", fontsize=8)
+                                        if x_max_abs is not None:
+                                            #ax.plot(x_min, y_min, 'gv', label='Mín.')
+                                            #ax.plot(x_max, y_max, 'r^', label='Máx.')
+                                            ax2.plot(x_max_abs, y_max_abs, 'r^', label='Máximo abs.')
+                                            ax2.plot(x_min_abs, y_min_abs, 'gv', label='Mínimo abs.')
+                                            #ax2.legend()
+                                        # 📘 Mostrar leyenda si corresponde
+                                        #if opcion_canal != "Promedio" or (profile.ndim == 2 and profile.shape[1] == 3):
+                                        #    ax2.legend()
 
-                                    # 📷 Mostrar figura en Streamlit
-                                    fn.mostrar_figura_como_imagen(fig2)
-                                    # 📁 Guardar figura en un buffer
-                                    buf = io.BytesIO()
-                                    fig2.savefig(buf, format="png", bbox_inches="tight")
-                                    buf.seek(0)
+                                        # 📷 Mostrar figura en Streamlit
+                                        fn.mostrar_figura_como_imagen(fig2)
+                                        # 📁 Guardar figura en un buffer
+                                        buf = io.BytesIO()
+                                        fig2.savefig(buf, format="png", bbox_inches="tight")
+                                        buf.seek(0)
 
-                                    # ⬇️ Mostrar botón de descarga
-                                    st.download_button(
-                                        label="📥 Descargar gráfico como PNG",
-                                        data=buf,
-                                        file_name="perfil_intensidad.png",
-                                        mime="image/png"
-                                    )
+                                        # ⬇️ Mostrar botón de descarga
+                                        st.download_button(
+                                            label="📥 Descargar gráfico como PNG",
+                                            data=buf,
+                                            file_name="perfil_intensidad.png",
+                                            mime="image/png"
+                                        )
+                                    else:
+                                       
+                                        import plotly.graph_objects as go
+
+                                        fig2 = go.Figure()
+
+                                        # === Agregado de curvas ===
+                                        if profile.ndim == 2 and profile.shape[1] == 3:
+                                            # Imagen RGB
+                                            if usar_curva_filtrada_perfil and st.session_state["CurvaFiltradaPerfil"] is not None:
+                                                fig2.add_trace(go.Scatter(x=distances, y=columna,
+                                                                        mode='lines', name="Perfil de intensidad",
+                                                                        line=dict(color='black')))
+                                            else:
+                                                if opcion_canal == "Todos":
+                                                    fig2.add_trace(go.Scatter(x=distances, y=df["Intensidad R"],
+                                                                            mode='lines', name="Rojo", line=dict(color='red')))
+                                                    fig2.add_trace(go.Scatter(x=distances, y=df["Intensidad G"],
+                                                                            mode='lines', name="Verde", line=dict(color='green')))
+                                                    fig2.add_trace(go.Scatter(x=distances, y=df["Intensidad B"],
+                                                                            mode='lines', name="Azul", line=dict(color='blue')))
+                                                else:
+                                                    # Un solo canal
+                                                    if columna == "Intensidad R":
+                                                        color = "red"
+                                                    elif columna == "Intensidad G":
+                                                        color = "green"
+                                                    elif columna == "Intensidad B":
+                                                        color = "blue"
+                                                    elif columna == "Promedio":
+                                                        color = "black"
+                                                    else:
+                                                        color = "gray"
+
+                                                    fig2.add_trace(go.Scatter(x=distances, y=df[columna],
+                                                                            mode='lines', name=columna, line=dict(color=color)))
+                                        else:
+                                            # Escala de grises o promedio 1D
+                                            if usar_curva_filtrada_perfil and st.session_state["CurvaFiltradaPerfil"] is not None:
+                                                fig2.add_trace(go.Scatter(x=distances, y=columna,
+                                                                        mode='lines', name="Perfil de intensidad",
+                                                                        line=dict(color='black')))
+                                            else:
+                                                fig2.add_trace(go.Scatter(x=distances, y=df["Intensidad"],
+                                                                        mode='lines', name="Perfil de intensidad",
+                                                                        line=dict(color='black')))
+
+                                        # === Líneas auxiliares verticales ===
+                                        fig2.add_vline(x=x_ini, line_dash="dash", line_color="cyan")
+                                        fig2.add_vline(x=x_fin, line_dash="dash", line_color="cyan")
+
+                                        # === Líneas auxiliares horizontales ===
+                                        fig2.add_hline(y=y1_int, line_dash="dash", line_color="orange")
+                                        fig2.add_hline(y=y2_int, line_dash="dash", line_color="orange")
+                                        y_centro = (y1_int + y2_int) / 2
+                                        fig2.add_hline(y=y_centro, line_dash="dot", line_color="orange")
+
+                                        # === Texto "Media" ===
+                                        fig2.add_annotation(x=distances[-1], y=y_centro,
+                                                            text="Media", showarrow=False,
+                                                            font=dict(color="orange", size=10),
+                                                            xanchor="right", yanchor="middle")
+
+                                        # === Marcadores de máximos y mínimos ===
+                                        if x_max_abs is not None:
+                                            fig2.add_trace(go.Scatter(x=[x_max_abs], y=[y_max_abs],
+                                                                    mode='markers', name="Máximo abs.",
+                                                                    marker=dict(color="red", symbol="triangle-up", size=10)))
+                                            fig2.add_trace(go.Scatter(x=[x_min_abs], y=[y_min_abs],
+                                                                    mode='markers', name="Mínimo abs.",
+                                                                    marker=dict(color="green", symbol="triangle-down", size=10)))
+
+                                        # === Decidir si mostrar leyenda ===
+                                        #mostrar_leyenda = (
+                                        #    opcion_canal == "Todos"
+                                        #    or columna not in ["Promedio", "Intensidad"]
+                                        #    or (profile.ndim == 2 and profile.shape[1] == 3)
+                                        #)
+
+                                        # === Estilo de la figura ===
+                                        fig2.update_layout(
+                                            title="Perfil de intensidad",
+                                            xaxis_title=f"Posición ({unidad})",
+                                            yaxis_title="Valor de píxel",
+                                            plot_bgcolor="white",
+                                            #paper_bgcolor="white"
+                                            showlegend=False
+                                        )
+
+                                        fig2.update_xaxes(showgrid=False)
+                                        fig2.update_yaxes(showgrid=False)
+
+                                        # === Mostrar en Streamlit ===
+                                        st.plotly_chart(fig2, use_container_width=True)
                                     # Crear resumen
                                     #idx_max = int(np.argmax(profile.mean(axis=1))) if profile.ndim == 2 else int(np.argmax(profile))
                                     #idx_min = int(np.argmin(profile.mean(axis=1))) if profile.ndim == 2 else int(np.argmin(profile))
