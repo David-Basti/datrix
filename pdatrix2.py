@@ -238,7 +238,7 @@ match modulo:
                         elif   A.shape[0] != A.shape[1]:
                             st.error("❌ La matriz debe ser cuadrada para poder elevarse a una potencia.")
                             escalar_3 = 1
-                        elif escalar_3f < 0 and A.det() == 0:
+                        elif escalar_3f < 0 and (sp.sympify(sp.simplify(str(st.session_state['expresion'])))).det() == 0:
                             #d = A.det()
                             #if d != 0:
                             st.error("❌ Para exponentes negativos el det(A) debe ser distinto de cero")
