@@ -183,7 +183,6 @@ Este proyecto fue desarrollado en Python utilizando las siguientes bibliotecas:
 - [**Matplotlib**](https://matplotlib.org/) – Gráficos 2D y visualizaciones
 - [**SymPy**](https://www.sympy.org/en/index.html) – Cálculo simbólico
 - [**SciPy**](https://scipy.org/) – Métodos numéricos (interpolación, ajuste, resolución de ecuaciones)
-- [**Pandas**](https://pandas.pydata.org/) – Análisis y manipulación de datos
 - [**scikit-image**](https://scikit-image.org/) – Procesamiento de imágenes
 - [**OpenCV** (headless)](https://opencv.org/) – Edición y filtrado de imágenes
 - [**Pillow**](https://python-pillow.org/) – Manejo de imágenes (carga, guardado, conversión)
