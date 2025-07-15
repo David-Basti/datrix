@@ -8,7 +8,7 @@ pydicom
 numba
 opencv-python-headless
 scipy
-tk
+pandas
 streamlit-drawable-canvas==0.5.2
 streamlit-image-coordinates
 imageio
