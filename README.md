@@ -188,6 +188,7 @@ Este proyecto fue desarrollado en Python utilizando las siguientes bibliotecas:
 - [**Pillow**](https://python-pillow.org/) – Manejo de imágenes (carga, guardado, conversión)
 - [**Pydicom**](https://pydicom.github.io/) – Lectura y análisis de archivos DICOM
 - [**ImageIO**](https://imageio.github.io/) – Lectura de imágenes multiformato
+- [**Pandas**](https://pandas.pydata.org/) – Análisis y manipulación de datos
 - [**XlsxWriter**](https://xlsxwriter.readthedocs.io/) – Exportación de datos a archivos Excel `.xlsx`
 - [**openpyxl**](https://openpyxl.readthedocs.io/) – Lectura y edición de archivos Excel
 - [**streamlit-drawable-canvas**](https://github.com/andfanilo/streamlit-drawable-canvas) `v0.5.2` – Herramienta para dibujar ROIs y anotaciones
