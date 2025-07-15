@@ -1182,7 +1182,7 @@ match modulo:
                                 st.pyplot(figexp)
                 
                 if f is not None:
-                    curana = st.tabs(["Integración", "Resolución de ecuación", "Transformada de Fourier"])
+                    curana = st.tabs(["Integración", "Resolución de ecuación f(x) = p", "Transformada de Fourier"])
                     with curana[0]:
                         st.subheader("Integración")
                         # Calcular área
