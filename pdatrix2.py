@@ -48,7 +48,7 @@ st.set_page_config(
     #layout="wide",
     #initial_sidebar_state = "collapsed"
 )
-##---------
+###---------
 #st.title("🧮 DaTrix")
 #titulo_personalizado("🧮 DaTrix", nivel=2, tamaño=56, color="black")
 # Función para convertir imagen local a base64
