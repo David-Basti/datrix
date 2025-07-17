@@ -5926,10 +5926,6 @@ match modulo:
 
         Mi objetivo es que esta herramienta sea útil tanto para estudiantes de tecnicaturas como ingenierías.
 
-        Podés contactarme en:
-        - [LinkedIn](https://www.linkedin.com/in/david-fern%C3%A1ndez-basti-133114190/)
-                    
-
         ---
         ### 💙 ¿Te gustó la app?
         Apoyá el proyecto con una donación:
