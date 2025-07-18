@@ -2651,7 +2651,7 @@ match modulo:
                                 #st.pyplot(figPrevB)
                                 #fn.mostrar_figura_como_imagen(figPrevB)
                                 #if EDI:
-                                st.image(fn.normalizar_0_255(previa_Ifilt_g),use_container_width=True)
+                                st.image(fn.normalizar_0_255(previa_Ifilt_b),use_container_width=True)
                                 #else:
                                 #    pass
                                 #plt.close(figPrevB)
