@@ -926,15 +926,51 @@ match modulo:
                                     st.error("❌ No se pudo invertir la matriz normal. El sistema no tiene solución por mínimos cuadrados.")
 
                             if x is not None:
+                                usar_decimales_sistemas = st.checkbox("Mostrar decimales", key="mostrardecsistemas")
+                                
                                 # Mostrar la solución en LaTeX
-                                solucion_latex = r"x = \begin{bmatrix}" + r"\\".join([sp.latex(xi) for xi in x]) + r"\end{bmatrix}"
-                                st.latex(solucion_latex)
+                                if usar_decimales_sistemas:
+                                    solucion_latex = r"x = \begin{bmatrix}" + r"\\".join([sp.latex(xi.evalf()) for xi in x]) + r"\end{bmatrix}"
+                                else:
+                                    solucion_latex = r"x = \begin{bmatrix}" + r"\\".join([sp.latex(xi) for xi in x]) + r"\end{bmatrix}"
 
+                                st.latex(solucion_latex)
+                                                                # Botón para copiar la matriz solución x
+                                if st.button("Copiar solución x", key="copiar_x"):
+                                    if isinstance(x, sp.Matrix):
+                                        # Convertir a texto: filas separadas por \n, elementos separados por coma
+                                        st.session_state["copiado"] = "\n".join(
+                                            ",".join(str(val) for val in fila) for fila in x.tolist()
+                                        )
+                                        #st.success("Solución x copiada al portapapeles (session_state)")
+                                    elif isinstance(x, (int, float)):
+                                        st.session_state["copiado"] = str(x)
+                                        #st.success("Solución x copiada al portapapeles (session_state)")
+                                    else:
+                                        # Por si x es algún otro tipo de objeto iterable
+                                        st.session_state["copiado"] = "\n".join(
+                                            ",".join(str(val) for val in fila) for fila in x.tolist()
+                                        )
+                                        #st.success("Solución x copiada al portapapeles (session_state)")
+                                mostrar_decimales_residuo = st.checkbox("Mostrar decimales", key="mostrardecresi")
                                 # Mostrar el residuo simbólico y su norma
                                 residuo = C * x - b
                                 residuo = sp.Matrix([sp.simplify(ri) for ri in residuo])
                                 error = sp.sqrt(sum([ri**2 for ri in residuo]))
-                                st.latex(rf"\text{{Error del residuo: }} \|C \cdot x - b\| = {sp.latex(error)}")
+                                
+                                if mostrar_decimales_residuo:
+                                    # Residuo como vector columna con decimales
+                                    residuo_latex = r"\begin{bmatrix}" + r"\\".join([sp.latex(ri.evalf()) for ri in residuo]) + r"\end{bmatrix}"
+                                    # Error como número con decimales
+                                    error_latex = sp.latex(error.evalf())
+                                else:
+                                    residuo_latex = r"\begin{bmatrix}" + r"\\".join([sp.latex(ri) for ri in residuo]) + r"\end{bmatrix}"
+                                    error_latex = sp.latex(error)
+
+                                # Mostrar en pantalla
+                                st.latex(rf"\text{{Residuo: }} \; {residuo_latex}")
+                                st.latex(rf"\text{{Error del residuo: }} \; \|C \cdot x - b\| = {error_latex}")
+                                #st.latex(rf"\text{{Error del residuo: }} \|C \cdot x - b\| = {sp.latex(error)}")
 
                         except Exception as e:
                             st.error(f"No se pudo resolver el sistema simbólicamente: {e}")
@@ -5933,4 +5969,5 @@ match modulo:
          Más información en:
         [⭐ Dejame una estrella](https://github.com/David-Basti/datrix/stargazers)
         """)
+
 
