@@ -590,10 +590,124 @@ match modulo:
                                 #    st.session_state["copiado"] = str(st.session_state["resultado2"])
                                 #else:
                                 #    st.session_state["copiado"] = "\n".join(" ".join(str(val) for val in fila) for fila in st.session_state["resultado2"].tolist())
+            st.title("🧮 Resolución de sistemas de ecuaciones lineales")
+            st.markdown("Resolvé sistemas lineales de la forma **C·x = b** con coeficientes numéricos o simbólicos.")
+
+            archivo = st.file_uploader("Subí un archivo con la matriz C y el vector b", type=["csv", "xlsx"])
+
+            C = None
+            b = None
+
+            if archivo is not None:
+                try:
+                    if archivo.name.endswith(".csv"):
+                        df = pd.read_csv(archivo, header=None)
+                    else:
+                        df = pd.read_excel(archivo, header=None)
+
+                    if df.shape[1] < 2:
+                        st.error("El archivo debe tener al menos dos columnas (C y b).")
+                    else:
+                        try:
+                            df_sym = df.applymap(lambda x: sp.sympify(str(x)))
+                            C = sp.Matrix(df_sym.iloc[:, :-1].values.tolist())
+                            b = sp.Matrix(df_sym.iloc[:, -1].values.tolist())
+                        except Exception as e:
+                            st.error(f"Error al interpretar simbólicamente los datos: {e}")
+                except Exception as e:
+                    st.error(f"Error al leer el archivo: {e}")
+
+            else:
+                st.subheader("Carga manual")
+                gol1,gol2=st.columns([0.7,0.3])
+                with gol1:
+                    C_txt = st.text_area("Matriz C (fila por fila, separado por coma)", "2, 1\n1, 3")
+                with gol2:
+                    b_txt = st.text_area("Vector b (una entrada por fila)", "8\n13")
+
+                try:
+                    C_list = [list(map(sp.sympify, fila.split(','))) for fila in C_txt.strip().split('\n')]
+                    b_list = list(map(sp.sympify, b_txt.strip().split('\n')))
+                    C = sp.Matrix(C_list)
+                    b = sp.Matrix(b_list)
+                except Exception as e:
+                    st.error(f"Error al procesar los datos simbólicamente: {e}")
+
+            if C is not None and b is not None and C.rows == b.rows:
+                try:
+                    if C.rows == C.cols:
+                        x = C.LUsolve(b)
+                        x = sp.Matrix([sp.simplify(xi) for xi in x])
+                        st.success("✅ Sistema cuadrado: solución exacta encontrada.")
+                    else:
+                        st.warning("⚠️ Sistema no cuadrado. Se usará método de mínimos cuadrados.")
+                        Ct = C.T
+                        normal_matrix = Ct * C
+                        normal_rhs = Ct * b
+                        try:
+                            x = normal_matrix.inv() * normal_rhs
+                            #x = (C.T * C).inv() * (C.T * b)
+                            x = sp.Matrix([sp.simplify(xi) for xi in x])
+                            st.success("✅ Solución por mínimos cuadrados:")
+                        except:
+                            x = None
+                            st.error("❌ No se pudo invertir la matriz normal. El sistema no tiene solución por mínimos cuadrados.")
+
+                    if x is not None:
+                        usar_decimales_sistemas = st.checkbox("Mostrar decimales", key="mostrardecsistemas")
+                        
+                        # Mostrar la solución en LaTeX
+                        if usar_decimales_sistemas:
+                            solucion_latex = r"x = \begin{bmatrix}" + r"\\".join([sp.latex(xi.evalf()) for xi in x]) + r"\end{bmatrix}"
+                        else:
+                            solucion_latex = r"x = \begin{bmatrix}" + r"\\".join([sp.latex(xi) for xi in x]) + r"\end{bmatrix}"
+
+                        st.latex(solucion_latex)
+                                                        # Botón para copiar la matriz solución x
+                        if st.button("Copiar solución x", key="copiar_x"):
+                            if isinstance(x, sp.Matrix):
+                                # Convertir a texto: filas separadas por \n, elementos separados por coma
+                                st.session_state["copiado"] = "\n".join(
+                                    ",".join(str(val) for val in fila) for fila in x.tolist()
+                                )
+                                #st.success("Solución x copiada al portapapeles (session_state)")
+                            elif isinstance(x, (int, float)):
+                                st.session_state["copiado"] = str(x)
+                                #st.success("Solución x copiada al portapapeles (session_state)")
+                            else:
+                                # Por si x es algún otro tipo de objeto iterable
+                                st.session_state["copiado"] = "\n".join(
+                                    ",".join(str(val) for val in fila) for fila in x.tolist()
+                                )
+                                #st.success("Solución x copiada al portapapeles (session_state)")
+                        mostrar_decimales_residuo = st.checkbox("Mostrar decimales", key="mostrardecresi")
+                        # Mostrar el residuo simbólico y su norma
+                        residuo = C * x - b
+                        residuo = sp.Matrix([sp.simplify(ri) for ri in residuo])
+                        error = sp.sqrt(sum([ri**2 for ri in residuo]))
+                        
+                        if mostrar_decimales_residuo:
+                            # Residuo como vector columna con decimales
+                            residuo_latex = r"\begin{bmatrix}" + r"\\".join([sp.latex(ri.evalf()) for ri in residuo]) + r"\end{bmatrix}"
+                            # Error como número con decimales
+                            error_latex = sp.latex(error.evalf())
+                        else:
+                            residuo_latex = r"\begin{bmatrix}" + r"\\".join([sp.latex(ri) for ri in residuo]) + r"\end{bmatrix}"
+                            error_latex = sp.latex(error)
+
+                        # Mostrar en pantalla
+                        st.latex(rf"\text{{Residuo: }} \; {residuo_latex}")
+                        st.latex(rf"\text{{Error del residuo: }} \; \|C \cdot x - b\| = {error_latex}")
+                        #st.latex(rf"\text{{Error del residuo: }} \|C \cdot x - b\| = {sp.latex(error)}")
+
+                except Exception as e:
+                    st.error(f"No se pudo resolver el sistema simbólicamente: {e}")
+            else:
+                st.warning("Verificá que C y b estén bien definidos y tengan la misma cantidad de filas.")
             with tabs[1]:
                 U = None
                 f = None
-                opcion = st.radio("Elegí una operación", ["Ajuste polinómico", "Interpolación Spline", "Ajuste exponencial","Resolución general de C·x = b"],horizontal=True,key="opcionsec1")
+                opcion = st.radio("Elegí una operación", ["Ajuste polinómico", "Interpolación Spline", "Ajuste exponencial"],horizontal=True,key="opcionsec1")
                 # --- Lógica para cada opción ---
                 if opcion == "Ajuste polinómico":
                     st.title("📐 Ajuste y resolución de sistemas lineales")
@@ -863,119 +977,7 @@ match modulo:
                         st.warning("No hay datos válidos para procesar.")
                     
 
-                elif opcion == "Resolución general de C·x = b":
-                                    
-                    st.title("🧮 Resolución de sistemas de ecuaciones lineales")
-                    st.markdown("Resolvé sistemas lineales de la forma **C·x = b** con coeficientes numéricos o simbólicos.")
-
-                    archivo = st.file_uploader("Subí un archivo con la matriz C y el vector b", type=["csv", "xlsx"])
-
-                    C = None
-                    b = None
-
-                    if archivo is not None:
-                        try:
-                            if archivo.name.endswith(".csv"):
-                                df = pd.read_csv(archivo, header=None)
-                            else:
-                                df = pd.read_excel(archivo, header=None)
-
-                            if df.shape[1] < 2:
-                                st.error("El archivo debe tener al menos dos columnas (C y b).")
-                            else:
-                                try:
-                                    df_sym = df.applymap(lambda x: sp.sympify(str(x)))
-                                    C = sp.Matrix(df_sym.iloc[:, :-1].values.tolist())
-                                    b = sp.Matrix(df_sym.iloc[:, -1].values.tolist())
-                                except Exception as e:
-                                    st.error(f"Error al interpretar simbólicamente los datos: {e}")
-                        except Exception as e:
-                            st.error(f"Error al leer el archivo: {e}")
-
-                    else:
-                        st.subheader("Carga manual")
-                        C_txt = st.text_area("Matriz C (fila por fila, separado por coma)", "2, 1\n1, 3")
-                        b_txt = st.text_area("Vector b (una entrada por fila)", "8\n13")
-
-                        try:
-                            C_list = [list(map(sp.sympify, fila.split(','))) for fila in C_txt.strip().split('\n')]
-                            b_list = list(map(sp.sympify, b_txt.strip().split('\n')))
-                            C = sp.Matrix(C_list)
-                            b = sp.Matrix(b_list)
-                        except Exception as e:
-                            st.error(f"Error al procesar los datos simbólicamente: {e}")
-
-                    if C is not None and b is not None and C.rows == b.rows:
-                        try:
-                            if C.rows == C.cols:
-                                x = C.LUsolve(b)
-                                x = sp.Matrix([sp.simplify(xi) for xi in x])
-                                st.success("✅ Sistema cuadrado: solución exacta encontrada.")
-                            else:
-                                st.warning("⚠️ Sistema no cuadrado. Se usará método de mínimos cuadrados.")
-                                Ct = C.T
-                                normal_matrix = Ct * C
-                                normal_rhs = Ct * b
-                                try:
-                                    x = normal_matrix.inv() * normal_rhs
-                                    #x = (C.T * C).inv() * (C.T * b)
-                                    x = sp.Matrix([sp.simplify(xi) for xi in x])
-                                    st.success("✅ Solución por mínimos cuadrados:")
-                                except:
-                                    x = None
-                                    st.error("❌ No se pudo invertir la matriz normal. El sistema no tiene solución por mínimos cuadrados.")
-
-                            if x is not None:
-                                usar_decimales_sistemas = st.checkbox("Mostrar decimales", key="mostrardecsistemas")
-                                
-                                # Mostrar la solución en LaTeX
-                                if usar_decimales_sistemas:
-                                    solucion_latex = r"x = \begin{bmatrix}" + r"\\".join([sp.latex(xi.evalf()) for xi in x]) + r"\end{bmatrix}"
-                                else:
-                                    solucion_latex = r"x = \begin{bmatrix}" + r"\\".join([sp.latex(xi) for xi in x]) + r"\end{bmatrix}"
-
-                                st.latex(solucion_latex)
-                                                                # Botón para copiar la matriz solución x
-                                if st.button("Copiar solución x", key="copiar_x"):
-                                    if isinstance(x, sp.Matrix):
-                                        # Convertir a texto: filas separadas por \n, elementos separados por coma
-                                        st.session_state["copiado"] = "\n".join(
-                                            ",".join(str(val) for val in fila) for fila in x.tolist()
-                                        )
-                                        #st.success("Solución x copiada al portapapeles (session_state)")
-                                    elif isinstance(x, (int, float)):
-                                        st.session_state["copiado"] = str(x)
-                                        #st.success("Solución x copiada al portapapeles (session_state)")
-                                    else:
-                                        # Por si x es algún otro tipo de objeto iterable
-                                        st.session_state["copiado"] = "\n".join(
-                                            ",".join(str(val) for val in fila) for fila in x.tolist()
-                                        )
-                                        #st.success("Solución x copiada al portapapeles (session_state)")
-                                mostrar_decimales_residuo = st.checkbox("Mostrar decimales", key="mostrardecresi")
-                                # Mostrar el residuo simbólico y su norma
-                                residuo = C * x - b
-                                residuo = sp.Matrix([sp.simplify(ri) for ri in residuo])
-                                error = sp.sqrt(sum([ri**2 for ri in residuo]))
-                                
-                                if mostrar_decimales_residuo:
-                                    # Residuo como vector columna con decimales
-                                    residuo_latex = r"\begin{bmatrix}" + r"\\".join([sp.latex(ri.evalf()) for ri in residuo]) + r"\end{bmatrix}"
-                                    # Error como número con decimales
-                                    error_latex = sp.latex(error.evalf())
-                                else:
-                                    residuo_latex = r"\begin{bmatrix}" + r"\\".join([sp.latex(ri) for ri in residuo]) + r"\end{bmatrix}"
-                                    error_latex = sp.latex(error)
-
-                                # Mostrar en pantalla
-                                st.latex(rf"\text{{Residuo: }} \; {residuo_latex}")
-                                st.latex(rf"\text{{Error del residuo: }} \; \|C \cdot x - b\| = {error_latex}")
-                                #st.latex(rf"\text{{Error del residuo: }} \|C \cdot x - b\| = {sp.latex(error)}")
-
-                        except Exception as e:
-                            st.error(f"No se pudo resolver el sistema simbólicamente: {e}")
-                    else:
-                        st.warning("Verificá que C y b estén bien definidos y tengan la misma cantidad de filas.")
+                
                 if U is not None:
                     st.subheader("Análisis de curva")
                     if "CurvaFiltrada" not in st.session_state:
@@ -5969,5 +5971,6 @@ match modulo:
          Más información en:
         [⭐ Dejame una estrella](https://github.com/David-Basti/datrix/stargazers)
         """)
+
 
 
