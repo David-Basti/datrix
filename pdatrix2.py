@@ -1607,6 +1607,7 @@ match modulo:
                     st.subheader("🧪 Ruido en la imagen original")
                     add_noise = st.checkbox("Agregar ruido gaussiano",key="addnoise3")
                     if add_noise:
+                        I_temp2 = I_temp2.astype(float)
                         sigma_rel = st.slider("Desvío relativo del ruido", 0.0, 0.5, 0.05, 0.01)
                         ruido = np.random.normal(0, sigma_rel * I_temp2, I_temp2.shape)
                         I_temp2 += ruido
@@ -5971,6 +5972,7 @@ match modulo:
          Más información en:
         [⭐ Dejame una estrella](https://github.com/David-Basti/datrix/stargazers)
         """)
+
 
 
 
