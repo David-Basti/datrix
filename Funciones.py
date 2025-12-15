@@ -1544,6 +1544,19 @@ def RLE_polyfit(U, V, grado, W=None, plot=True, titulo="", xlabel="", ylabel="",
     # Error estándar residual
     D = np.sqrt(ss_res / (n - grado - 1))
 
+    # Transformación de variable
+    alpha = 2 / (x_max - x_min)
+    beta  = -2 * x_min / (x_max - x_min) - 1
+
+    # Polinomio ajustado en variable escalada
+    p_scaled = np.poly1d(coef)
+
+    # Composición: P(U) = P_scaled(alpha*U + beta)
+    p_real = p_scaled(np.poly1d([alpha, beta]))
+
+    # Coeficientes del polinomio en la variable original
+    coef_real = p_real.coefficients
+    
     fig = None
     if plot:
         fig, ax = plt.subplots()
@@ -1589,7 +1602,7 @@ def RLE_polyfit(U, V, grado, W=None, plot=True, titulo="", xlabel="", ylabel="",
         plt.close(fig)
 
     resultado = {
-        'coef': coef,
+        'coef': coef_real,
         'delta_coef': delta_coef,
         'residuos': residuos,
         'R2': R2,
@@ -1599,8 +1612,8 @@ def RLE_polyfit(U, V, grado, W=None, plot=True, titulo="", xlabel="", ylabel="",
     }
 
     if grado == 1:
-        resultado['a'] = coef[0]
-        resultado['b'] = coef[1]
+        resultado['a'] = coef_real[0]
+        resultado['b'] = coef_real[1]
         resultado['𝛥a'] = delta_coef[0]
         resultado['𝛥b'] = delta_coef[1]
         resultado['R'] = np.sqrt(R2)
@@ -2040,3 +2053,4 @@ def crear_histograma_plotly(bin_centers, hist, color='gray', nombre=''):
         marker_color=color,
         width=1,  # Simula líneas finas
     )
+
