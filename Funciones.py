@@ -26,7 +26,7 @@ from io import BytesIO
 from matplotlib.patches import Rectangle, Ellipse, Polygon
 from scipy.interpolate import interp1d
 import pandas as pd
-
+#
 # Funcio iradon
 def iradon_with_spline(getp, theta, output_size):
     # Genera la reconstrucción usando iradon (sin interpolación avanzada)
@@ -2053,4 +2053,5 @@ def crear_histograma_plotly(bin_centers, hist, color='gray', nombre=''):
         marker_color=color,
         width=1,  # Simula líneas finas
     )
+
 
