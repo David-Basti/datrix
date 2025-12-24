@@ -828,7 +828,7 @@ def filtro_frecuencia(img, tipo, fc1, fc2=None,orden=None):
     F = fftshift(fft2(img))
     mask = crear_filtro(img.shape, tipo, fc1, fc2,orden)
     Ffiltrado = F * mask
-    img_filtrada = np.abs(ifft2(ifftshift(Ffiltrado)))
+    img_filtrada = np.real(ifft2(ifftshift(Ffiltrado)))
     return np.log(1 + np.abs(F)), mask, np.log(1 + np.abs(Ffiltrado)), img_filtrada
 
 
@@ -2053,5 +2053,6 @@ def crear_histograma_plotly(bin_centers, hist, color='gray', nombre=''):
         marker_color=color,
         width=1,  # Simula líneas finas
     )
+
 
 
